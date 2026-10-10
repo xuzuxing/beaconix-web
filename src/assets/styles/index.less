@@ -1,0 +1,80 @@
+// 全局基础样式
+// - 令牌覆写集中在 theme.less
+// - 变量（@beacon-*）由 vite 注入，见 assets/styles/variables.less
+@import './theme.less';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: @beacon-font-family;
+  font-size: @beacon-font-size-base;
+  line-height: @beacon-line-height;
+  color: @beacon-text-primary;
+  background-color: @beacon-bg-page;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: @beacon-brand;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// 卡片：容器底 + 1px 边框 + 直角，无默认阴影
+.t-card {
+  border: 1px solid @beacon-border !important;
+  border-radius: @beacon-radius !important;
+  box-shadow: none !important;
+
+  &__title {
+    font-size: @beacon-font-size-section;
+    font-weight: @beacon-font-weight-medium;
+    line-height: 24px;
+    color: @beacon-text-primary;
+  }
+}
+
+// 细滚动条
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: @beacon-border-strong;
+  border-radius: 3px;
+
+  &:hover {
+    background-color: @beacon-text-disabled;
+  }
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

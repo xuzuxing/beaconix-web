@@ -1,0 +1,91 @@
+// ============================================================
+// 业务样式变量层
+//
+// 颜色取值全部引用 TDesign 设计令牌（var(--td-*)），因此在切换
+// 明暗主题或更换品牌色时会自动跟随；解析在运行时进行。
+//
+// 布局专有尺寸（顶栏高、侧栏宽、最小宽度）与 tea 的字号档位
+// （TDesign 没有一一对应的令牌）仍以字面量定义。
+// ============================================================
+
+// ---------- 品牌色 ----------
+@beacon-brand: var(--td-brand-color);
+@beacon-brand-hover: var(--td-brand-color-hover);
+@beacon-brand-active: var(--td-brand-color-active);
+@beacon-brand-focus: var(--td-brand-color-focus);
+@beacon-brand-light: var(--td-brand-color-light);
+
+// ---------- 功能色 ----------
+@beacon-success: var(--td-success-color);
+@beacon-warning: var(--td-warning-color);
+@beacon-error: var(--td-error-color);
+
+// ---------- 文本 ----------
+@beacon-text-primary: var(--td-text-color-primary);
+@beacon-text-secondary: var(--td-text-color-secondary);
+@beacon-text-tertiary: var(--td-text-color-placeholder);
+@beacon-text-disabled: var(--td-text-color-disabled);
+
+// ---------- 背景 ----------
+@beacon-bg-page: var(--td-bg-color-page);
+@beacon-bg-container: var(--td-bg-color-container);
+@beacon-bg-hover: var(--td-bg-color-container-hover);
+@beacon-bg-active: var(--td-bg-color-container-select);
+
+// ---------- 边框 ----------
+@beacon-border: var(--td-border-level-1-color);
+@beacon-border-strong: var(--td-border-level-2-color);
+// 侧栏分隔线：原先区分的 #e9ecf1 / #f2f4f8 两档为暗色自适应统一为令牌
+@beacon-sider-border: var(--td-border-level-1-color);
+@beacon-sider-secondary-border: var(--td-border-level-1-color);
+
+// ---------- 布局尺寸（参考实现的专有尺寸，TDesign 无对应令牌） ----------
+@beacon-header-height: 48px;
+@beacon-sider-width: 190px;
+@beacon-sider-collapsed-width: 48px;
+@beacon-layout-min-width: 1440px;
+@beacon-radius: 0;
+@beacon-radius-m: 2px;
+// 间距沿用项目既有节奏（不映射到 --td-comp-margin-*，那套节奏与参考不同）
+@beacon-gap: 12px;
+@beacon-gap-l: 16px;
+@beacon-page-padding: 24px;
+
+// ---------- 字体（tea 的字号档位，TDesign 无一一对应令牌） ----------
+@beacon-font-family: var(--td-font-family);
+@beacon-font-size-base: 12px;
+@beacon-font-size-menu: 13px;
+@beacon-font-size-section: 16px;
+@beacon-font-size-title: 28px;
+@beacon-line-height: 18px;
+@beacon-font-weight-medium: 600;
+
+// ============================================================
+// 兼容别名（沿用原 @beacon-* 语义，值已指向令牌）
+// ============================================================
+@beacon-primary-color: @beacon-brand;
+@beacon-success-color: @beacon-success;
+@beacon-warning-color: @beacon-warning;
+@beacon-error-color: @beacon-error;
+@beacon-text-color: @beacon-text-primary;
+@beacon-text-color-secondary: @beacon-text-secondary;
+@beacon-text-color-placeholder: @beacon-text-tertiary;
+@beacon-bg-color: @beacon-bg-page;
+@beacon-border-color: @beacon-border;
+@beacon-content-width: @beacon-layout-min-width;
+
+// ============================================================
+// 常用 mixin
+// ============================================================
+
+.flex-center() {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-ellipsis() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

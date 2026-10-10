@@ -1,0 +1,55 @@
+// ============================================================
+// 设计令牌层：把 TDesign 的 --td-* 令牌对齐到参考实现
+// （腾讯云 CloudBase 控制台所用的 tea 设计体系）
+//
+// 覆写策略：
+// - 两态通用（圆角等）：写在 :root
+// - 仅亮色（底色/边框等 tea 取值）：用 html:not([theme-mode='dark']) 限定，
+//   避免覆盖 TDesign 为暗色提供的那套值
+// - 品牌色不覆写：TDesign 默认品牌色即 #0052d9，与参考一致（见文件末尾的换色说明）
+// ============================================================
+
+// 特异性说明：TDesign 把变量定义在 :root[theme-mode='light']（0,2,0）上，
+// 因此这里的覆写也要达到同等特异性（:root:root = 0,2,0），再靠加载顺序取胜。
+// 用 :root:root 而不是 [theme-mode] 是为了在属性尚未写入的首帧也生效。
+:root:root {
+  // 参考实现是直角体系，TDesign 默认 default 3px / medium 6px
+  --td-radius-default: 0;
+  --td-radius-small: 0;
+  --td-radius-medium: 2px;
+  --td-radius-large: 2px;
+}
+
+// 仅亮色：tea 的底色、边框与占位文案取值（同样用 (0,2,0) 特异性）
+:root:not([theme-mode='dark']) {
+  --td-bg-color-page: #f2f4f8;
+  --td-bg-color-container: #fff;
+  --td-bg-color-container-hover: #f7f8fb;
+  --td-bg-color-container-select: #e9ecf1;
+  --td-bg-color-secondarycontainer: #e9ecf1;
+  --td-bg-color-secondarycontainer-hover: #f7f8fb;
+
+  --td-border-level-1-color: #e6e9ef;
+  --td-border-level-2-color: #d6dbe3;
+
+  --td-text-color-placeholder: rgba(0, 0, 0, 0.5);
+}
+
+// ============================================================
+// 换品牌色：TDesign 的品牌色由 10 档色阶派生（--td-brand-color: var(--td-brand-color-7)），
+// 只改 --td-brand-color 单个变量会导致 hover/active/light 与色阶不同步。
+// 需要换色时，在 html 上覆写整套色阶（1 最浅 → 10 最深）：
+//
+// html {
+//   --td-brand-color-1: #f2f3ff;
+//   --td-brand-color-2: #d9e1ff;
+//   --td-brand-color-3: #b5c7ff;
+//   --td-brand-color-4: #8eabff;
+//   --td-brand-color-5: #618dff;
+//   --td-brand-color-6: #366ef4;
+//   --td-brand-color-7: #0052d9; // ← 主色
+//   --td-brand-color-8: #0044b3;
+//   --td-brand-color-9: #003a99;
+//   --td-brand-color-10: #002d73;
+// }
+// ============================================================
