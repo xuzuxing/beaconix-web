@@ -19,14 +19,15 @@ router.beforeEach(async (to) => {
     return true
   }
 
-  if (!userStore.token) {
+  if (!userStore.isLogin) {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
 
-  if (!userStore.userInfo) {
+  if (!userStore.user) {
     try {
-      await userStore.loadUserInfo()
+      await userStore.loadUser()
     } catch {
+      // 令牌失效：请求层已触发登出，这里回到登录页即可
       userStore.reset()
       return { path: '/login', query: { redirect: to.fullPath } }
     }

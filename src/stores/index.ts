@@ -10,4 +10,5 @@ pinia.use(piniaPluginPersistedstate)
 export * from './modules/app'
 export * from './modules/counter'
 export * from './modules/env'
+export * from './modules/organization'
 export * from './modules/user'

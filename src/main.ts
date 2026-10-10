@@ -5,7 +5,7 @@ import App from './App.vue'
 import { setupI18n } from './locales'
 import router from './router'
 import { pinia, useUserStore } from './stores'
-import { setupRequestUnauthorized, setupRequestToken } from './utils/request'
+import { setupRequestAuth } from './utils/request'
 
 import 'tdesign-vue-next/es/style/index.css'
 import '@/assets/styles/index.less'
@@ -22,13 +22,18 @@ app.use(router)
 setupI18n(app)
 
 // 请求层与 store 解耦：token 与 401 处理在这里接线
-setupRequestToken(() => useUserStore().token)
-setupRequestUnauthorized(() => {
-  useUserStore().reset()
-  void router.replace({
-    path: '/login',
-    query: { redirect: router.currentRoute.value.fullPath },
-  })
+// 请求层与 store 解耦：令牌读取、续期回写与登录失效处理在这里接线
+setupRequestAuth({
+  getAccessToken: () => useUserStore().accessToken,
+  getRefreshToken: () => useUserStore().refreshToken,
+  setTokens: (tokens) => useUserStore().setTokens(tokens),
+  onUnauthorized: () => {
+    useUserStore().reset()
+    void router.replace({
+      path: '/login',
+      query: { redirect: router.currentRoute.value.fullPath },
+    })
+  },
 })
 
 app.mount('#app')

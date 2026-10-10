@@ -50,6 +50,7 @@ export {
   ListViewIcon,
   LockPasswordIcon,
   Logout01Icon,
+  Mail01Icon,
   Moon01Icon,
   MoreHorizontalIcon,
   Notification03Icon,

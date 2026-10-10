@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { MessagePlugin } from 'tdesign-vue-next'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -10,27 +11,26 @@ import whiteIcon from '@/assets/logo/wihte-icon.png'
 import AppIcon from '@/components/AppIcon.vue'
 import GuideDialog from '@/components/guide/GuideDialog.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import type { Organization, Project } from '@/api/types'
 import { APP_TITLE } from '@/config'
-import { envList, type EnvItem } from '@/config/env'
-import { userAccountRows, userMenuGroups } from '@/config/user'
+import { userMenuGroups } from '@/config/user'
 import {
   BookOpen01Icon,
   ComputerIcon,
   Copy01Icon,
   FlashIcon,
+  Folder01Icon,
   HelpCircleIcon,
-  Invoice01Icon,
-  Archive02Icon,
   Moon01Icon,
   Notification03Icon,
   PlusSignIcon,
-  Settings01Icon,
   Search01Icon,
+  Settings01Icon,
   Sun01Icon,
-  UserIcon,
+  TeamWorkIcon,
   VerticalScrollPointIcon,
 } from '@/icons'
-import { useAppStore, useEnvStore } from '@/stores'
+import { useAppStore, useOrganizationStore, useUserStore } from '@/stores'
 import type { ThemeMode } from '@/types'
 
 defineOptions({ name: 'AppHeader' })
@@ -38,7 +38,8 @@ defineOptions({ name: 'AppHeader' })
 const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
-const envStore = useEnvStore()
+const userStore = useUserStore()
+const orgStore = useOrganizationStore()
 
 const collapsed = computed(() => appStore.collapsed)
 
@@ -68,72 +69,98 @@ function handleThemeSelect(data: { value?: string | number }) {
   appStore.setTheme((data.value as ThemeMode) ?? 'light')
 }
 
-/** 环境列表为静态占位，接入环境接口后替换 */
-// ---------- 个人信息 ----------
-/** 头像 hover 展开的个人信息面板 */
-const userVisible = ref(false)
-const accountRows = userAccountRows
-const userGroups = userMenuGroups
-const appVersion = __APP_VERSION__
+// ---------- 团队（组织） ----------
+/** 弹层：hover 显示团队信息卡，点击切到团队切换面板 */
+const teamVisible = ref(false)
+const teamMode = ref<'info' | 'list'>('info')
+const teamKeyword = ref('')
 
-function handleUserMenu(key: string) {
-  // 菜单项目前为占位：接入鉴权后，「切换账号」「退出登录」在此跳转
-  void key
-}
+const currentOrg = computed(() => orgStore.currentOrganization)
 
-// ---------- 环境 ----------
-/** 弹层：hover 显示信息卡，点击切到环境选择面板 */
-const envVisible = ref(false)
-const envMode = ref<'info' | 'list'>('info')
-const envKeyword = ref('')
-
-/** 当前环境来自全局 store：「选择环境」页切换后顶栏同步跟随 */
-const currentEnv = computed(() => envStore.current)
-
-interface EnvInfoRow {
-  labelKey: string
-  value: string
-  copyable?: boolean
-  status?: boolean
-  plan?: boolean
-}
-
-/** 信息卡的字段行 */
-const envInfoRows = computed<EnvInfoRow[]>(() => {
-  const env = currentEnv.value
-  return [
-    { labelKey: 'layout.envName', value: env.name, copyable: true },
-    { labelKey: 'layout.envId', value: env.id, copyable: true },
-    { labelKey: 'layout.envStatus', value: '', status: true },
-    { labelKey: 'layout.envCreatedAt', value: env.createdAt },
-    { labelKey: 'layout.envExpiredAt', value: env.expiredAt },
-    { labelKey: 'layout.envRegion', value: t(env.regionKey) },
-    { labelKey: 'layout.envPlan', value: '', plan: true },
-  ]
-})
-
-const filteredEnvs = computed(() => {
-  const keyword = envKeyword.value.trim().toLowerCase()
-  if (!keyword) return envList
-  return envList.filter(
-    (env) => env.name.toLowerCase().includes(keyword) || env.id.toLowerCase().includes(keyword),
+const filteredOrgs = computed(() => {
+  const keyword = teamKeyword.value.trim().toLowerCase()
+  if (!keyword) return orgStore.organizations
+  return orgStore.organizations.filter(
+    (org) => org.name.toLowerCase().includes(keyword) || org.slug.toLowerCase().includes(keyword),
   )
 })
 
-function selectEnv(env: EnvItem) {
-  envStore.setCurrent(env.id)
-  envMode.value = 'info'
-  envVisible.value = false
+interface InfoRow {
+  labelKey: string
+  value: string
+  copyable?: boolean
 }
 
-/** 打开控制台之外的选择环境整页 */
-function goManageEnv() {
+/** 团队信息卡的字段行 */
+const teamInfoRows = computed<InfoRow[]>(() => {
+  const org = currentOrg.value
+  if (!org) return []
+  return [
+    { labelKey: 'layout.teamName', value: org.name, copyable: true },
+    { labelKey: 'layout.teamSlug', value: org.slug, copyable: true },
+    { labelKey: 'layout.teamId', value: org.id, copyable: true },
+    { labelKey: 'layout.teamCreatedAt', value: org.createdAt },
+  ]
+})
+
+async function selectOrg(org: Organization) {
+  await orgStore.switchOrganization(org.id)
+  teamMode.value = 'info'
+  teamVisible.value = false
+}
+
+/** 团队管理页（阶段 4 落地，先复用现有入口） */
+function goTeams() {
   void router.push('/env')
 }
 
-/** 套餐用量页在主布局内 */
-function goUsage() {
-  void router.push('/usage')
+// ---------- 项目 ----------
+const projectVisible = ref(false)
+const projectKeyword = ref('')
+
+const currentProject = computed(() => orgStore.currentProject)
+
+const filteredProjects = computed(() => {
+  const keyword = projectKeyword.value.trim().toLowerCase()
+  if (!keyword) return orgStore.projects
+  return orgStore.projects.filter(
+    (project) =>
+      project.name.toLowerCase().includes(keyword) || project.key.toLowerCase().includes(keyword),
+  )
+})
+
+function selectProject(project: Project) {
+  orgStore.switchProject(project.id)
+  projectVisible.value = false
+}
+
+// ---------- 个人信息 ----------
+/** 头像 hover 展开的个人信息面板 */
+const userVisible = ref(false)
+const userGroups = userMenuGroups
+const appVersion = __APP_VERSION__
+
+const displayName = computed(() => userStore.user?.name ?? '')
+
+/** 头像用姓名首字母 */
+const avatarText = computed(() => displayName.value.trim().slice(0, 1).toUpperCase())
+
+const accountRows = computed<InfoRow[]>(() => {
+  const user = userStore.user
+  if (!user) return []
+  return [
+    { labelKey: 'layout.userName', value: user.name },
+    { labelKey: 'layout.userEmail', value: user.email },
+  ]
+})
+
+async function handleUserMenu(key: string) {
+  if (key === 'logout') {
+    await userStore.logout()
+    orgStore.reset()
+    MessagePlugin.success(t('layout.userLogoutDone'))
+    await router.replace('/login')
+  }
 }
 
 async function copyText(text: string) {
@@ -143,6 +170,20 @@ async function copyText(text: string) {
     // 剪贴板不可用时静默忽略
   }
 }
+
+/** 顶栏挂载即拉取团队与项目，保证选择器可用 */
+async function loadWorkspace() {
+  try {
+    await orgStore.loadOrganizations()
+    await orgStore.loadProjects()
+  } catch {
+    // 请求层已统一提示
+  }
+}
+
+onMounted(() => {
+  void loadWorkspace()
+})
 </script>
 
 <template>
@@ -154,87 +195,96 @@ async function copyText(text: string) {
 
     <!-- 左侧功能组 -->
     <div class="app-header__main">
-      <!-- 环境：hover 看信息，点击切到选择面板 -->
-      <t-popup v-model:visible="envVisible" trigger="hover" placement="bottom-left" :show-arrow="false"
-        overlay-class-name="app-env-popup">
-        <button type="button" class="app-header__env" @mouseenter="envMode = 'info'"
-          @click="envMode = envMode === 'list' ? 'info' : 'list'">
-          <AppIcon class="app-header__env-icon" :icon="Archive02Icon" />
-          <span class="app-header__env-name">{{ currentEnv.name }}</span>
-          <span v-if="currentEnv.tagKey" class="app-header__env-tag">
-            {{ t(currentEnv.tagKey) }}
+      <!-- 团队：hover 看信息，点击切到团队列表 -->
+      <t-popup v-model:visible="teamVisible" trigger="hover" placement="bottom-left" :show-arrow="false"
+        overlay-class-name="app-team-popup">
+        <button type="button" class="app-header__team" @mouseenter="teamMode = 'info'"
+          @click="teamMode = teamMode === 'list' ? 'info' : 'list'">
+          <AppIcon class="app-header__team-icon" :icon="TeamWorkIcon" />
+          <span class="app-header__team-name">{{ currentOrg?.name ?? t('layout.teamEmpty') }}</span>
+          <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
+        </button>
+
+        <template #content>
+          <!-- 团队信息卡 -->
+          <div v-if="teamMode === 'info'" class="team-card">
+            <div v-for="row in teamInfoRows" :key="row.labelKey" class="team-card__row">
+              <span class="team-card__label">{{ t(row.labelKey) }}</span>
+              <span class="team-card__value">
+                {{ row.value }}
+                <button v-if="row.copyable" type="button" class="team-card__copy"
+                  :aria-label="t('guide.copy')" @click="copyText(row.value)">
+                  <AppIcon :icon="Copy01Icon" :size="14" />
+                </button>
+              </span>
+            </div>
+          </div>
+
+          <!-- 团队切换面板 -->
+          <div v-else class="team-list">
+            <label class="team-list__search">
+              <AppIcon class="team-list__search-icon" :icon="Search01Icon" :size="14" />
+              <input v-model="teamKeyword" :placeholder="t('layout.teamSearch')" />
+            </label>
+
+            <ul class="team-list__items">
+              <li v-for="org in filteredOrgs" :key="org.id">
+                <button type="button" class="team-list__item"
+                  :class="{ 'is-active': org.id === orgStore.currentOrganizationId }" @click="selectOrg(org)">
+                  <span class="team-list__name">{{ org.name }}</span>
+                  <span class="team-list__meta">{{ org.slug }}</span>
+                </button>
+              </li>
+            </ul>
+
+            <p v-if="!filteredOrgs.length" class="team-list__empty">{{ t('layout.teamEmpty') }}</p>
+
+            <div class="team-list__actions">
+              <button type="button" class="team-list__action" @click="goTeams">
+                <AppIcon :icon="Settings01Icon" />
+                {{ t('layout.teamManage') }}
+              </button>
+              <button type="button" class="team-list__action">
+                <AppIcon :icon="PlusSignIcon" />
+                {{ t('layout.teamCreate') }}
+              </button>
+            </div>
+          </div>
+        </template>
+      </t-popup>
+
+      <!-- 项目：点击切换当前项目 -->
+      <t-popup v-model:visible="projectVisible" trigger="click" placement="bottom-left" :show-arrow="false"
+        overlay-class-name="app-project-popup">
+        <button type="button" class="app-header__project">
+          <AppIcon class="app-header__project-icon" :icon="Folder01Icon" />
+          <span class="app-header__project-name">
+            {{ currentProject?.name ?? t('layout.projectEmpty') }}
           </span>
           <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
         </button>
 
         <template #content>
-          <!-- 环境信息卡 -->
-          <div v-if="envMode === 'info'" class="env-card">
-            <div v-for="row in envInfoRows" :key="row.labelKey" class="env-card__row">
-              <span class="env-card__label">{{ t(row.labelKey) }}</span>
-
-              <span class="env-card__value">
-                <template v-if="row.copyable">
-                  {{ row.value }}
-                  <button type="button" class="env-card__copy" :aria-label="t('guide.copy')"
-                    @click="copyText(row.value)">
-                    <AppIcon :icon="Copy01Icon" :size="14" />
-                  </button>
-                </template>
-
-                <template v-else-if="row.status">
-                  <i class="env-card__dot" />
-                  {{ t(currentEnv.active ? 'layout.envStatusActive' : 'layout.envStatusInactive') }}
-                </template>
-
-                <template v-else-if="row.plan">
-                  <span class="env-card__tag">{{ t(currentEnv.planKey) }}</span>
-                  <a class="env-card__link" href="#">{{ t('layout.envViewUsage') }}</a>
-                  <span class="env-card__tag env-card__tag--warning">
-                    {{ t('badge.limited') }}
-                  </span>
-                </template>
-
-                <template v-else>{{ row.value }}</template>
-              </span>
-            </div>
-          </div>
-
-          <!-- 环境选择面板 -->
-          <div v-else class="env-list">
-            <label class="env-list__search">
-              <AppIcon class="env-list__search-icon" :icon="Search01Icon" :size="14" />
-              <input v-model="envKeyword" :placeholder="t('layout.envSearch')" />
+          <div class="project-list">
+            <label class="project-list__search">
+              <AppIcon class="project-list__search-icon" :icon="Search01Icon" :size="14" />
+              <input v-model="projectKeyword" :placeholder="t('layout.projectSearch')" />
             </label>
 
-            <ul class="env-list__items">
-              <li v-for="env in filteredEnvs" :key="env.id">
-                <button type="button" class="env-list__item" :class="{ 'is-active': env.id === currentEnv.id }"
-                  @click="selectEnv(env)">
-                  <span class="env-list__name">
-                    {{ env.name }}
-                    <span v-if="env.tagKey" class="env-list__tag">{{ t(env.tagKey) }}</span>
-                  </span>
-                  <span class="env-list__id">{{ env.id }}</span>
+            <ul class="project-list__items">
+              <li v-for="project in filteredProjects" :key="project.id">
+                <button type="button" class="project-list__item"
+                  :class="{ 'is-active': project.id === orgStore.currentProjectId }"
+                  @click="selectProject(project)">
+                  <span class="project-list__name">{{ project.name }}</span>
+                  <span class="project-list__key">{{ project.key }}</span>
                 </button>
               </li>
             </ul>
 
-            <div class="env-list__actions">
-              <button type="button" class="env-list__action" @click="goManageEnv">
-                <AppIcon :icon="Settings01Icon" />
-                {{ t('layout.envManage') }}
-              </button>
-              <button type="button" class="env-list__action" @click="goUsage">
-                <AppIcon :icon="Invoice01Icon" />
-                {{ t('layout.envUsage') }}
-                <span class="env-list__badge">{{ t('badge.limited') }}</span>
-              </button>
-              <button type="button" class="env-list__action">
-                <AppIcon :icon="PlusSignIcon" />
-                {{ t('layout.envCreate') }}
-              </button>
-            </div>
+            <p v-if="!filteredProjects.length" class="project-list__empty">
+              {{ t('layout.projectEmpty') }}
+            </p>
           </div>
         </template>
       </t-popup>
@@ -285,13 +335,19 @@ async function copyText(text: string) {
       <t-popup v-model:visible="userVisible" trigger="hover" placement="bottom-right" :show-arrow="false"
         overlay-class-name="app-user-popup">
         <button type="button" class="app-header__user" :aria-label="t('layout.profile')">
-          <t-avatar size="32px">
-            <AppIcon :icon="UserIcon" />
-          </t-avatar>
+          <t-avatar size="32px">{{ avatarText }}</t-avatar>
         </button>
 
         <template #content>
           <div class="user-panel">
+            <div class="user-panel__profile">
+              <t-avatar size="40px">{{ avatarText }}</t-avatar>
+              <div class="user-panel__identity">
+                <span class="user-panel__name">{{ displayName }}</span>
+                <span class="user-panel__email">{{ userStore.user?.email }}</span>
+              </div>
+            </div>
+
             <div class="user-panel__ids">
               <div v-for="row in accountRows" :key="row.labelKey" class="user-panel__row">
                 <span class="user-panel__label">{{ t(row.labelKey) }}</span>
@@ -331,6 +387,36 @@ async function copyText(text: string) {
   .user-panel {
     width: 260px;
     background-color: @beacon-bg-container;
+  }
+
+  .user-panel__profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid @beacon-border;
+  }
+
+  .user-panel__identity {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .user-panel__name {
+    overflow: hidden;
+    font-size: @beacon-font-size-menu;
+    color: @beacon-text-primary;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .user-panel__email {
+    overflow: hidden;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-tertiary;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .user-panel__ids {
@@ -405,18 +491,18 @@ async function copyText(text: string) {
   }
 }
 
-/* 环境弹层 teleport 到 body，样式需非 scoped，用 overlayClassName 限定作用域 */
-.app-env-popup {
+/* 团队弹层 teleport 到 body，样式需非 scoped，用 overlayClassName 限定作用域 */
+.app-team-popup {
   padding: 0;
 
-  // ---------- 环境信息卡（hover） ----------
-  .env-card {
+  // ---------- 团队信息卡（hover） ----------
+  .team-card {
     width: 360px;
     padding: 12px 16px;
     background-color: @beacon-bg-container;
   }
 
-  .env-card__row {
+  .team-card__row {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -425,13 +511,13 @@ async function copyText(text: string) {
     line-height: 20px;
   }
 
-  .env-card__label {
+  .team-card__label {
     flex: none;
     width: 64px;
     color: @beacon-text-tertiary;
   }
 
-  .env-card__value {
+  .team-card__value {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -440,7 +526,7 @@ async function copyText(text: string) {
     word-break: break-all;
   }
 
-  .env-card__copy {
+  .team-card__copy {
     flex: none;
     padding: 0;
     color: @beacon-text-tertiary;
@@ -453,46 +539,13 @@ async function copyText(text: string) {
     }
   }
 
-  .env-card__dot {
-    width: 8px;
-    height: 8px;
-    background-color: @beacon-success;
-    border-radius: 50%;
-  }
-
-  .env-card__tag {
-    flex: none;
-    padding: 0 6px;
-    font-size: @beacon-font-size-base;
-    line-height: 18px;
-    color: @beacon-text-tertiary;
-    background-color: @beacon-bg-page;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
-
-    &--warning {
-      color: var(--td-text-color-anti);
-      background-color: var(--td-warning-color);
-      border-color: var(--td-warning-color);
-    }
-  }
-
-  .env-card__link {
-    flex: none;
-    color: @beacon-brand;
-
-    &:hover {
-      color: @beacon-brand-hover;
-    }
-  }
-
-  // ---------- 环境选择面板（点击） ----------
-  .env-list {
+  // ---------- 团队切换面板（点击） ----------
+  .team-list {
     width: 340px;
     background-color: @beacon-bg-container;
   }
 
-  .env-list__search {
+  .team-list__search {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -521,13 +574,13 @@ async function copyText(text: string) {
     }
   }
 
-  .env-list__items {
+  .team-list__items {
     max-height: 220px;
     padding: 4px 0;
     overflow-y: auto;
   }
 
-  .env-list__item {
+  .team-list__item {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -549,47 +602,37 @@ async function copyText(text: string) {
       color: var(--td-text-color-anti);
       background-color: @beacon-brand;
 
-      .env-list__id {
+      .team-list__meta {
         color: var(--td-text-color-anti);
-      }
-
-      .env-list__tag {
-        color: var(--td-text-color-anti);
-        border-color: rgb(255 255 255 / 40%);
       }
     }
   }
 
-  .env-list__name {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  .team-list__name {
     font-size: @beacon-font-size-menu;
   }
 
-  .env-list__tag {
-    flex: none;
-    padding: 0 6px;
-    font-size: @beacon-font-size-base;
-    line-height: 16px;
-    color: @beacon-text-tertiary;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
-  }
-
-  .env-list__id {
+  .team-list__meta {
     font-size: @beacon-font-size-base;
     color: @beacon-text-tertiary;
   }
 
-  .env-list__actions {
+  .team-list__empty {
+    margin: 0;
+    padding: 16px 12px;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-tertiary;
+    text-align: center;
+  }
+
+  .team-list__actions {
     display: flex;
     flex-direction: column;
     padding: 4px 0;
     border-top: 1px solid @beacon-border;
   }
 
-  .env-list__action {
+  .team-list__action {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -605,15 +648,101 @@ async function copyText(text: string) {
       background-color: @beacon-bg-hover;
     }
   }
+}
 
-  .env-list__badge {
-    flex: none;
-    padding: 0 6px;
+/* 项目弹层：只有搜索 + 列表 */
+.app-project-popup {
+  padding: 0;
+
+  .project-list {
+    width: 300px;
+    background-color: @beacon-bg-container;
+  }
+
+  .project-list__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 12px 0;
+    padding: 4px 2px 8px;
+    color: @beacon-text-tertiary;
+    border-bottom: 1px solid @beacon-border;
+
+    &:focus-within {
+      border-bottom-color: @beacon-brand;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      font-family: inherit;
+      font-size: @beacon-font-size-base;
+      color: @beacon-text-primary;
+      background-color: transparent;
+      border: 0;
+      outline: none;
+
+      &::placeholder {
+        color: @beacon-text-tertiary;
+      }
+    }
+  }
+
+  .project-list__items {
+    max-height: 240px;
+    padding: 4px 0;
+    overflow-y: auto;
+  }
+
+  .project-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    font-family: inherit;
     font-size: @beacon-font-size-base;
-    line-height: 16px;
-    color: var(--td-text-color-anti);
-    background-color: var(--td-warning-color);
-    border-radius: @beacon-radius-m;
+    text-align: left;
+    color: @beacon-text-primary;
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+
+    &:hover {
+      background-color: @beacon-bg-hover;
+    }
+
+    &.is-active {
+      color: var(--td-text-color-anti);
+      background-color: @beacon-brand;
+
+      .project-list__key {
+        color: var(--td-text-color-anti);
+      }
+    }
+  }
+
+  .project-list__name {
+    min-width: 0;
+    overflow: hidden;
+    font-size: @beacon-font-size-menu;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .project-list__key {
+    flex: none;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-tertiary;
+  }
+
+  .project-list__empty {
+    margin: 0;
+    padding: 16px 12px;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-tertiary;
+    text-align: center;
   }
 }
 </style>
@@ -682,12 +811,14 @@ async function copyText(text: string) {
     }
   }
 
-  &__env {
+  // 团队与项目选择器：外观一致，只有图标与数据不同
+  &__team,
+  &__project {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     height: 32px;
-    padding: 4px;
+    padding: 4px 6px;
     font-family: inherit;
     font-size: @beacon-font-size-base;
     color: @beacon-text-primary;
@@ -701,26 +832,21 @@ async function copyText(text: string) {
     }
   }
 
-  &__env-name {
+  &__team-icon {
+    color: @beacon-brand;
+  }
+
+  &__project-icon {
+    color: @beacon-text-secondary;
+  }
+
+  &__team-name,
+  &__project-name {
     max-width: 140px;
     overflow: hidden;
     line-height: 28px;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  &__env-tag {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    height: 20px;
-    padding: 0 7px;
-    font-size: @beacon-font-size-base;
-    line-height: 18px;
-    color: @beacon-text-tertiary;
-    background-color: @beacon-bg-container;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
   }
 
   &__caret {
