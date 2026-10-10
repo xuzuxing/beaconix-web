@@ -1,11 +1,11 @@
 import {
+  ApiIcon,
   BookOpen01Icon,
-  CloudIcon,
-  CodeIcon,
   CustomerServiceIcon,
   Exchange01Icon,
-  GlobalIcon,
+  LockPasswordIcon,
   Logout01Icon,
+  Notification03Icon,
   UserCircleIcon,
   type IconData,
 } from '@/icons'
@@ -15,17 +15,28 @@ export interface UserMenuItem {
   key: string
   labelKey: string
   icon: IconData
+  /** 点击后跳转的路由，缺省表示该入口暂未接入 */
+  path?: string
   /** 危险操作（退出登录等）用错误色 */
   danger?: boolean
 }
 
-/** 菜单分组，组与组之间渲染分隔线 */
+/**
+ * 菜单分组，组与组之间渲染分隔线。
+ * 第一组是控制台里真实存在的个人页面（对应路由表中 meta.hidden 的模块，
+ * 因此它们不占侧边栏，只从顶栏右侧这个下拉进入）。
+ */
 export const userMenuGroups: UserMenuItem[][] = [
   [
-    { key: 'profile', labelKey: 'layout.userProfile', icon: UserCircleIcon },
-    { key: 'site', labelKey: 'layout.userSite', icon: GlobalIcon },
-    { key: 'editor', labelKey: 'layout.userEditor', icon: CodeIcon },
-    { key: 'console', labelKey: 'layout.userConsole', icon: CloudIcon },
+    { key: 'profile', labelKey: 'menu.profile', icon: UserCircleIcon, path: '/profile' },
+    { key: 'security', labelKey: 'menu.security', icon: LockPasswordIcon, path: '/security' },
+    { key: 'tokens', labelKey: 'menu.accessTokens', icon: ApiIcon, path: '/access-tokens' },
+    {
+      key: 'notifications',
+      labelKey: 'menu.notifications',
+      icon: Notification03Icon,
+      path: '/notifications',
+    },
   ],
   [
     { key: 'docs', labelKey: 'layout.userDocs', icon: BookOpen01Icon },

@@ -239,7 +239,7 @@ export interface UpdateProjectParams {
 // 监控
 // ============================================================
 
-export type MonitorType = 'HTTP' | 'TCP'
+export type MonitorType = 'HTTP' | 'TCP' | 'PING' | 'DNS' | 'MYSQL' | 'POSTGRESQL' | 'REDIS' | 'MONGODB' | 'DOCKER' | 'GRPC' | 'WEBSOCKET'
 
 /** UNKNOWN（尚未检查）/ UP / DEGRADED / DOWN / PAUSED */
 export type MonitorStatus = 'UNKNOWN' | 'UP' | 'DEGRADED' | 'DOWN' | 'PAUSED'
@@ -285,6 +285,11 @@ export interface Monitor {
   sslLastNotifiedAt: string | null
   createdAt: string
   updatedAt: string
+  /** Optional on backends with protocol-specific configuration and plan gating. */
+  config?: Record<string, unknown>
+  hasCredentials?: boolean
+  executionEligible?: boolean
+  executionBlockedReason?: string | null
 }
 
 export interface CreateMonitorParams {

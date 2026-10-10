@@ -6,8 +6,8 @@ import { useRouter } from 'vue-router'
 
 import { useOrganizationStore, useUserStore } from '@/stores'
 
-/** 设置：当前账号信息与退出登录（改密码 / 2FA 在后续阶段接入） */
-defineOptions({ name: 'SettingsView' })
+/** 个人信息：当前账号资料、所在团队/项目与退出登录（改密码与 2FA 见「安全」页） */
+defineOptions({ name: 'ProfileView' })
 
 const { t } = useI18n()
 const router = useRouter()
@@ -27,6 +27,8 @@ const rows = computed(() => {
         ? t('workspace.settings.verified')
         : t('workspace.settings.unverified'),
     },
+    { labelKey: 'workspace.settings.team', value: orgStore.currentOrganization?.name ?? '—' },
+    { labelKey: 'workspace.settings.project', value: orgStore.currentProject?.name ?? '—' },
   ]
 })
 
@@ -39,29 +41,39 @@ async function logout() {
 </script>
 
 <template>
-  <div class="settings">
-    <div class="settings__panel">
-      <h3 class="settings__title">{{ t('workspace.settings.account') }}</h3>
+  <div class="profile">
+    <div class="profile__panel">
+      <h3 class="profile__title">{{ t('workspace.settings.account') }}</h3>
 
-      <div v-for="row in rows" :key="row.labelKey" class="settings__row">
-        <span class="settings__label">{{ t(row.labelKey) }}</span>
-        <span class="settings__value">{{ row.value }}</span>
+      <div v-for="row in rows" :key="row.labelKey" class="profile__row">
+        <span class="profile__label">{{ t(row.labelKey) }}</span>
+        <span class="profile__value">{{ row.value }}</span>
       </div>
     </div>
 
-    <div class="settings__panel">
-      <h3 class="settings__title">{{ t('workspace.settings.security') }}</h3>
-      <p class="settings__hint">{{ t('workspace.settings.securityPending') }}</p>
+    <div class="profile__panel">
+      <h3 class="profile__title">{{ t('workspace.profile.securityTitle') }}</h3>
+      <p class="profile__hint">{{ t('workspace.profile.securityHint') }}</p>
 
-      <t-button variant="outline" size="small" @click="logout">
-        {{ t('layout.userLogout') }}
-      </t-button>
+      <div class="profile__actions">
+        <t-button
+          theme="primary"
+          variant="outline"
+          size="small"
+          @click="router.push('/security')"
+        >
+          {{ t('workspace.profile.gotoSecurity') }}
+        </t-button>
+        <t-button variant="outline" size="small" @click="logout">
+          {{ t('layout.userLogout') }}
+        </t-button>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="less">
-.settings {
+.profile {
   display: flex;
   flex-direction: column;
   gap: @beacon-gap-l;
@@ -105,6 +117,11 @@ async function logout() {
   &__hint {
     margin: 0;
     color: @beacon-text-tertiary;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
   }
 }
 </style>

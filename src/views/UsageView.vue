@@ -1,57 +1,81 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import { getQuotaSummary, listPlans } from '@/api'
+import type { Plan, QuotaSummary } from '@/api/types/billing'
 import PackageInfoCard from '@/components/usage/PackageInfoCard.vue'
-import UsageOverview from '@/components/usage/UsageOverview.vue'
+import QuotaUsageCard from '@/components/usage/QuotaUsageCard.vue'
+import UpgradePlanDialog from '@/components/usage/UpgradePlanDialog.vue'
+import { useOrganizationStore } from '@/stores'
 
-/** 套餐用量页：页内 Tab 与快捷链接注入布局标题栏，内容为套餐信息卡 + 功能用量概览 */
+/** 套餐用量页：顶部套餐概况与升级特权，下方才是用量指标，升级走弹窗 */
 defineOptions({ name: 'UsageView' })
 
 const { t } = useI18n()
+const orgStore = useOrganizationStore()
 
-const activeTab = ref('basic')
+const orgId = computed(() => orgStore.currentOrganizationId)
+const plans = ref<Plan[]>([])
+const quota = ref<QuotaSummary | null>(null)
+const loading = ref(false)
+const upgradeVisible = ref(false)
 
-const tabOptions = computed(() => [
-  { value: 'basic', label: t('usage.tabs.basic') },
-  { value: 'detail', label: t('usage.tabs.detail') },
-  { value: 'token', label: t('usage.tabs.token') },
-  { value: 'package', label: t('usage.tabs.package') },
-])
+/** 套餐来自 store（顶栏共用），套餐目录与用量单独拉取；切换团队时一并刷新 */
+async function load() {
+  const id = orgId.value
+  if (!id) {
+    plans.value = []
+    quota.value = null
+    return
+  }
 
-const links = computed(() => [
-  t('usage.links.price'),
-  t('usage.links.bill'),
-  t('usage.links.invoice'),
-  t('usage.links.order'),
-])
+  loading.value = true
+  try {
+    const plansRequest = listPlans()
+    const quotaRequest = getQuotaSummary(id)
+    await orgStore.loadSubscription(id)
+    plans.value = await plansRequest
+    quota.value = await quotaRequest
+  } finally {
+    loading.value = false
+  }
+}
+
+/** 升级成功：套餐已变更，重新拉取套餐与用量 */
+function onPaid() {
+  void load()
+}
+
+watch(orgId, load, { immediate: true })
 </script>
 
 <template>
   <div class="usage">
-    <!-- 页内 Tab：注入到布局标题栏的标题右侧（defer：等布局渲染完再挂载） -->
-    <Teleport to="#layout-header-title-addon" defer>
-      <nav class="usage__tabs">
-        <button
-          v-for="tab in tabOptions"
-          :key="tab.value"
-          type="button"
-          class="usage__tab"
-          :class="{ 'is-active': activeTab === tab.value }"
-          @click="activeTab = tab.value"
-        >
-          {{ tab.label }}
-        </button>
-      </nav>
-    </Teleport>
+    <div class="usage__bar">
+      <span class="usage__scope">{{ orgStore.currentOrganization?.name ?? '—' }}</span>
+      <t-button variant="outline" size="small" :loading="loading" @click="load">
+        {{ t('usage.refresh') }}
+      </t-button>
+    </div>
 
-    <!-- 快捷入口：注入到布局标题栏的评分卡片右侧 -->
-    <Teleport to="#layout-header-actions" defer>
-      <a v-for="link in links" :key="link" class="usage__link" href="#">{{ link }}</a>
-    </Teleport>
+    <PackageInfoCard
+      :plan="orgStore.currentPlan"
+      :expires-at="orgStore.currentPlanExpiresAt"
+      :plans="plans"
+      :quota="quota"
+      :loading="loading"
+      @upgrade="upgradeVisible = true"
+    />
 
-    <PackageInfoCard />
-    <UsageOverview />
+    <QuotaUsageCard :quota="quota" :loading="loading" />
+
+    <UpgradePlanDialog
+      v-model:visible="upgradeVisible"
+      :plans="plans"
+      :loading="loading"
+      @paid="onPaid"
+    />
   </div>
 </template>
 
@@ -61,41 +85,16 @@ const links = computed(() => [
   flex-direction: column;
   gap: 16px;
 
-  &__tabs {
+  &__bar {
     display: flex;
     align-items: center;
-    gap: 20px;
+    justify-content: space-between;
+    gap: 16px;
   }
 
-  // 页内 Tab：文字 + 选中态下划线
-  &__tab {
-    height: 30px;
-    padding: 0;
-    font-family: inherit;
-    font-size: @beacon-font-size-base;
-    color: @beacon-text-primary;
-    cursor: pointer;
-    background: none;
-    border: 0;
-    border-bottom: 2px solid transparent;
-
-    &:hover {
-      color: @beacon-brand;
-    }
-
-    &.is-active {
-      color: @beacon-brand;
-      border-bottom-color: @beacon-brand;
-    }
-  }
-
-  &__link {
+  &__scope {
     font-size: @beacon-font-size-base;
     color: @beacon-text-secondary;
-
-    &:hover {
-      color: @beacon-brand;
-    }
   }
 }
 </style>

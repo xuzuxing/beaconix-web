@@ -1,5 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router'
 
+import type { GlobalRole } from '@/api/types'
 import type { MenuItem } from '@/types'
 
 /** 拼接父子路由的完整路径 */
@@ -18,8 +19,25 @@ function resolvePath(basePath: string, path: string): string {
  * - 二级菜单：路径含多段的路由按第一段归到对应的一级项；meta.subGroup 变化处插入分组标签
  * - 一级项自身也会作为二级菜单的第一项（文案取 meta.subTitleKey），
  *   因此只有真正带子路由的模块才会出现二级菜单
+ * - meta.roles 限定的项只对其中列出的角色可见（如平台管理后台）
  */
-export function buildMenu(routes: readonly RouteRecordRaw[], basePath = ''): MenuItem[] {
+export interface BuildMenuOptions {
+  /** 父级路径，用于拼接子路由的完整路径 */
+  basePath?: string
+  /** 当前用户的全局角色，用于过滤 meta.roles 限定的菜单项 */
+  roles?: readonly GlobalRole[]
+  /** 是否包含 meta.hidden 的模块（二级菜单需要为隐藏模块渲染它的子页导航） */
+  includeHidden?: boolean
+}
+
+export function buildMenu(
+  routes: readonly RouteRecordRaw[],
+  options: BuildMenuOptions = {},
+): MenuItem[] {
+  const { basePath = '', roles = [], includeHidden = false } = options
+  /** meta.roles 存在时，只有其中列出的角色可见 */
+  const isVisible = (route: RouteRecordRaw) =>
+    !route.meta?.roles?.length || route.meta.roles.some((role) => roles.includes(role))
   const items: MenuItem[] = []
   const submenus = new Map<string, MenuItem[]>()
   /** 每个一级模块当前所在的二级分组，用于避免重复渲染分组标签 */
@@ -37,7 +55,7 @@ export function buildMenu(routes: readonly RouteRecordRaw[], basePath = ''): Men
   }
 
   routes.forEach((route) => {
-    if (route.meta?.hidden) {
+    if (route.meta?.menuExcluded || (!includeHidden && route.meta?.hidden) || !isVisible(route)) {
       return
     }
 

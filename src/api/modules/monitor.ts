@@ -7,10 +7,12 @@ import type {
   UpdateMonitorParams,
 } from '../types'
 import { del, get, patch, post } from '@/utils/request'
+import type { AxiosRequestConfig } from 'axios'
+import type { MonitorDetailRange, MonitorInsights } from '../types/monitor-detail'
 
 /** 项目下的监控项列表 */
-export function listMonitors(projectId: string) {
-  return get<Monitor[]>(`/projects/${projectId}/monitors`)
+export function listMonitors(projectId: string, config?: AxiosRequestConfig) {
+  return get<Monitor[]>(`/projects/${encodeURIComponent(projectId)}/monitors`, undefined, config)
 }
 
 /** 新建监控项 */
@@ -18,8 +20,12 @@ export function createMonitor(projectId: string, data: CreateMonitorParams) {
   return post<Monitor>(`/projects/${projectId}/monitors`, data)
 }
 
-export function getMonitor(projectId: string, id: string) {
-  return get<Monitor>(`/projects/${projectId}/monitors/${id}`)
+export function getMonitor(projectId: string, id: string, config?: AxiosRequestConfig) {
+  return get<Monitor>(`/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(id)}`, undefined, config)
+}
+
+export function getMonitorInsights(projectId: string, id: string, params: { range: MonitorDetailRange; tz: string }, config?: AxiosRequestConfig) {
+  return get<MonitorInsights>(`/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(id)}/insights`, params, config)
 }
 
 export function updateMonitor(projectId: string, id: string, data: UpdateMonitorParams) {

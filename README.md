@@ -81,6 +81,7 @@ src/
 | `subTitleKey` | 在二级菜单里显示的标题（默认取 `titleKey`）                      |
 | `subGroup`    | 二级菜单分组，值即分组标题的 i18n key，变化处渲染分组标签        |
 | `hideHeader`  | 为 `true` 时不渲染内容区标题栏（页面自带头部，如概览页）         |
+| `hideRating`  | 为 `true` 时不渲染标题栏右侧的评价卡（如监控页这类自带工具栏的） |
 | `badge`       | 菜单项右侧徽标，如 `{ textKey: 'badge.beta', theme: 'primary' }` |
 | `hidden`      | 为 `true` 时不出现在菜单里（如 404）                             |
 | `keepAlive`   | 为 `false` 时该页面不参与 keep-alive 缓存（默认缓存）            |
@@ -99,6 +100,37 @@ src/
 菜单顺序即路由声明顺序；该路由再挂 `children` 即可变成多级菜单（父级自动渲染为 `t-submenu`）。
 尚未接入的页面可先复用 `src/views/PlaceholderView.vue`。参考工程（腾讯云 CloudBase 控制台）的概览页实现见
 `src/views/OverviewView.vue` 与 `src/components/overview/`。
+
+### 页面标题栏
+
+内容区顶部是一条白底标题栏（`.layout__content-header`，底部 1px 分隔线），左右两组结构固定：
+
+```
+[返回按钮] 标题 [#layout-header-title-addon]        [评价卡] [#layout-header-actions]
+```
+
+- **标题**：优先取页面用 `usePageHeader` 声明的值，其次 `meta.subTitleKey`，最后 `meta.titleKey`
+- **返回按钮**：页面声明了返回目标时才渲染，样式为无文字的蓝色箭头
+- **注入区**：页面用 `Teleport` 把页内 Tab、类型标签、页面级操作按钮放进对应容器
+- **隐藏**：整条用 `meta.hideHeader`（自带头部的页面，如概览），只隐藏评价卡用 `meta.hideRating`
+
+下钻页面（详情页）用 `usePageHeader` 声明标题与返回目标，页面级操作 Teleport 进标题栏：
+
+```vue
+<script setup lang="ts">
+import { usePageHeader } from '@/composables/usePageHeader'
+
+// 标题取实体名，返回按钮回到列表并保留筛选条件
+const back = computed(() => ({ name: 'monitor', query: route.query }))
+usePageHeader({ title: () => monitor.value?.name, back })
+</script>
+
+<template>
+  <Teleport to="#layout-header-actions">
+    <t-button variant="outline" shape="square" :loading="loading" @click="refresh">刷新</t-button>
+  </Teleport>
+</template>
+```
 
 ### 二级菜单
 

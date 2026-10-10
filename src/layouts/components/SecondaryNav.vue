@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 
 import { buildMenu } from '@/router/menu'
 import { layoutChildren } from '@/router/routes'
+import { useUserStore } from '@/stores'
 import type { MenuItem } from '@/types'
 
 /**
@@ -14,14 +15,24 @@ import type { MenuItem } from '@/types'
 defineOptions({ name: 'SecondaryNav' })
 
 const route = useRoute()
+const userStore = useUserStore()
 const { t } = useI18n()
 
-const menu = buildMenu(layoutChildren)
+/**
+ * 与侧边菜单同一份数据（按当前角色过滤），额外包含 meta.hidden 的模块：
+ * 团队管理这类只从顶栏下拉进入的模块，也要在左侧渲染它的子页导航。
+ */
+const menu = computed(() =>
+  buildMenu(layoutChildren, {
+    roles: userStore.user ? [userStore.user.globalRole] : [],
+    includeHidden: true,
+  }),
+)
 
 /** 当前路由所属的一级菜单项（按路径前缀匹配，取最长者） */
 const current = computed(() => {
   let matched: MenuItem | undefined
-  menu.forEach((item) => {
+  menu.value.forEach((item) => {
     if (!item.submenu) return
     const isSelf = route.path === item.path
     const isChild = route.path.startsWith(`${item.path}/`)
@@ -53,7 +64,7 @@ function renderTitle(item: MenuItem) {
           <li v-else class="secondary-nav__cell">
             <router-link
               class="secondary-nav__link"
-              :class="{ 'secondary-nav__link--active': route.path === item.path }"
+              :class="{ 'secondary-nav__link--active': (route.meta.activeMenu ?? route.path) === item.path }"
               :to="item.path"
             >
               {{ renderTitle(item) }}

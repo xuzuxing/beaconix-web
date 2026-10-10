@@ -87,6 +87,10 @@ service.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 /** 解包 { data, meta }；文件流等非包装响应原样返回 */
 function unwrap(response: AxiosResponse) {
+  if (response.config.headers['X-Monitoring-Conditional']) {
+    return { status: response.status, etag: response.headers.etag,
+      body: response.status === 304 ? undefined : response.data?.data }
+  }
   const { responseType } = response.config
   if (responseType === 'blob' || responseType === 'arraybuffer') {
     return response
@@ -195,6 +199,7 @@ service.interceptors.response.use(
       hooks.onUnauthorized()
     }
 
+    if (axios.isCancel(error)) return Promise.reject(error)
     const message = readErrorMessage(error.response?.data) ?? fallbackMessage(status)
     MessagePlugin.error(message)
     return Promise.reject(new Error(message))

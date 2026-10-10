@@ -10,8 +10,10 @@ defineOptions({ name: 'MetricChartCard' })
 defineProps<{
   title: string
   tip?: string
-  values: number[]
+  values: (number | null)[]
   labels: string[]
+  /** 以数据最小值附近的整刻度为基线（可用率等高位窄幅波动指标） */
+  autoScale?: boolean
 }>()
 </script>
 
@@ -25,7 +27,7 @@ defineProps<{
     </div>
 
     <div class="metric-card__body">
-      <LineChart :values="values" :labels="labels" />
+      <LineChart :values="values" :labels="labels" :auto-scale="autoScale" />
     </div>
   </div>
 </template>

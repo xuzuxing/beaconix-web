@@ -32,6 +32,7 @@ import {
 } from '@/icons'
 import { useAppStore, useOrganizationStore, useUserStore } from '@/stores'
 import type { ThemeMode } from '@/types'
+import { planTagTheme, planTier } from '@/utils/billing'
 
 defineOptions({ name: 'AppHeader' })
 
@@ -77,6 +78,9 @@ const teamKeyword = ref('')
 
 const currentOrg = computed(() => orgStore.currentOrganization)
 
+/** 当前团队套餐标签：无生效订阅时回退为免费版文案 */
+const planLabel = computed(() => orgStore.currentPlan?.name ?? t('usage.package.freePlan'))
+
 const filteredOrgs = computed(() => {
   const keyword = teamKeyword.value.trim().toLowerCase()
   if (!keyword) return orgStore.organizations
@@ -109,9 +113,10 @@ async function selectOrg(org: Organization) {
   teamVisible.value = false
 }
 
-/** 团队管理页（阶段 4 落地，先复用现有入口） */
+/** 团队管理不进侧边栏，入口只放在这个下拉里 */
 function goTeams() {
-  void router.push('/env')
+  teamVisible.value = false
+  void router.push('/teams')
 }
 
 // ---------- 项目 ----------
@@ -160,6 +165,14 @@ async function handleUserMenu(key: string) {
     orgStore.reset()
     MessagePlugin.success(t('layout.userLogoutDone'))
     await router.replace('/login')
+    return
+  }
+
+  // 其余入口按 config/user.ts 里配置的路由跳转（没有 path 的表示暂未接入）
+  const target = userGroups.flat().find((item) => item.key === key)
+  if (target?.path) {
+    userVisible.value = false
+    await router.push(target.path)
   }
 }
 
@@ -202,6 +215,11 @@ onMounted(() => {
           @click="teamMode = teamMode === 'list' ? 'info' : 'list'">
           <AppIcon class="app-header__team-icon" :icon="TeamWorkIcon" />
           <span class="app-header__team-name">{{ currentOrg?.name ?? t('layout.teamEmpty') }}</span>
+          <t-tag class="app-header__team-tag beacon-plan-badge"
+            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`" :theme="planTagTheme(orgStore.currentPlan)"
+            variant="light" size="small">
+            {{ planLabel }}
+          </t-tag>
           <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
         </button>
 
@@ -216,6 +234,17 @@ onMounted(() => {
                   :aria-label="t('guide.copy')" @click="copyText(row.value)">
                   <AppIcon :icon="Copy01Icon" :size="14" />
                 </button>
+              </span>
+            </div>
+
+            <!-- 当前团队套餐标签 -->
+            <div class="team-card__row">
+              <span class="team-card__label">{{ t('layout.teamPlan') }}</span>
+              <span class="team-card__value">
+                <t-tag class="beacon-plan-badge" :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+                  :theme="planTagTheme(orgStore.currentPlan)" variant="light" size="small">
+                  {{ planLabel }}
+                </t-tag>
               </span>
             </div>
           </div>
@@ -242,7 +271,7 @@ onMounted(() => {
             <div class="team-list__actions">
               <button type="button" class="team-list__action" @click="goTeams">
                 <AppIcon :icon="Settings01Icon" />
-                {{ t('layout.teamManage') }}
+                {{ t('menu.team') }}
               </button>
               <button type="button" class="team-list__action">
                 <AppIcon :icon="PlusSignIcon" />
@@ -847,6 +876,11 @@ onMounted(() => {
     line-height: 28px;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  // 团队名右侧的套餐标签，不参与收缩
+  &__team-tag {
+    flex: none;
   }
 
   &__caret {
