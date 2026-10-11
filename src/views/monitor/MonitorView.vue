@@ -140,7 +140,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           :disabled="!projectId"
           :aria-label="t('monitorPage.refresh')"
           @click="load"
-          ><AppIcon :icon="RefreshIcon" /></t-button
+          ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
       <t-button v-if="canManage" :disabled="!projectId" @click="edit()"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template

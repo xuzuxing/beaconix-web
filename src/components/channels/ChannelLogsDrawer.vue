@@ -118,7 +118,7 @@ function paginate(info: { current: number }) {
             :loading="loading"
             :aria-label="t('channelPage.refresh')"
             @click="load"
-            ><AppIcon :icon="RefreshIcon" /></t-button
+            ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
         ></t-tooltip>
       </div>
 

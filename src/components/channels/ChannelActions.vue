@@ -31,8 +31,8 @@ const { t } = useI18n()
           :disabled="pending"
           :aria-label="t('channelPage.test')"
           @click="emit('action', 'test')"
-          ><AppIcon :icon="FlashIcon"
-        /></t-button>
+          ><template #icon><AppIcon :icon="FlashIcon" /></template
+        ></t-button>
       </t-tooltip>
       <t-tooltip :content="t(channel.enabled ? 'channelPage.disable' : 'channelPage.enable')">
         <t-button

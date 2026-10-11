@@ -13,7 +13,7 @@ const structure = [
   { path: 'src/stores', desc: 'pinia 实例与按模块拆分的 store' },
   { path: 'src/types', desc: '全局共享类型' },
   { path: 'src/utils/request.ts', desc: 'axios 封装：token 注入、统一解包与错误提示' },
-  { path: 'src/views', desc: '页面组件' },
+  { path: 'src/views/<domain>', desc: '页面组件，按业务域分目录' },
 ]
 </script>
 

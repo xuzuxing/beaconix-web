@@ -326,7 +326,7 @@ async function copy() {
           :loading="loading"
           :aria-label="t('monitorPage.refresh')"
           @click="refresh"
-          ><AppIcon :icon="RefreshIcon" /></t-button
+          ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
       <MonitorActions
         v-if="monitor"
@@ -567,7 +567,9 @@ async function copy() {
             <div class="monitor-detail__rule-head">
               <span class="monitor-detail__rule-name">{{ group.name }}</span>
               <t-tag size="small" variant="outline">{{
-                group.projectId ? t('ruleGroup.monitor.scopeProject') : t('ruleGroup.monitor.scopeOrg')
+                group.projectId
+                  ? t('ruleGroup.monitor.scopeProject')
+                  : t('ruleGroup.monitor.scopeOrg')
               }}</t-tag>
               <t-tag v-if="!group.enabled" size="small" variant="light">{{
                 t('ruleGroup.monitor.disabled')

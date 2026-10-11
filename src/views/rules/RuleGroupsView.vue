@@ -148,7 +148,7 @@ function openDetail(group: RuleGroup) {
           :disabled="!orgId"
           :aria-label="t('ruleGroup.refresh')"
           @click="load"
-          ><AppIcon :icon="RefreshIcon" /></t-button
+          ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
       <t-button v-if="canManage" :disabled="!orgId" @click="create()"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
@@ -216,9 +216,12 @@ function openDetail(group: RuleGroup) {
             <div class="rule-group-row__identity">
               <div class="rule-group-row__name">
                 <span>{{ group.name }}</span>
-                <t-tag size="small" variant="light" :theme="group.enabled ? 'success' : 'default'">{{
-                  t(group.enabled ? 'ruleGroup.state.on' : 'ruleGroup.state.off')
-                }}</t-tag>
+                <t-tag
+                  size="small"
+                  variant="light"
+                  :theme="group.enabled ? 'success' : 'default'"
+                  >{{ t(group.enabled ? 'ruleGroup.state.on' : 'ruleGroup.state.off') }}</t-tag
+                >
                 <t-tag size="small" variant="outline">{{
                   group.projectId ? t('ruleGroup.scope.project') : t('ruleGroup.scope.org')
                 }}</t-tag>

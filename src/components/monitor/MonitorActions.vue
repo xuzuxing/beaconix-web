@@ -20,8 +20,8 @@ const { t } = useI18n()
         :loading="pending"
         :disabled="pending || !monitor.enabled || monitor.executionEligible === false"
         @click="emit('action', 'check')"
-        ><AppIcon :icon="FlashIcon"
-      /></t-button>
+        ><template #icon><AppIcon :icon="FlashIcon" /></template
+      ></t-button>
     </t-tooltip>
     <template v-if="canManage">
       <t-tooltip

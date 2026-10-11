@@ -241,6 +241,112 @@ export interface UpdateProjectParams {
 
 export type MonitorType = 'HTTP' | 'TCP' | 'PING' | 'DNS' | 'MYSQL' | 'POSTGRESQL' | 'REDIS' | 'MONGODB' | 'DOCKER' | 'GRPC' | 'WEBSOCKET'
 
+// ---------- 协议配置（CreateMonitorDto.config / MonitorEntity.config） ----------
+
+/** HTTP JSON 指针断言的比较操作符 */
+export type HttpAssertionOperator = 'exists' | 'notExists' | 'eq' | 'neq'
+
+/** HTTP 响应体的 JSON 指针断言；path 为空串表示根节点 */
+export interface HttpJsonAssertion {
+  path: string
+  operator: HttpAssertionOperator
+  /** eq / neq 的期望值（严格比较，不做类型转换）；exists / notExists 时省略 */
+  value?: string | number | boolean | null
+}
+
+/** HTTP / HTTPS：关键字与 JSON 指针断言，多条断言之间为 AND */
+export interface HttpMonitorConfig {
+  keyword?: string
+  /** 仅在填写 keyword 时生效 */
+  keywordMode?: 'contains' | 'notContains'
+  /** 仅在存在响应体断言时生效，统计解码后的响应字节数 */
+  maxBodyBytes?: number
+  jsonAssertions?: HttpJsonAssertion[]
+}
+
+/** DNS：记录类型与期望值 */
+export interface DnsMonitorConfig {
+  recordType?: 'A' | 'AAAA' | 'CNAME'
+  expectedValues?: string[]
+}
+
+/** MYSQL / POSTGRESQL：SQL 固定为 SELECT 1 */
+export interface SqlMonitorConfig {
+  username: string
+  /** 只写字段：响应不回传，替换 config 时必须重新提交 */
+  password?: string
+  database: string
+  /** 默认 true */
+  tls?: boolean
+  /** 内联 PEM，不允许文件路径 */
+  tlsCa?: string
+}
+
+/** REDIS */
+export interface RedisMonitorConfig {
+  username?: string
+  password?: string
+  /** 逻辑库序号 0 - 15，默认 0 */
+  db?: number
+  tls?: boolean
+  tlsCa?: string
+}
+
+/** MONGODB */
+export interface MongodbMonitorConfig {
+  username?: string
+  password?: string
+  database?: string
+  /** 认证库，默认 admin */
+  authSource?: string
+  tls?: boolean
+  tlsCa?: string
+}
+
+/** DOCKER：HTTPS daemon 或运维授权的 unix socket */
+export interface DockerMonitorConfig {
+  containerId: string
+  /** 只写字段 */
+  token?: string
+  tlsCa?: string
+  /** 内联 PEM 客户端证书 */
+  tlsCert?: string
+  /** 只写字段，内联 PEM 私钥 */
+  tlsKey?: string
+}
+
+/** GRPC：固定调用 grpc.health.v1.Health/Check */
+export interface GrpcMonitorConfig {
+  /** 服务名，默认空串（整体健康） */
+  service?: string
+  tls?: boolean
+  tlsCa?: string
+  /** 只写字段 */
+  token?: string
+}
+
+/** WEBSOCKET：协议级 ping/pong；携带 token 时必须为 wss */
+export interface WebsocketMonitorConfig {
+  /** 只写字段 */
+  token?: string
+  tlsCa?: string
+}
+
+/** TCP / PING 不需要协议配置 */
+export type EmptyMonitorConfig = Record<string, never>
+
+/** 协议配置联合类型（TCP / PING 传空对象） */
+export type MonitorConfig =
+  | HttpMonitorConfig
+  | DnsMonitorConfig
+  | SqlMonitorConfig
+  | RedisMonitorConfig
+  | MongodbMonitorConfig
+  | DockerMonitorConfig
+  | GrpcMonitorConfig
+  | WebsocketMonitorConfig
+  | EmptyMonitorConfig
+
 /** UNKNOWN（尚未检查）/ UP / DEGRADED / DOWN / PAUSED */
 export type MonitorStatus = 'UNKNOWN' | 'UP' | 'DEGRADED' | 'DOWN' | 'PAUSED'
 
@@ -285,8 +391,9 @@ export interface Monitor {
   sslLastNotifiedAt: string | null
   createdAt: string
   updatedAt: string
-  /** Optional on backends with protocol-specific configuration and plan gating. */
-  config?: Record<string, unknown>
+  /** 协议配置；响应中不含 writeOnly 凭据（password / token / tlsKey） */
+  config?: MonitorConfig
+  /** 是否已配置凭据（凭据值永不回传） */
   hasCredentials?: boolean
   executionEligible?: boolean
   executionBlockedReason?: string | null
@@ -295,8 +402,10 @@ export interface Monitor {
 export interface CreateMonitorParams {
   name: string
   type: MonitorType
-  /** HTTP 用 URL，TCP 用 host:port */
+  /** HTTP/WS 用 URL，TCP/数据库/gRPC 用 host:port，DNS 用域名，PING 用主机名，Docker 用 HTTPS 源或 unix socket */
   target: string
+  /** 协议配置；类型特有，省略 PATCH 时保留原凭据 */
+  config?: MonitorConfig
   interval?: number
   timeout?: number
   expectedStatus?: number

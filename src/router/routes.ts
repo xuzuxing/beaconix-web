@@ -29,6 +29,8 @@ const ADMIN_ROLES: GlobalRole[] = ['SUPER_ADMIN']
  * 主布局下的业务路由，侧边菜单由这份路由表的 meta 生成。
  *
  * 约定：
+ * - 页面组件按业务域分目录放在 `src/views/<domain>/`（dashboard / monitor / channels /
+ *   rules / billing / team / account / auth / common），新增页面时放进对应域
  * - 菜单顺序即路由声明顺序；一级项 = 单段路径的路由，多段路径归到它第一段对应的一级项下
  * - 二级菜单里「一级项自身」的位置同样由声明顺序决定（它取 meta.subTitleKey 作为文案），
  *   所以把 xxx/overview 写在 xxx 之前，「概览」就会排在「管理」前面
@@ -41,7 +43,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'dashboard',
     name: 'dashboard',
-    component: () => import('@/views/DashboardView.vue'),
+    component: () => import('@/views/dashboard/DashboardView.vue'),
     meta: {
       titleKey: 'menu.dashboard',
       icon: DashboardSquare01Icon,
@@ -54,13 +56,13 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'monitor/overview',
     name: 'monitor-overview',
-    component: () => import('@/views/MonitorOverviewView.vue'),
+    component: () => import('@/views/monitor/MonitorOverviewView.vue'),
     meta: { titleKey: 'submenu.monitor.overview', group: 'main' },
   },
   {
     path: 'monitor',
     name: 'monitor',
-    component: () => import('@/views/MonitorView.vue'),
+    component: () => import('@/views/monitor/MonitorView.vue'),
     meta: {
       titleKey: 'menu.monitor',
       subTitleKey: 'submenu.monitor.manage',
@@ -73,7 +75,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'monitor/:projectId/:monitorId',
     name: 'monitor-detail',
-    component: () => import('@/views/MonitorDetailView.vue'),
+    component: () => import('@/views/monitor/MonitorDetailView.vue'),
     meta: {
       // 标题由页面用 usePageHeader 覆盖为监控项名称，这里只作为兜底文案
       titleKey: 'monitorPage.detail',
@@ -88,7 +90,7 @@ export const layoutChildren: RouteRecordRaw[] = [
     // 文案沿用「告警规则」，路径与后端资源 rule-groups 对齐
     path: 'monitor/rule-groups',
     name: 'monitor-rule-groups',
-    component: () => import('@/views/RuleGroupsView.vue'),
+    component: () => import('@/views/rules/RuleGroupsView.vue'),
     meta: { titleKey: 'submenu.monitor.alertRules', group: 'main' },
   },
 
@@ -96,13 +98,13 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'probes/overview',
     name: 'probes-overview',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.probes.overview', group: 'main' },
   },
   {
     path: 'probes',
     name: 'probes',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: {
       titleKey: 'menu.probes',
       subTitleKey: 'submenu.probes.nodes',
@@ -115,13 +117,13 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'channels/overview',
     name: 'channels-overview',
-    component: () => import('@/views/ChannelsOverviewView.vue'),
+    component: () => import('@/views/channels/ChannelsOverviewView.vue'),
     meta: { titleKey: 'submenu.channels.overview', group: 'main' },
   },
   {
     path: 'channels',
     name: 'channels',
-    component: () => import('@/views/ChannelsView.vue'),
+    component: () => import('@/views/channels/ChannelsView.vue'),
     meta: {
       titleKey: 'menu.channels',
       subTitleKey: 'submenu.channels.manage',
@@ -134,13 +136,13 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'status-pages/overview',
     name: 'status-pages-overview',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.statusPages.overview', group: 'main' },
   },
   {
     path: 'status-pages',
     name: 'status-pages',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: {
       titleKey: 'menu.statusPages',
       subTitleKey: 'submenu.statusPages.pages',
@@ -151,7 +153,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'status-pages/templates',
     name: 'status-pages-templates',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.statusPages.templates', group: 'main' },
   },
 
@@ -159,7 +161,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'billing',
     name: 'billing',
-    component: () => import('@/views/UsageView.vue'),
+    component: () => import('@/views/billing/UsageView.vue'),
     meta: {
       titleKey: 'menu.billing',
       subTitleKey: 'submenu.billing.usage',
@@ -170,7 +172,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'billing/orders',
     name: 'billing-orders',
-    component: () => import('@/views/OrdersView.vue'),
+    component: () => import('@/views/billing/OrdersView.vue'),
     meta: { titleKey: 'submenu.billing.orders', group: 'main' },
   },
 
@@ -178,7 +180,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'teams',
     name: 'teams',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: {
       titleKey: 'menu.team',
       subTitleKey: 'submenu.team.basic',
@@ -190,19 +192,19 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'teams/members',
     name: 'team-members',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.team.members', group: 'main', hidden: true },
   },
   {
     path: 'teams/api-keys',
     name: 'team-api-keys',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.team.apiKeys', group: 'main', hidden: true },
   },
   {
     path: 'teams/audit-logs',
     name: 'team-audit-logs',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.team.auditLogs', group: 'main', hidden: true },
   },
 
@@ -210,25 +212,25 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'profile',
     name: 'profile',
-    component: () => import('@/views/ProfileView.vue'),
+    component: () => import('@/views/account/ProfileView.vue'),
     meta: { titleKey: 'menu.profile', icon: UserCircleIcon, group: 'main', hidden: true },
   },
   {
     path: 'security',
     name: 'security',
-    component: () => import('@/views/SecurityView.vue'),
+    component: () => import('@/views/account/SecurityView.vue'),
     meta: { titleKey: 'menu.security', icon: LockPasswordIcon, group: 'main', hidden: true },
   },
   {
     path: 'access-tokens',
     name: 'access-tokens',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'menu.accessTokens', icon: ApiIcon, group: 'main', hidden: true },
   },
   {
     path: 'notifications',
     name: 'notifications',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'menu.notifications', icon: Notification03Icon, group: 'main', hidden: true },
   },
 
@@ -236,7 +238,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'admin',
     name: 'admin',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: {
       titleKey: 'menu.admin',
       subTitleKey: 'submenu.admin.metrics',
@@ -248,19 +250,19 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'admin/tenants',
     name: 'admin-tenants',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.admin.tenants', group: 'admin', roles: ADMIN_ROLES },
   },
   {
     path: 'admin/system-probes',
     name: 'admin-system-probes',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.admin.probes', group: 'admin', roles: ADMIN_ROLES },
   },
   {
     path: 'admin/audit-logs',
     name: 'admin-audit-logs',
-    component: () => import('@/views/PlaceholderView.vue'),
+    component: () => import('@/views/common/PlaceholderView.vue'),
     meta: { titleKey: 'submenu.admin.auditLogs', group: 'admin', roles: ADMIN_ROLES },
   },
 
@@ -268,7 +270,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'about',
     name: 'about',
-    component: () => import('@/views/AboutView.vue'),
+    component: () => import('@/views/common/AboutView.vue'),
     meta: { titleKey: 'nav.about', icon: InformationCircleIcon, hidden: true },
   },
 ]
@@ -290,7 +292,7 @@ const routes: RouteRecordRaw[] = [
     // 登录页：整屏无框架，自带品牌条与居中卡片
     path: '/login',
     name: 'login',
-    component: () => import('@/views/LoginView.vue'),
+    component: () => import('@/views/auth/LoginView.vue'),
     meta: { titleKey: 'login.title.login', hidden: true },
   },
   {
@@ -301,7 +303,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'select-team',
-        component: () => import('@/views/TeamSelectView.vue'),
+        component: () => import('@/views/team/TeamSelectView.vue'),
         meta: { titleKey: 'workspace.teamSelect.title' },
       },
     ],
@@ -319,7 +321,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'blank-demo',
-        component: () => import('@/views/BlankDemoView.vue'),
+        component: () => import('@/views/common/BlankDemoView.vue'),
         meta: { titleKey: 'nav.blankDemo', hidden: true },
       },
     ],
@@ -331,7 +333,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'not-found',
-        component: () => import('@/views/NotFoundView.vue'),
+        component: () => import('@/views/common/NotFoundView.vue'),
         meta: { titleKey: 'notFound.title', hidden: true },
       },
     ],

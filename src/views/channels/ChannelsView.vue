@@ -75,7 +75,9 @@ const status = computed({
 })
 const sort = computed({
   get: () =>
-    sorts.includes(queryValue('sort') as ChannelSort) ? (queryValue('sort') as ChannelSort) : 'newest',
+    sorts.includes(queryValue('sort') as ChannelSort)
+      ? (queryValue('sort') as ChannelSort)
+      : 'newest',
   set: (value) => setFilter('sort', value),
 })
 const pageSize = computed(() =>
@@ -133,7 +135,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           :disabled="!orgId"
           :aria-label="t('channelPage.refresh')"
           @click="load"
-          ><AppIcon :icon="RefreshIcon" /></t-button
+          ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
       <t-button v-if="canManage" :disabled="!orgId" @click="edit()"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template

@@ -57,7 +57,16 @@ src/
 ├── stores/               # pinia 实例 + modules/ 下的 store
 ├── types/                # 全局共享类型
 ├── utils/request.ts      # axios 封装
-├── views/                # 页面组件
+├── views/                # 页面组件，按业务域分目录
+│   ├── dashboard/        # 概览：DashboardView、参考实现 OverviewView
+│   ├── monitor/          # 云监控：列表 / 详情 / 运行概览
+│   ├── channels/         # 通知渠道：管理 / 概览
+│   ├── rules/            # 告警规则
+│   ├── billing/          # 账单用量与订单
+│   ├── team/             # 选择团队（含遗留的选择环境整页）
+│   ├── account/          # 个人资料与安全
+│   ├── auth/             # 登录
+│   └── common/           # 通用页：404 / 占位 / 空白布局示例 / 关于
 ├── App.vue
 └── main.ts
 ```
@@ -86,20 +95,20 @@ src/
 | `hidden`      | 为 `true` 时不出现在菜单里（如 404）                             |
 | `keepAlive`   | 为 `false` 时该页面不参与 keep-alive 缓存（默认缓存）            |
 
-新增主布局页面：在 `src/views/` 建组件，加进 `routes.ts` 的 `layoutChildren` 并写好 `meta`，菜单会自动出现：
+新增主布局页面：在 `src/views/<domain>/`（按业务域选目录）建组件，加进 `routes.ts` 的 `layoutChildren` 并写好 `meta`，菜单会自动出现：
 
 ```ts
 {
   path: 'system',
   name: 'system',
-  component: () => import('@/views/SystemView.vue'),
+  component: () => import('@/views/<domain>/SystemView.vue'),
   meta: { titleKey: 'menu.system', icon: 'setting', group: 'service' },
 }
 ```
 
 菜单顺序即路由声明顺序；该路由再挂 `children` 即可变成多级菜单（父级自动渲染为 `t-submenu`）。
-尚未接入的页面可先复用 `src/views/PlaceholderView.vue`。参考工程（腾讯云 CloudBase 控制台）的概览页实现见
-`src/views/OverviewView.vue` 与 `src/components/overview/`。
+尚未接入的页面可先复用 `src/views/common/PlaceholderView.vue`。参考工程（腾讯云 CloudBase 控制台）的概览页实现见
+`src/views/dashboard/OverviewView.vue` 与 `src/components/overview/`。
 
 ### 页面标题栏
 
@@ -268,6 +277,6 @@ persist 的 `key` 统一使用 `beacon-web:` 前缀；`pick` 只持久化需要�
 
 ## 目录约定与后续扩展
 
-- 新增页面：`src/views/` 下建单文件组件，加进 `src/router/routes.ts` 的 `layoutChildren`（主布局，自动进菜单）或其他布局路由下，`meta.titleKey` 填 i18n key
+- 新增页面：在 `src/views/<domain>/` 下建单文件组件（业务域目录见上方「目录结构」），加进 `src/router/routes.ts` 的 `layoutChildren`（主布局，自动进菜单）或其他布局路由下，`meta.titleKey` 填 i18n key
 - 新增 store：`src/stores/modules/` 下建文件，并在 `src/stores/index.ts` 导出
 - 新增接口模块：`src/api/modules/` 下建文件，并在 `src/api/index.ts` 导出

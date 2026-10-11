@@ -10,11 +10,19 @@ import {
   unbindRuleGroup,
   updateMonitor,
 } from '@/api'
-import type { Monitor, MonitorType } from '@/api/types'
+import type { Monitor, MonitorConfig, MonitorType, UpdateMonitorParams } from '@/api/types'
 import type { RuleGroup } from '@/api/types/rule'
+import MonitorConfigForm from '@/components/monitor/MonitorConfigForm.vue'
 import RuleGroupEditorDialog from '@/components/rules/RuleGroupEditorDialog.vue'
 import RuleTreeView from '@/components/rules/RuleTreeView.vue'
 import { useOrganizationStore } from '@/stores'
+import {
+  MONITOR_TYPE_OPTIONS,
+  monitorConfigDefaults,
+  monitorConfigDraft,
+  monitorConfigHasCredentials,
+  monitorTargetPlaceholderKey,
+} from '@/utils/monitor-config'
 
 /**
  * 监控项编辑器：基础配置 + 告警规则绑定。
@@ -29,6 +37,8 @@ const org = useOrganizationStore()
 const submitting = ref(false)
 const error = ref('')
 let generation = 0
+/** 回填表单期间抑制派生副作用（如按协议加载规则绑定） */
+let restoringForm = false
 const form = reactive({
   name: '',
   type: 'HTTP' as MonitorType,
@@ -43,7 +53,25 @@ const form = reactive({
   availabilityEnabled: false,
   availabilityThreshold: 90,
   availabilityWindow: 10,
+  /** 当前协议的 config（字段级校验与清洗见 MonitorConfigForm / utils/monitor-config） */
+  config: {} as Record<string, unknown>,
 })
+
+/** 协议下拉：与后端 MonitorType 枚举一致（共 11 种） */
+const typeOptions = computed(() =>
+  MONITOR_TYPE_OPTIONS.map((option) => ({ label: t(option.labelKey), value: option.value })),
+)
+/** 检查目标的占位提示按协议的目标形态区分 */
+const targetPlaceholder = computed(() => t(monitorTargetPlaceholderKey(form.type)))
+/** 编辑含凭据的协议时提醒：config 整体替换，凭据需要重新填写 */
+const credentialsHint = computed(() => Boolean(props.monitor) && monitorConfigHasCredentials(form.type))
+
+interface MonitorConfigFormApi {
+  buildConfig: () => MonitorConfig
+  validate: () => string
+  isDirty: () => boolean
+}
+const configForm = ref<MonitorConfigFormApi>()
 
 // ---------- 告警规则绑定 ----------
 const orgId = computed(() => props.monitor?.organizationId ?? org.currentOrganizationId)
@@ -127,9 +155,11 @@ watch(
     ruleDialog.value = false
     if (!value) return
     const m = props.monitor
+    const type = m?.type ?? 'HTTP'
+    restoringForm = true
     Object.assign(form, {
       name: m?.name ?? '',
-      type: m?.type ?? 'HTTP',
+      type,
       target: m?.target ?? '',
       interval: m?.interval ?? 60,
       timeout: m?.timeout ?? 5000,
@@ -141,11 +171,29 @@ watch(
       availabilityEnabled: m?.availabilityEnabled ?? false,
       availabilityThreshold: m?.availabilityThreshold ?? 90,
       availabilityWindow: m?.availabilityWindow ?? 10,
+      // 编辑时用后端返回的 config 覆盖默认值（凭据字段不回传，需重新填写）
+      config: monitorConfigDraft(type, m?.config),
     })
-    void loadRules()
+    restoringForm = false
+    // 只有启用「规则健康比例告警」时才需要绑定数据
+    if (form.availabilityEnabled) void loadRules()
   },
   { flush: 'sync' },
 )
+
+// 告警规则与「规则健康比例告警」开关联动：开启后才加载并展示绑定配置
+watch(
+  () => form.availabilityEnabled,
+  (enabled) => {
+    if (enabled && !restoringForm) void loadRules()
+  },
+  { flush: 'sync' },
+)
+
+/** 新建时切换协议：重置为该协议的默认配置 */
+function onTypeChange(value: unknown) {
+  form.config = monitorConfigDefaults(value as MonitorType)
+}
 watch(
   () => [props.projectId, props.monitor?.id],
   () => {
@@ -193,6 +241,11 @@ async function save() {
     error.value = t('monitorPage.invalidNumber')
     return
   }
+  const configError = configForm.value?.validate() ?? ''
+  if (configError) {
+    error.value = configError
+    return
+  }
   const project = props.projectId
   const editing = props.monitor?.id
   const token = generation
@@ -209,22 +262,27 @@ async function save() {
       availabilityWindow: form.availabilityWindow,
       ...(form.type === 'HTTP'
         ? {
-            expectedStatus: form.expectedStatus,
-            checkSsl: form.checkSsl,
-            sslExpiryThreshold: form.sslExpiryThreshold,
-          }
+          expectedStatus: form.expectedStatus,
+          checkSsl: form.checkSsl,
+          sslExpiryThreshold: form.sslExpiryThreshold,
+        }
         : {}),
     }
     const changes = Object.fromEntries(
       Object.entries(basic).filter(
         ([key, value]) => value !== props.monitor?.[key as keyof Monitor],
       ),
-    )
+    ) as UpdateMonitorParams
+    const config: MonitorConfig = configForm.value?.buildConfig() ?? ({} as MonitorConfig)
+    // 后端对 config 是整体替换：新建必传；编辑只在用户改过时提交，
+    // 否则整段省略以保留密码 / token 等不回传的凭据。
+    if (!editing || configForm.value?.isDirty()) changes.config = config
     const result = editing
       ? await updateMonitor(project, editing, changes)
-      : await createMonitor(project, { ...basic, type: form.type, enabled: form.enabled })
+      : await createMonitor(project, { ...basic, type: form.type, enabled: form.enabled, config })
     if (token !== generation) return
-    await commitBindings(result.id)
+    // 未启用规则健康比例告警时不提交绑定变更，避免误删已有绑定
+    if (form.availabilityEnabled) await commitBindings(result.id)
     if (token !== generation || project !== props.projectId) return
     MessagePlugin.success(t(editing ? 'workspace.monitor.updated' : 'workspace.monitor.created'))
     visible.value = false
@@ -239,130 +297,94 @@ async function save() {
 </script>
 
 <template>
-  <t-dialog
-    v-model:visible="visible"
-    :header="t(monitor ? 'workspace.monitor.edit' : 'workspace.monitor.create')"
-    width="min(720px, calc(100vw - 32px))"
-    :confirm-btn="{ content: t('common.confirm'), loading: submitting }"
-    :cancel-btn="t('common.cancel')"
-    :close-on-overlay-click="!submitting"
-    @confirm="save"
-  >
+  <t-dialog v-model:visible="visible" :header="t(monitor ? 'workspace.monitor.edit' : 'workspace.monitor.create')"
+    width="min(720px, calc(100vw - 32px))" :confirm-btn="{ content: t('common.confirm'), loading: submitting }"
+    :cancel-btn="t('common.cancel')" :close-on-overlay-click="!submitting" @confirm="save">
     <t-alert v-if="error" theme="error" :message="error" class="editor-error" />
     <t-form :data="form" label-align="top" :colon="false">
-      <t-form-item :label="t('workspace.monitor.name')"
-        ><t-input v-model="form.name" :maxlength="100"
-      /></t-form-item>
+      <t-form-item :label="t('workspace.monitor.name')"><t-input v-model="form.name" :maxlength="100" /></t-form-item>
       <t-form-item :label="t('workspace.monitor.type')">
         <t-input v-if="monitor" :value="form.type" readonly />
-        <t-select
-          v-else
-          v-model="form.type"
-          :options="[
-            { label: 'HTTP / HTTPS', value: 'HTTP' },
-            { label: 'TCP', value: 'TCP' },
-          ]"
-        />
+        <t-select v-else v-model="form.type" :options="typeOptions" @change="(value: string) => onTypeChange(value)" />
       </t-form-item>
-      <t-form-item :label="t('workspace.monitor.target')"
-        ><t-input
-          v-model="form.target"
-          :maxlength="2048"
-          :placeholder="t('workspace.monitor.targetPlaceholder')"
-      /></t-form-item>
+      <t-form-item :label="t('workspace.monitor.target')"><t-input v-model="form.target" :maxlength="2048"
+          :placeholder="targetPlaceholder" /></t-form-item>
+      <!-- 协议配置：按协议渲染各自的 config（TCP / PING 无需额外配置） -->
+      <section class="editor-config">
+        <div class="editor-config__head">
+          <span class="editor-config__title">{{ t('workspace.monitor.config.title') }}</span>
+          <small>{{ t(`workspace.monitor.config.hint.${form.type}`) }}</small>
+        </div>
+        <t-alert v-if="credentialsHint" theme="warning" :message="t('workspace.monitor.config.credentialsHint')" />
+        <MonitorConfigForm ref="configForm" :type="form.type" :config="form.config" />
+      </section>
       <div class="editor-grid">
-        <t-form-item :label="t('workspace.monitor.interval')"
-          ><t-input-number v-model="form.interval" :min="10" :max="86400"
-        /></t-form-item>
-        <t-form-item :label="t('workspace.monitor.timeout')"
-          ><t-input-number v-model="form.timeout" :min="100" :max="60000" :step="100"
-        /></t-form-item>
-        <t-form-item :label="t('workspace.monitor.failureThreshold')"
-          ><t-input-number v-model="form.failureThreshold" :min="1" :max="10"
-        /></t-form-item>
-        <t-form-item v-if="form.type === 'HTTP'" :label="t('workspace.monitor.expectedStatus')"
-          ><t-input-number v-model="form.expectedStatus" :min="100" :max="599"
-        /></t-form-item>
+        <t-form-item :label="t('workspace.monitor.interval')"><t-input-number v-model="form.interval" :min="10"
+            :max="86400" /></t-form-item>
+        <t-form-item :label="t('workspace.monitor.timeout')"><t-input-number v-model="form.timeout" :min="100"
+            :max="60000" :step="100" /></t-form-item>
+        <t-form-item :label="t('workspace.monitor.failureThreshold')"><t-input-number v-model="form.failureThreshold"
+            :min="1" :max="10" /></t-form-item>
+        <t-form-item v-if="form.type === 'HTTP'" :label="t('workspace.monitor.expectedStatus')"><t-input-number
+            v-model="form.expectedStatus" :min="100" :max="599" /></t-form-item>
       </div>
       <template v-if="form.type === 'HTTP'">
-        <t-form-item :label="t('monitorPage.sslEnabled')"
-          ><t-switch v-model="form.checkSsl"
-        /></t-form-item>
-        <t-form-item v-if="form.checkSsl" :label="t('monitorPage.sslThreshold')"
-          ><t-input-number v-model="form.sslExpiryThreshold" :min="1" :max="365"
-        /></t-form-item>
+        <t-form-item :label="t('monitorPage.sslEnabled')"><t-switch v-model="form.checkSsl" /></t-form-item>
+        <t-form-item v-if="form.checkSsl" :label="t('monitorPage.sslThreshold')"><t-input-number
+            v-model="form.sslExpiryThreshold" :min="1" :max="365" /></t-form-item>
       </template>
-      <t-form-item :label="t('monitorPage.availabilityRule')"
-        ><t-switch v-model="form.availabilityEnabled"
-      /></t-form-item>
-      <div v-if="form.availabilityEnabled" class="editor-grid">
-        <t-form-item :label="t('monitorPage.availabilityThreshold')"
-          ><t-input-number v-model="form.availabilityThreshold" :min="0" :max="100"
-        /></t-form-item>
-        <t-form-item :label="t('monitorPage.availabilityWindow')"
-          ><t-input-number v-model="form.availabilityWindow" :min="1" :max="1000"
-        /></t-form-item>
-      </div>
-      <t-form-item v-if="!monitor" :label="t('workspace.monitor.enabled')"
-        ><t-switch v-model="form.enabled"
-      /></t-form-item>
-    </t-form>
-    <!-- 告警规则：选择绑定已有规则组，或直接新增规则组（立即创建并并入本次绑定） -->
-    <section class="editor-rules">
-      <div class="editor-rules__head">
-        <div>
-          <span class="editor-rules__title">{{ t('ruleGroup.monitor.rules') }}</span>
-          <small>{{ t('ruleGroup.monitor.createHint') }}</small>
-        </div>
-        <div class="editor-rules__actions">
-          <t-select
-            v-if="bindOptions.length"
-            :value="null"
-            :options="bindOptions"
-            :placeholder="t('ruleGroup.monitor.bindPlaceholder')"
-            :aria-label="t('ruleGroup.monitor.bind')"
-            @change="(value: string) => bindRule(value)"
-          />
-          <t-button size="small" variant="outline" :disabled="!orgId" @click="openRuleDialog">{{
-            t('ruleGroup.monitor.addRule')
-          }}</t-button>
-        </div>
-      </div>
-      <t-alert v-if="rulesError" theme="error" :message="rulesError" />
-      <t-loading v-else-if="rulesLoading" size="small" :text="t('common.loading')" />
-      <div v-else-if="selectedGroups.length" class="editor-rules__list">
-        <article v-for="group in selectedGroups" :key="group.id" class="editor-rule">
-          <div class="editor-rule__head">
-            <span class="editor-rule__name">{{ group.name }}</span>
-            <t-tag size="small" variant="outline">{{
-              group.projectId
-                ? t('ruleGroup.monitor.scopeProject')
-                : t('ruleGroup.monitor.scopeOrg')
-            }}</t-tag>
-            <t-tag v-if="!group.enabled" size="small" variant="light">{{
-              t('ruleGroup.monitor.disabled')
-            }}</t-tag>
-            <t-button
-              size="small"
-              variant="text"
-              theme="danger"
-              @click="unbindRule(group.id)"
-              >{{ t('ruleGroup.monitor.unbind') }}</t-button
-            >
+      <t-form-item :label="t('monitorPage.availabilityRule')"><t-switch
+          v-model="form.availabilityEnabled" /></t-form-item>
+      <!-- 告警规则：仅当启用「规则健康比例告警」时展示，可选绑定已有规则组或直接新增（立即创建并并入本次绑定） -->
+      <section v-if="form.availabilityEnabled" class="editor-rules">
+        <div class="editor-rules__head">
+          <div>
+            <span class="editor-rules__title">{{ t('ruleGroup.monitor.rules') }}</span>
+            <small>{{ t('ruleGroup.monitor.createHint') }}</small>
           </div>
-          <RuleTreeView :tree="group.tree" compact />
-        </article>
+          <div class="editor-rules__actions">
+            <t-select v-if="bindOptions.length" :value="null" :options="bindOptions"
+              :placeholder="t('ruleGroup.monitor.bindPlaceholder')" :aria-label="t('ruleGroup.monitor.bind')"
+              @change="(value: string) => bindRule(value)" />
+            <t-button size="small" variant="outline" :disabled="!orgId" @click="openRuleDialog">{{
+              t('ruleGroup.monitor.addRule')
+              }}</t-button>
+          </div>
+        </div>
+        <t-alert v-if="rulesError" theme="error" :message="rulesError" />
+        <t-loading v-else-if="rulesLoading" size="small" :text="t('common.loading')" />
+        <div v-else-if="selectedGroups.length" class="editor-rules__list">
+          <article v-for="group in selectedGroups" :key="group.id" class="editor-rule">
+            <div class="editor-rule__head">
+              <span class="editor-rule__name">{{ group.name }}</span>
+              <t-tag size="small" variant="outline">{{
+                group.projectId
+                  ? t('ruleGroup.monitor.scopeProject')
+                  : t('ruleGroup.monitor.scopeOrg')
+              }}</t-tag>
+              <t-tag v-if="!group.enabled" size="small" variant="light">{{
+                t('ruleGroup.monitor.disabled')
+                }}</t-tag>
+              <t-button size="small" variant="text" theme="danger" @click="unbindRule(group.id)">{{
+                t('ruleGroup.monitor.unbind') }}</t-button>
+            </div>
+            <RuleTreeView :tree="group.tree" compact />
+          </article>
+        </div>
+        <p v-else class="editor-rules__empty">{{ t('ruleGroup.monitor.empty') }}</p>
+        <p v-if="monitor" class="editor-rules__hint">{{ t('ruleGroup.monitor.pendingNote') }}</p>
+      </section>
+      <div v-if="form.availabilityEnabled" class="editor-grid">
+        <t-form-item :label="t('monitorPage.availabilityThreshold')"><t-input-number
+            v-model="form.availabilityThreshold" :min="0" :max="100" /></t-form-item>
+        <t-form-item :label="t('monitorPage.availabilityWindow')"><t-input-number v-model="form.availabilityWindow"
+            :min="1" :max="1000" /></t-form-item>
       </div>
-      <p v-else class="editor-rules__empty">{{ t('ruleGroup.monitor.empty') }}</p>
-      <p v-if="monitor" class="editor-rules__hint">{{ t('ruleGroup.monitor.pendingNote') }}</p>
-    </section>
-    <RuleGroupEditorDialog
-      v-model:visible="ruleDialog"
-      :org-id="orgId"
-      :project-id="projectId"
-      :monitor-type="form.type"
-      @saved="onRuleGroupSaved"
-    />
+      <t-form-item v-if="!monitor" :label="t('workspace.monitor.enabled')"><t-switch
+          v-model="form.enabled" /></t-form-item>
+    </t-form>
+    <RuleGroupEditorDialog v-model:visible="ruleDialog" :org-id="orgId" :project-id="projectId"
+      :monitor-type="form.type" @saved="onRuleGroupSaved" />
   </t-dialog>
 </template>
 
@@ -370,14 +392,40 @@ async function save() {
 .editor-error {
   margin-bottom: 16px;
 }
+
+.editor-config {
+  margin-bottom: 24px;
+
+  &__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+
+    small {
+      color: @beacon-text-secondary;
+      font-size: 12px;
+    }
+  }
+
+  &__title {
+    font-weight: @beacon-font-weight-medium;
+    color: @beacon-text-primary;
+  }
+}
+
 .editor-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0 16px;
 }
+
 .editor-grid :deep(.t-input-number) {
   max-width: 100%;
 }
+
 .editor-rules {
   display: flex;
   flex-direction: column;
@@ -393,7 +441,7 @@ async function save() {
     gap: 12px;
     flex-wrap: wrap;
 
-    > div {
+    >div {
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -459,6 +507,7 @@ async function save() {
   .editor-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+
   .editor-rules__actions {
     width: 100%;
 
