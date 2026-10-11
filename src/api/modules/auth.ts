@@ -1,14 +1,19 @@
 import type {
   AuthResponse,
   ChangePasswordParams,
+  EnableTwoFactorParams,
   ForgotPasswordParams,
   LoginParams,
   LoginResult,
   MessageResponse,
+  RecoveryCodes,
   RegisterParams,
   ResendVerificationParams,
   ResetPasswordParams,
+  SecondFactorConfirmParams,
+  SetupTwoFactorParams,
   TwoFactorChallenge,
+  TwoFactorSetup,
   TwoFactorStatus,
   UpdateProfileParams,
   User,
@@ -64,6 +69,26 @@ export function verifyTwoFactorLogin(data: VerifyTwoFactorLoginParams) {
 /** 两步验证状态 */
 export function getTwoFactorStatus() {
   return get<TwoFactorStatus>('/auth/2fa/status')
+}
+
+/** 开始绑定两步验证：校验密码后返回二维码与一次性 setupToken */
+export function setupTwoFactor(data: SetupTwoFactorParams) {
+  return post<TwoFactorSetup>('/auth/2fa/setup', data)
+}
+
+/** 提交动态验证码完成绑定，返回一次性恢复码 */
+export function enableTwoFactor(data: EnableTwoFactorParams) {
+  return post<RecoveryCodes>('/auth/2fa/enable', data)
+}
+
+/** 重置恢复码（旧码全部失效，返回新码） */
+export function regenerateRecoveryCodes(data: SecondFactorConfirmParams) {
+  return post<RecoveryCodes>('/auth/2fa/recovery-codes', data)
+}
+
+/** 关闭两步验证（会使该账号所有会话失效） */
+export function disableTwoFactor(data: SecondFactorConfirmParams) {
+  return post<void>('/auth/2fa/disable', data)
 }
 
 /** 轮换刷新令牌 */

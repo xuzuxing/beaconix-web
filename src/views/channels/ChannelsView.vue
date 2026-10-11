@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import type { NotificationChannel, NotificationChannelType } from '@/api/types/notification'
 import AppIcon from '@/components/AppIcon.vue'
+import HeaderActions from '@/components/HeaderActions.vue'
 import ChannelActions from '@/components/channels/ChannelActions.vue'
 import ChannelEditorDialog from '@/components/channels/ChannelEditorDialog.vue'
 import ChannelLogsDrawer from '@/components/channels/ChannelLogsDrawer.vue'
@@ -126,7 +127,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
 
 <template>
   <section class="channel-page">
-    <Teleport defer to="#layout-header-actions">
+    <HeaderActions>
       <t-tooltip :content="t('channelPage.refresh')"
         ><t-button
           variant="outline"
@@ -141,7 +142,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('channelPage.create') }}</t-button
       >
-    </Teleport>
+    </HeaderActions>
 
     <t-card class="channel-page__panel">
       <template #title>{{ t('channelPage.manageTitle') }}</template>

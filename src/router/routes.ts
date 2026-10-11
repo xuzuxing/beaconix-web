@@ -68,7 +68,6 @@ export const layoutChildren: RouteRecordRaw[] = [
       subTitleKey: 'submenu.monitor.manage',
       icon: Analytics01Icon,
       group: 'main',
-      hideRating: true,
       keepAlive: false,
     },
   },
@@ -82,7 +81,6 @@ export const layoutChildren: RouteRecordRaw[] = [
       hidden: true,
       menuExcluded: true,
       activeMenu: '/monitor',
-      hideRating: true,
       keepAlive: false,
     },
   },
@@ -180,7 +178,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'teams',
     name: 'teams',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/team/TeamInfoView.vue'),
     meta: {
       titleKey: 'menu.team',
       subTitleKey: 'submenu.team.basic',
@@ -192,19 +190,19 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'teams/members',
     name: 'team-members',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/team/TeamMembersView.vue'),
     meta: { titleKey: 'submenu.team.members', group: 'main', hidden: true },
   },
   {
     path: 'teams/api-keys',
     name: 'team-api-keys',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/team/TeamApiKeysView.vue'),
     meta: { titleKey: 'submenu.team.apiKeys', group: 'main', hidden: true },
   },
   {
     path: 'teams/audit-logs',
     name: 'team-audit-logs',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/team/TeamAuditLogsView.vue'),
     meta: { titleKey: 'submenu.team.auditLogs', group: 'main', hidden: true },
   },
 
@@ -224,14 +222,26 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'access-tokens',
     name: 'access-tokens',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/account/AccessTokensView.vue'),
     meta: { titleKey: 'menu.accessTokens', icon: ApiIcon, group: 'main', hidden: true },
   },
   {
     path: 'notifications',
     name: 'notifications',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/notifications/NotificationListView.vue'),
     meta: { titleKey: 'menu.notifications', icon: Notification03Icon, group: 'main', hidden: true },
+  },
+  {
+    // 事项详情：后端没有单条查询接口，页面按 id 从列表回捞
+    path: 'notifications/:id',
+    name: 'notification-detail',
+    component: () => import('@/views/notifications/NotificationDetailView.vue'),
+    meta: {
+      titleKey: 'notificationCenter.detailTitle',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/notifications',
+    },
   },
 
   // ---------- 管理后台（仅 SUPER_ADMIN，独立分组）----------
@@ -271,7 +281,7 @@ export const layoutChildren: RouteRecordRaw[] = [
     path: 'about',
     name: 'about',
     component: () => import('@/views/common/AboutView.vue'),
-    meta: { titleKey: 'nav.about', icon: InformationCircleIcon, hidden: true },
+    meta: { titleKey: 'nav.about', icon: InformationCircleIcon, hidden: true, searchExcluded: true },
   },
 ]
 

@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import AppIcon from '@/components/AppIcon.vue'
-import PageRating from '@/components/PageRating.vue'
 import { providePageHeader } from '@/composables/usePageHeader'
 import { ArrowLeft01Icon } from '@/icons'
 import AppContent from './components/AppContent.vue'
@@ -35,12 +34,10 @@ const metaTitle = computed(() => {
 })
 const pageTitle = computed(() => pageHeader.title.value || metaTitle.value)
 const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitle.value))
-/** 评价卡：监控这类自带工具栏的页面用 meta.hideRating 关掉 */
-const showRating = computed(() => !route.meta.hideRating)
 </script>
 
 <template>
-  <div class="layout" :class="{ 'layout--dashboard': route.name === 'dashboard' || route.name === 'monitor' || route.name === 'monitor-detail', 'layout--monitor': route.name === 'monitor' || route.name === 'monitor-detail' }">
+  <div class="layout" :class="{ 'layout--dashboard': route.name === 'dashboard' || route.name === 'monitor' || route.name === 'monitor-detail', 'layout--monitor': route.name === 'monitor' || route.name === 'monitor-detail', 'layout--notifications': route.name === 'notifications' || route.name === 'notification-detail' }">
     <AppHeader />
 
     <div class="layout__main">
@@ -49,9 +46,10 @@ const showRating = computed(() => !route.meta.hideRating)
 
       <main class="layout__content">
         <!--
-          标题栏分左右两组：左侧是「返回按钮 + 标题 + 附加区」，右侧是「评价卡 + 动作区」。
+          标题栏分左右两组：左侧是「返回按钮 + 标题 + 附加区」，右侧是「页面级动作区」。
           页面可通过 <Teleport to="#layout-header-title-addon">（标题右侧，如类型标签、页内 Tab）
           与 <Teleport to="#layout-header-actions">（最右侧，如页面级操作按钮）注入内容；
+          注入容器用 components/HeaderActions.vue（缓存页面停用时会卸载注入内容）；
           标题与返回按钮用 usePageHeader 声明。
           容器用 v-show 常驻 DOM：页面挂载时就要能找到 Teleport 目标。
         -->
@@ -72,7 +70,6 @@ const showRating = computed(() => !route.meta.hideRating)
           </div>
 
           <div class="layout__content-header-right">
-            <PageRating v-if="showRating" />
             <div id="layout-header-actions" class="layout__header-slot"></div>
           </div>
         </div>
@@ -96,7 +93,8 @@ const showRating = computed(() => !route.meta.hideRating)
   height: 100vh;
   overflow: hidden;
 
-  &--dashboard {
+  &--dashboard,
+  &--notifications {
     min-width: 0;
 
     @media (max-width: 1400px) {
@@ -116,6 +114,21 @@ const showRating = computed(() => !route.meta.hideRating)
       :deep(.app-header__extra) { margin-left: 0; padding-right: 4px; }
       :deep(.app-header__user) { margin-right: 0; padding: 0 8px; }
       .layout__content-body { padding: 16px; }
+    }
+  }
+  &--notifications {
+    @media (max-width: 900px) {
+      :deep(.app-header__pending) {
+        display: flex;
+        width: 44px;
+        height: 44px;
+        padding: 14px;
+        font-size: 0;
+      }
+    }
+    @media (max-width: 600px) {
+      :deep(.app-header__project) { display: none; }
+      .layout__content-body { padding: 12px; }
     }
   }
   &--monitor {

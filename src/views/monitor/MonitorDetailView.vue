@@ -15,6 +15,7 @@ import {
 import type { MonitorDetailRange } from '@/api/types/monitor-detail'
 import type { MonitorRuleBinding, RuleGroup } from '@/api/types/rule'
 import AppIcon from '@/components/AppIcon.vue'
+import HeaderActions from '@/components/HeaderActions.vue'
 import MonitorActions from '@/components/monitor/MonitorActions.vue'
 import MonitorDetailCharts from '@/components/monitor/MonitorDetailCharts.vue'
 import MonitorEditorDialog from '@/components/monitor/MonitorEditorDialog.vue'
@@ -318,7 +319,7 @@ async function copy() {
 <template>
   <section class="monitor-detail">
     <!-- 页面级操作与协议标签注入内容区标题栏，返回按钮与标题由 usePageHeader 声明 -->
-    <Teleport defer to="#layout-header-actions">
+    <HeaderActions>
       <t-tooltip :content="t('monitorPage.refresh')"
         ><t-button
           shape="square"
@@ -337,10 +338,10 @@ async function copy() {
         @edit="dialog = true"
         @action="act(projectId, monitor, $event)"
       />
-    </Teleport>
-    <Teleport defer to="#layout-header-title-addon">
+    </HeaderActions>
+    <HeaderActions to="#layout-header-title-addon">
       <span v-if="monitor" class="monitor-detail__protocol">{{ monitor.type }}</span>
-    </Teleport>
+    </HeaderActions>
     <div v-if="workspaceError || error" class="monitor-detail__empty">
       <t-alert theme="error" :message="workspaceError || error" /><t-button
         @click="workspaceError ? resolveWorkspace() : refresh()"

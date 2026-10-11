@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { Monitor, MonitorStatus, MonitorType } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
+import HeaderActions from '@/components/HeaderActions.vue'
 import MonitorActions from '@/components/monitor/MonitorActions.vue'
 import MonitorEditorDialog from '@/components/monitor/MonitorEditorDialog.vue'
 import MonitorStatusTag from '@/components/monitor/MonitorStatusTag.vue'
@@ -131,7 +132,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
 <template>
   <section class="monitor-page">
     <!-- 页面级操作注入内容区标题栏右侧的动作区（defer：目标在同一渲染周期内创建） -->
-    <Teleport defer to="#layout-header-actions">
+    <HeaderActions>
       <t-tooltip :content="t('monitorPage.refresh')"
         ><t-button
           variant="outline"
@@ -146,7 +147,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('workspace.monitor.create') }}</t-button
       >
-    </Teleport>
+    </HeaderActions>
     <t-card class="monitor-page__panel">
       <template #title>{{ t('monitorPage.title') }}</template>
       <template #actions>

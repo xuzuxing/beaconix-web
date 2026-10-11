@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { listRuleGroups } from '@/api'
 import type { RuleGroup } from '@/api/types/rule'
 import AppIcon from '@/components/AppIcon.vue'
+import HeaderActions from '@/components/HeaderActions.vue'
 import RuleGroupDetailDrawer from '@/components/rules/RuleGroupDetailDrawer.vue'
 import RuleGroupEditorDialog from '@/components/rules/RuleGroupEditorDialog.vue'
 import { fieldLabelKey } from '@/config/rules'
@@ -139,7 +140,7 @@ function openDetail(group: RuleGroup) {
 
 <template>
   <section class="rule-groups">
-    <Teleport defer to="#layout-header-actions">
+    <HeaderActions>
       <t-tooltip :content="t('ruleGroup.refresh')"
         ><t-button
           variant="outline"
@@ -154,7 +155,7 @@ function openDetail(group: RuleGroup) {
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('ruleGroup.create') }}</t-button
       >
-    </Teleport>
+    </HeaderActions>
     <t-card class="rule-groups__panel">
       <template #title>{{ t('ruleGroup.title') }}</template>
       <template #actions>

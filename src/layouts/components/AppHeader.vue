@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { MessagePlugin } from 'tdesign-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -11,7 +11,11 @@ import whiteIcon from '@/assets/logo/wihte-icon.png'
 import AppIcon from '@/components/AppIcon.vue'
 import GuideDialog from '@/components/guide/GuideDialog.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import NotificationDrawer from '@/components/notifications/NotificationDrawer.vue'
+import GlobalSearch from '@/components/search/GlobalSearch.vue'
 import type { Organization, Project } from '@/api/types'
+import type { Plan } from '@/api/types/billing'
+import { useTeamPlans } from '@/composables/useTeamPlans'
 import { APP_TITLE } from '@/config'
 import { userMenuGroups } from '@/config/user'
 import {
@@ -24,13 +28,14 @@ import {
   Moon01Icon,
   Notification03Icon,
   PlusSignIcon,
+  ResourcesAddIcon,
   Search01Icon,
   Settings01Icon,
   Sun01Icon,
-  TeamWorkIcon,
+  UserIcon,
   VerticalScrollPointIcon,
 } from '@/icons'
-import { useAppStore, useOrganizationStore, useUserStore } from '@/stores'
+import { useAppStore, useNotificationStore, useOrganizationStore, useUserStore } from '@/stores'
 import type { ThemeMode } from '@/types'
 import { planTagTheme, planTier } from '@/utils/billing'
 
@@ -41,6 +46,7 @@ const router = useRouter()
 const appStore = useAppStore()
 const userStore = useUserStore()
 const orgStore = useOrganizationStore()
+const notificationStore = useNotificationStore()
 
 const collapsed = computed(() => appStore.collapsed)
 
@@ -113,10 +119,30 @@ async function selectOrg(org: Organization) {
   teamVisible.value = false
 }
 
-/** 团队管理不进侧边栏，入口只放在这个下拉里 */
+/** 团队管理不进侧边栏，入口只放在这个下拉里；跳转到控制台之外的「选择团队」整页 */
 function goTeams() {
   teamVisible.value = false
-  void router.push('/teams')
+  void router.push('/team')
+}
+
+/** 各团队的套餐：当前团队复用 store，其余按需加载（与选择团队页共用同一实现） */
+const { planOf, loadTeamPlans } = useTeamPlans()
+
+/** 套餐标签文案：无生效订阅时回退为免费版 */
+function planLabelOf(plan: Plan | null) {
+  return plan?.name ?? t('usage.package.freePlan')
+}
+
+// 打开团队切换面板时补齐套餐标签
+watch([teamVisible, teamMode], ([visible, mode]) => {
+  if (visible && mode === 'list') void loadTeamPlans()
+})
+
+/** 进入某团队的成员页 / 团队管理页：先切到该团队，再跳转 */
+async function openTeamPage(org: Organization, path: string) {
+  teamVisible.value = false
+  await orgStore.switchOrganization(org.id)
+  await router.push(path)
 }
 
 // ---------- 项目 ----------
@@ -196,6 +222,8 @@ async function loadWorkspace() {
 
 onMounted(() => {
   void loadWorkspace()
+  // 顶栏事项入口的角标：未读数与事项抽屉共用同一份状态
+  void notificationStore.refreshUnreadCount()
 })
 </script>
 
@@ -213,7 +241,7 @@ onMounted(() => {
         overlay-class-name="app-team-popup">
         <button type="button" class="app-header__team" @mouseenter="teamMode = 'info'"
           @click="teamMode = teamMode === 'list' ? 'info' : 'list'">
-          <AppIcon class="app-header__team-icon" :icon="TeamWorkIcon" />
+          <AppIcon class="app-header__team-icon" :icon="ResourcesAddIcon" />
           <span class="app-header__team-name">{{ currentOrg?.name ?? t('layout.teamEmpty') }}</span>
           <t-tag class="app-header__team-tag beacon-plan-badge"
             :class="`beacon-plan--${planTier(orgStore.currentPlan)}`" :theme="planTagTheme(orgStore.currentPlan)"
@@ -230,8 +258,8 @@ onMounted(() => {
               <span class="team-card__label">{{ t(row.labelKey) }}</span>
               <span class="team-card__value">
                 {{ row.value }}
-                <button v-if="row.copyable" type="button" class="team-card__copy"
-                  :aria-label="t('guide.copy')" @click="copyText(row.value)">
+                <button v-if="row.copyable" type="button" class="team-card__copy" :aria-label="t('guide.copy')"
+                  @click="copyText(row.value)">
                   <AppIcon :icon="Copy01Icon" :size="14" />
                 </button>
               </span>
@@ -258,11 +286,29 @@ onMounted(() => {
 
             <ul class="team-list__items">
               <li v-for="org in filteredOrgs" :key="org.id">
-                <button type="button" class="team-list__item"
-                  :class="{ 'is-active': org.id === orgStore.currentOrganizationId }" @click="selectOrg(org)">
-                  <span class="team-list__name">{{ org.name }}</span>
-                  <span class="team-list__meta">{{ org.slug }}</span>
-                </button>
+                <div class="team-list__item"
+                  :class="{ 'is-active': org.id === orgStore.currentOrganizationId }">
+                  <button type="button" class="team-list__main" @click="selectOrg(org)">
+                    <span class="team-list__name">{{ org.name }}</span>
+                    <t-tag class="team-list__plan beacon-plan-badge"
+                      :class="`beacon-plan--${planTier(planOf(org))}`" :theme="planTagTheme(planOf(org))"
+                      variant="light" size="small">
+                      {{ planLabelOf(planOf(org)) }}
+                    </t-tag>
+                  </button>
+
+                  <!-- 两个入口：该团队的成员页 / 团队管理页（都会先切到该团队） -->
+                  <div class="team-list__entries">
+                    <button type="button" class="team-list__entry" :title="t('submenu.team.members')"
+                      :aria-label="t('submenu.team.members')" @click="openTeamPage(org, '/teams/members')">
+                      <AppIcon :icon="UserIcon" :size="14" />
+                    </button>
+                    <button type="button" class="team-list__entry" :title="t('menu.team')"
+                      :aria-label="t('menu.team')" @click="openTeamPage(org, '/teams')">
+                      <AppIcon :icon="Settings01Icon" :size="14" />
+                    </button>
+                  </div>
+                </div>
               </li>
             </ul>
 
@@ -303,8 +349,7 @@ onMounted(() => {
             <ul class="project-list__items">
               <li v-for="project in filteredProjects" :key="project.id">
                 <button type="button" class="project-list__item"
-                  :class="{ 'is-active': project.id === orgStore.currentProjectId }"
-                  @click="selectProject(project)">
+                  :class="{ 'is-active': project.id === orgStore.currentProjectId }" @click="selectProject(project)">
                   <span class="project-list__name">{{ project.name }}</span>
                   <span class="project-list__key">{{ project.key }}</span>
                 </button>
@@ -327,17 +372,17 @@ onMounted(() => {
 
     <!-- 右侧功能组 -->
     <div class="app-header__extra">
-      <!-- 全局搜索：已就位，搜索逻辑待接入 -->
-      <label class="app-header__search">
-        <AppIcon class="app-header__search-icon" :icon="Search01Icon" />
-        <input class="app-header__search-input" type="search" :placeholder="t('layout.searchPlaceholder')" />
-        <span class="app-header__hotkey">/</span>
-      </label>
+      <!-- 全局搜索：输入框触发，结果面板在下方弹出 -->
+      <GlobalSearch />
 
-      <button type="button" class="app-header__pending">
+      <button type="button" class="app-header__pending" @click="notificationStore.toggleDrawer()">
         <AppIcon class="app-header__pending-icon" :icon="Notification03Icon" />
-        {{ t('layout.pending') }}
-        <span class="app-header__dot" />
+        {{
+          notificationStore.hasUnread
+            ? t('layout.pending', { count: notificationStore.unreadCount })
+            : t('layout.pendingEmpty')
+        }}
+        <span v-if="notificationStore.hasUnread" class="app-header__dot" />
       </button>
 
       <t-tooltip :content="t('layout.docs')" placement="bottom">
@@ -405,6 +450,7 @@ onMounted(() => {
     </div>
 
     <GuideDialog v-model="guideVisible" />
+    <NotificationDrawer />
   </header>
 </template>
 
@@ -570,7 +616,7 @@ onMounted(() => {
 
   // ---------- 团队切换面板（点击） ----------
   .team-list {
-    width: 340px;
+    width: 380px;
     background-color: @beacon-bg-container;
   }
 
@@ -611,10 +657,42 @@ onMounted(() => {
 
   .team-list__item {
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: 8px;
     width: 100%;
-    padding: 8px 12px;
+    padding: 4px 8px 4px 12px;
+
+    &:hover {
+      background-color: @beacon-bg-hover;
+    }
+
+    &.is-active {
+      background-color: @beacon-brand;
+
+      .team-list__name {
+        color: var(--td-text-color-anti);
+      }
+
+      // 高亮底色上入口图标要反色，悬停底色同理，避免看不清
+      .team-list__entry {
+        color: var(--td-text-color-anti);
+
+        &:hover {
+          color: var(--td-text-color-anti);
+          background-color: rgb(255 255 255 / 16%);
+        }
+      }
+    }
+  }
+
+  // 名称 + 套餐标签：点击切换当前团队
+  .team-list__main {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 6px 0;
     font-family: inherit;
     font-size: @beacon-font-size-base;
     text-align: left;
@@ -622,28 +700,45 @@ onMounted(() => {
     cursor: pointer;
     background-color: transparent;
     border: 0;
-
-    &:hover {
-      background-color: @beacon-bg-hover;
-    }
-
-    &.is-active {
-      color: var(--td-text-color-anti);
-      background-color: @beacon-brand;
-
-      .team-list__meta {
-        color: var(--td-text-color-anti);
-      }
-    }
   }
 
   .team-list__name {
+    min-width: 0;
+    overflow: hidden;
     font-size: @beacon-font-size-menu;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .team-list__meta {
-    font-size: @beacon-font-size-base;
-    color: @beacon-text-tertiary;
+  .team-list__plan {
+    flex: none;
+  }
+
+  // 右侧两个入口：团队成员 / 团队管理
+  .team-list__entries {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .team-list__entry {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    color: @beacon-text-secondary;
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+    border-radius: @beacon-radius-m;
+
+    &:hover {
+      color: @beacon-brand;
+      background-color: @beacon-bg-hover;
+    }
   }
 
   .team-list__empty {
@@ -862,7 +957,7 @@ onMounted(() => {
   }
 
   &__team-icon {
-    color: @beacon-brand;
+    color: @beacon-text-secondary;
   }
 
   &__project-icon {
@@ -932,62 +1027,6 @@ onMounted(() => {
     gap: 4px;
     margin-left: auto;
     padding-right: 8px;
-  }
-
-  &__search {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 360px;
-    height: 30px;
-    margin: 0 8px;
-    padding: 0 12px 0 36px;
-    background-color: @beacon-bg-container;
-    border: 1px solid @beacon-border;
-    border-radius: @beacon-radius-m;
-
-    &:hover {
-      border-color: @beacon-brand-hover;
-    }
-  }
-
-  &__search-icon {
-    position: absolute;
-    left: 12px;
-    color: @beacon-text-tertiary;
-  }
-
-  &__search-input {
-    flex: 1;
-    min-width: 0;
-    font-family: inherit;
-    font-size: @beacon-font-size-base;
-    color: @beacon-text-primary;
-    background-color: transparent;
-    border: 0;
-    outline: none;
-
-    &::placeholder {
-      color: @beacon-text-tertiary;
-    }
-
-    &::-webkit-search-cancel-button {
-      display: none;
-    }
-  }
-
-  &__hotkey {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    height: 20px;
-    padding: 0 7px;
-    font-size: @beacon-font-size-base;
-    line-height: 18px;
-    color: @beacon-text-tertiary;
-    background-color: @beacon-bg-container;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
   }
 
   &__pending {

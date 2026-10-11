@@ -88,6 +88,44 @@ export interface TwoFactorStatus {
   recoveryCodesRemaining: number
 }
 
+/** 开始绑定两步验证：校验当前登录密码 */
+export interface SetupTwoFactorParams {
+  currentPassword: string
+}
+
+/**
+ * 开始绑定的返回：一次性 setupToken、otpauth 链接与二维码图片（data URL）。
+ * 密钥在 enable 之前不会落库，因此中途放弃不会改变账号状态。
+ */
+export interface TwoFactorSetup {
+  setupToken: string
+  otpauthUrl: string
+  qrCodeDataUrl: string
+  expiresAt: string
+}
+
+/** 提交验证码完成绑定 */
+export interface EnableTwoFactorParams {
+  setupToken: string
+  /** 身份验证器生成的 6 位动态验证码 */
+  code: string
+}
+
+/**
+ * 恢复码集合：enable 与重置恢复码接口返回。
+ * 明文只在本次响应中出现一次，页面必须提示用户立即离线保存。
+ */
+export interface RecoveryCodes {
+  recoveryCodes: string[]
+}
+
+/** 重置恢复码 / 关闭两步验证：校验当前密码与一次性验证码 */
+export interface SecondFactorConfirmParams {
+  currentPassword: string
+  /** 身份验证器动态验证码，或设备丢失时使用的恢复码 */
+  code: string
+}
+
 export interface LoginParams {
   email: string
   password: string
@@ -171,6 +209,18 @@ export interface UpdateOrganizationParams {
   website?: string
 }
 
+/**
+ * 成员内嵌的用户概要。
+ * 接口文档只承诺 `userId`，实际响应可能内嵌用户资料；
+ * 缺失时前端回退展示 userId（见 utils/team-presenter.ts 的 memberIdentity）。
+ */
+export interface MembershipUser {
+  id: string
+  name: string
+  email: string
+  avatarUrl: string | null
+}
+
 /** 成员关系 */
 export interface Membership {
   id: string
@@ -180,6 +230,8 @@ export interface Membership {
   joinedAt: string
   updatedAt: string
   invitedById: string | null
+  /** 内嵌的用户资料，后端未内嵌时为 undefined */
+  user?: MembershipUser | null
 }
 
 /** 邀请 */
