@@ -1,9 +1,11 @@
+import adminPage from './admin.zh-CN'
 import channelPage from './channel.zh-CN'
 import monitorPage from './monitor.zh-CN'
 import notificationCenter from './notification.zh-CN'
 import ruleGroup from './rule.zh-CN'
 
 export default {
+  adminPage,
   monitorPage,
   ruleGroup,
   channelPage,
@@ -176,6 +178,7 @@ export default {
       tenants: '租户管理',
       probes: '系统探针',
       auditLogs: '审计日志',
+      orders: '订单管理',
     },
     storage: {
       overview: '概览',

@@ -1,4 +1,9 @@
 /** 接口统一出口，页面中始终从 `@/api` 引入 */
+export * from './modules/admin-audit-log'
+export * from './modules/admin-metrics'
+export * from './modules/admin-order'
+export * from './modules/admin-probe'
+export * from './modules/admin-tenant'
 export * from './modules/api-key'
 export * from './modules/audit-log'
 export * from './modules/auth'

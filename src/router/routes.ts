@@ -248,7 +248,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'admin',
     name: 'admin',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/admin/AdminMetricsView.vue'),
     meta: {
       titleKey: 'menu.admin',
       subTitleKey: 'submenu.admin.metrics',
@@ -260,20 +260,27 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'admin/tenants',
     name: 'admin-tenants',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/admin/AdminTenantsView.vue'),
     meta: { titleKey: 'submenu.admin.tenants', group: 'admin', roles: ADMIN_ROLES },
   },
   {
     path: 'admin/system-probes',
     name: 'admin-system-probes',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/admin/AdminSystemProbesView.vue'),
     meta: { titleKey: 'submenu.admin.probes', group: 'admin', roles: ADMIN_ROLES },
   },
   {
     path: 'admin/audit-logs',
     name: 'admin-audit-logs',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/admin/AdminAuditLogsView.vue'),
     meta: { titleKey: 'submenu.admin.auditLogs', group: 'admin', roles: ADMIN_ROLES },
+  },
+  {
+    // 跨租户订单：与「账单 → 订单管理」（单组织维度）不同，这里覆盖全平台
+    path: 'admin/orders',
+    name: 'admin-orders',
+    component: () => import('@/views/admin/AdminOrdersView.vue'),
+    meta: { titleKey: 'submenu.admin.orders', group: 'admin', roles: ADMIN_ROLES },
   },
 
   // ---------- 不在菜单中展示 ----------

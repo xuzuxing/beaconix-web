@@ -1,9 +1,11 @@
+import adminPage from './admin.en-US'
 import channelPage from './channel.en-US'
 import monitorPage from './monitor.en-US'
 import notificationCenter from './notification.en-US'
 import ruleGroup from './rule.en-US'
 
 export default {
+  adminPage,
   monitorPage,
   ruleGroup,
   channelPage,
@@ -176,6 +178,7 @@ export default {
       tenants: 'Tenants',
       probes: 'System probes',
       auditLogs: 'Audit logs',
+      orders: 'Orders',
     },
     storage: {
       overview: 'Overview',
