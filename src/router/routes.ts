@@ -134,13 +134,13 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'status-pages/overview',
     name: 'status-pages-overview',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/status-pages/StatusPagesOverviewView.vue'),
     meta: { titleKey: 'submenu.statusPages.overview', group: 'main' },
   },
   {
     path: 'status-pages',
     name: 'status-pages',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/status-pages/StatusPagesView.vue'),
     meta: {
       titleKey: 'menu.statusPages',
       subTitleKey: 'submenu.statusPages.pages',
@@ -151,7 +151,7 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'status-pages/templates',
     name: 'status-pages-templates',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/status-pages/StatusPageTemplatesView.vue'),
     meta: { titleKey: 'submenu.statusPages.templates', group: 'main' },
   },
 
@@ -311,6 +311,19 @@ const routes: RouteRecordRaw[] = [
     name: 'login',
     component: () => import('@/views/auth/LoginView.vue'),
     meta: { titleKey: 'login.title.login', hidden: true },
+  },
+  {
+    // 公开状态页：对外分享的地址，无需登录，整屏无框架（数据来自 GET /status/:slug）
+    path: '/status',
+    component: BlankLayout,
+    children: [
+      {
+        path: ':slug',
+        name: 'public-status-page',
+        component: () => import('@/views/status-pages/PublicStatusPageView.vue'),
+        meta: { titleKey: 'menu.statusPages', public: true, hidden: true },
+      },
+    ],
   },
   {
     // 选择团队：控制台之外的独立整页，只有精简顶栏，不带侧边菜单

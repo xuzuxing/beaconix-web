@@ -3,12 +3,14 @@ import channelPage from './channel.en-US'
 import monitorPage from './monitor.en-US'
 import notificationCenter from './notification.en-US'
 import ruleGroup from './rule.en-US'
+import statusPage from './status-page.en-US'
 
 export default {
   adminPage,
   monitorPage,
   ruleGroup,
   channelPage,
+  statusPage,
   notificationCenter,
   app: {
     title: 'Beacon Web',

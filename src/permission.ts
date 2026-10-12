@@ -6,7 +6,7 @@ const WHITE_LIST = ['/login']
 
 /**
  * 全局路由守卫：
- * - 白名单（登录页）直接放行
+ * - 白名单（登录页）与 meta.public 的路由（如公开状态页 /status/:slug）直接放行
  * - 未登录时跳登录页，并带上来源地址，登录后回跳
  * - 已登录但本地没有用户信息时补拉一次，失败则按登录失效处理
  *
@@ -15,7 +15,7 @@ const WHITE_LIST = ['/login']
 router.beforeEach(async (to) => {
   const userStore = useUserStore()
 
-  if (WHITE_LIST.includes(to.path)) {
+  if (WHITE_LIST.includes(to.path) || to.matched.some((record) => record.meta.public)) {
     return true
   }
 
