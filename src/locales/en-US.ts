@@ -148,7 +148,7 @@ export default {
     monitor: {
       overview: 'Overview',
       manage: 'Monitors',
-      alertRules: 'Alert rules',
+      alertRules: 'Failure conditions',
     },
     probes: {
       overview: 'Overview',

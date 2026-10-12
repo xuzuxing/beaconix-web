@@ -85,7 +85,7 @@ export const layoutChildren: RouteRecordRaw[] = [
     },
   },
   {
-    // 文案沿用「告警规则」，路径与后端资源 rule-groups 对齐
+    // 文案沿用「检测异常条件」，路径与后端资源 rule-groups 对齐
     path: 'monitor/rule-groups',
     name: 'monitor-rule-groups',
     component: () => import('@/views/rules/RuleGroupsView.vue'),

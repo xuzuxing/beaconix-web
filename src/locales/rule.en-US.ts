@@ -1,5 +1,5 @@
 export default {
-  title: 'Alert rules',
+  title: 'Failure conditions',
   pageHint:
     'A rule group defines what counts as a node failure. Combine status code, latency, certificate days or response body checks with AND / OR, and nest logic groups freely.',
   create: 'New rule group',
@@ -144,12 +144,12 @@ export default {
     addRule: 'New rule group',
     createHint: 'The rule group is created right away for this monitor',
     pendingNote: 'Binding is applied when the monitor is saved',
-    rules: 'Alert rules',
+    rules: 'Failure conditions',
     scopeOrg: 'Organization',
     scopeProject: 'Current project',
     disabled: 'Disabled',
     bindFailed: 'Failed to bind, please retry.',
     unbindFailed: 'Failed to unbind, please retry.',
-    loadFailed: 'Failed to load alert rules',
+    loadFailed: 'Failed to load failure conditions',
   },
 }

@@ -1,5 +1,5 @@
 export default {
-  title: '告警规则',
+  title: '检测异常条件',
   pageHint: '规则组定义「什么情况下算节点异常」。可选状态码、耗时、证书剩余天数或响应体字段，支持 AND / OR 组合，也可递归嵌套逻辑组。',
   create: '新建规则组',
   detailTitle: '规则组详情',
@@ -130,7 +130,7 @@ export default {
     statusClass: '状态码类别只能取 1xx~5xx。',
   },
   monitor: {
-    cardTitle: '异常条件规则',
+    cardTitle: '检测异常条件',
     empty: '未绑定规则组：按检查结果默认判定异常。',
     bind: '绑定规则组',
     bindPlaceholder: '选择要绑定的规则组',
@@ -141,12 +141,12 @@ export default {
     addRule: '新增规则组',
     createHint: '规则组会立即创建并用于当前监控项',
     pendingNote: '保存监控项后完成绑定',
-    rules: '告警规则',
+    rules: '检测异常条件',
     scopeOrg: '组织级',
     scopeProject: '当前项目',
     disabled: '已停用',
     bindFailed: '绑定失败，请重试。',
     unbindFailed: '解绑失败，请重试。',
-    loadFailed: '告警规则加载失败',
+    loadFailed: '检测异常条件加载失败',
   },
 }

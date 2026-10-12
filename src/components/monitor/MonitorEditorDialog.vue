@@ -25,7 +25,7 @@ import {
 } from '@/utils/monitor-config'
 
 /**
- * 监控项编辑器：基础配置 + 告警规则绑定。
+ * 监控项编辑器：基础配置 + 检测异常条件（规则组绑定），表单底部另有独立的可用率条件区块。
  * 绑定关系在保存监控项时统一提交（编辑模式下按差异 bind / unbind），
  * 而弹窗内「新增规则组」按产品约定立即创建规则组，再把新组加进本次绑定集合。
  */
@@ -37,8 +37,6 @@ const org = useOrganizationStore()
 const submitting = ref(false)
 const error = ref('')
 let generation = 0
-/** 回填表单期间抑制派生副作用（如按协议加载规则绑定） */
-let restoringForm = false
 const form = reactive({
   name: '',
   type: 'HTTP' as MonitorType,
@@ -50,7 +48,7 @@ const form = reactive({
   enabled: true,
   checkSsl: false,
   sslExpiryThreshold: 30,
-  availabilityEnabled: false,
+  /** 可用率条件：最近检查窗口内可用率低于阈值即判为异常，并发送告警通知（保存时自动启用 availabilityEnabled） */
   availabilityThreshold: 90,
   availabilityWindow: 10,
   /** 当前协议的 config（字段级校验与清洗见 MonitorConfigForm / utils/monitor-config） */
@@ -73,7 +71,7 @@ interface MonitorConfigFormApi {
 }
 const configForm = ref<MonitorConfigFormApi>()
 
-// ---------- 告警规则绑定 ----------
+// ---------- 检测异常条件（规则组绑定） ----------
 const orgId = computed(() => props.monitor?.organizationId ?? org.currentOrganizationId)
 const groups = ref<RuleGroup[]>([])
 /** 弹窗打开时该监控项已有的绑定（编辑模式） */
@@ -156,7 +154,6 @@ watch(
     if (!value) return
     const m = props.monitor
     const type = m?.type ?? 'HTTP'
-    restoringForm = true
     Object.assign(form, {
       name: m?.name ?? '',
       type,
@@ -168,24 +165,13 @@ watch(
       enabled: m?.enabled ?? true,
       checkSsl: m?.checkSsl ?? false,
       sslExpiryThreshold: m?.sslExpiryThreshold ?? 30,
-      availabilityEnabled: m?.availabilityEnabled ?? false,
       availabilityThreshold: m?.availabilityThreshold ?? 90,
       availabilityWindow: m?.availabilityWindow ?? 10,
       // 编辑时用后端返回的 config 覆盖默认值（凭据字段不回传，需重新填写）
       config: monitorConfigDraft(type, m?.config),
     })
-    restoringForm = false
-    // 只有启用「规则健康比例告警」时才需要绑定数据
-    if (form.availabilityEnabled) void loadRules()
-  },
-  { flush: 'sync' },
-)
-
-// 告警规则与「规则健康比例告警」开关联动：开启后才加载并展示绑定配置
-watch(
-  () => form.availabilityEnabled,
-  (enabled) => {
-    if (enabled && !restoringForm) void loadRules()
+    // 检测异常条件（规则组绑定）随监控项一并展示：打开弹窗即加载
+    void loadRules()
   },
   { flush: 'sync' },
 )
@@ -257,7 +243,8 @@ async function save() {
       interval: form.interval,
       timeout: form.timeout,
       failureThreshold: form.failureThreshold,
-      availabilityEnabled: form.availabilityEnabled,
+      // 区块里配置的可用率条件即生效：没有开关，保存时统一按启用提交
+      availabilityEnabled: true,
       availabilityThreshold: form.availabilityThreshold,
       availabilityWindow: form.availabilityWindow,
       ...(form.type === 'HTTP'
@@ -281,8 +268,8 @@ async function save() {
       ? await updateMonitor(project, editing, changes)
       : await createMonitor(project, { ...basic, type: form.type, enabled: form.enabled, config })
     if (token !== generation) return
-    // 未启用规则健康比例告警时不提交绑定变更，避免误删已有绑定
-    if (form.availabilityEnabled) await commitBindings(result.id)
+    // 检测异常条件（规则组绑定）随监控项一起保存：按差异提交绑定变更
+    await commitBindings(result.id)
     if (token !== generation || project !== props.projectId) return
     MessagePlugin.success(t(editing ? 'workspace.monitor.updated' : 'workspace.monitor.created'))
     visible.value = false
@@ -333,10 +320,8 @@ async function save() {
         <t-form-item v-if="form.checkSsl" :label="t('monitorPage.sslThreshold')"><t-input-number
             v-model="form.sslExpiryThreshold" :min="1" :max="365" /></t-form-item>
       </template>
-      <t-form-item :label="t('monitorPage.availabilityRule')"><t-switch
-          v-model="form.availabilityEnabled" /></t-form-item>
-      <!-- 告警规则：仅当启用「规则健康比例告警」时展示，可选绑定已有规则组或直接新增（立即创建并并入本次绑定） -->
-      <section v-if="form.availabilityEnabled" class="editor-rules">
+      <!-- 检测异常条件：绑定规则组（可选绑定已有组或立即新增），区块常驻、无开关门控 -->
+      <section class="editor-rules">
         <div class="editor-rules__head">
           <div>
             <span class="editor-rules__title">{{ t('ruleGroup.monitor.rules') }}</span>
@@ -374,14 +359,21 @@ async function save() {
         <p v-else class="editor-rules__empty">{{ t('ruleGroup.monitor.empty') }}</p>
         <p v-if="monitor" class="editor-rules__hint">{{ t('ruleGroup.monitor.pendingNote') }}</p>
       </section>
-      <div v-if="form.availabilityEnabled" class="editor-grid">
-        <t-form-item :label="t('monitorPage.availabilityThreshold')"><t-input-number
-            v-model="form.availabilityThreshold" :min="0" :max="100" /></t-form-item>
-        <t-form-item :label="t('monitorPage.availabilityWindow')"><t-input-number v-model="form.availabilityWindow"
-            :min="1" :max="1000" /></t-form-item>
-      </div>
       <t-form-item v-if="!monitor" :label="t('workspace.monitor.enabled')"><t-switch
           v-model="form.enabled" /></t-form-item>
+      <!-- 可用率条件：独立 section 置于表单最底部；区块无开关，保存时自动启用 availabilityEnabled -->
+      <section class="editor-availability">
+        <div class="editor-config__head">
+          <span class="editor-config__title">{{ t('monitorPage.availabilitySection') }}</span>
+          <small>{{ t('monitorPage.availabilityHint') }}</small>
+        </div>
+        <div class="editor-grid">
+          <t-form-item :label="t('monitorPage.availabilityThreshold')"><t-input-number
+              v-model="form.availabilityThreshold" :min="0" :max="100" /></t-form-item>
+          <t-form-item :label="t('monitorPage.availabilityWindow')"><t-input-number v-model="form.availabilityWindow"
+              :min="1" :max="1000" /></t-form-item>
+        </div>
+      </section>
     </t-form>
     <RuleGroupEditorDialog v-model:visible="ruleDialog" :org-id="orgId" :project-id="projectId"
       :monitor-type="form.type" @saved="onRuleGroupSaved" />
@@ -414,6 +406,12 @@ async function save() {
     font-weight: @beacon-font-weight-medium;
     color: @beacon-text-primary;
   }
+}
+
+.editor-availability {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid @beacon-border;
 }
 
 .editor-grid {

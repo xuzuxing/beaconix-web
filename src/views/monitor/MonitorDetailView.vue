@@ -185,7 +185,7 @@ const kpis = computed(() => {
 const days = computed(() =>
   certificateDays(monitor.value?.sslExpiresAt ?? null, insights.value?.asOf ?? Date.now()),
 )
-// ---------- 异常条件规则（绑定的规则组）----------
+// ---------- 检测异常条件（绑定的规则组）----------
 const ruleBindings = ref<MonitorRuleBinding[]>([])
 const ruleGroups = ref<RuleGroup[]>([])
 const rulesLoading = ref(false)
@@ -294,13 +294,8 @@ const info = computed(() => {
         ? t('monitorPage.rulesBound', { count: ruleBindings.value.length })
         : t('monitorPage.rulesNone'),
     ],
-    ['availabilityRule', t(m.availabilityEnabled ? 'monitorPage.enabled' : 'monitorPage.disabled')],
-    ...(m.availabilityEnabled
-      ? [
-          ['availabilityThreshold', `${m.availabilityThreshold}%`],
-          ['availabilityWindow', String(m.availabilityWindow)],
-        ]
-      : []),
+    ['availabilityThreshold', m.availabilityThreshold === null ? '-' : `${m.availabilityThreshold}%`],
+    ['availabilityWindow', m.availabilityWindow === null ? '-' : String(m.availabilityWindow)],
   ]
 })
 const visibleChecks = computed(
@@ -543,7 +538,7 @@ async function copy() {
         />
       </t-card>
 
-      <!-- 异常条件规则：绑定的规则组只读展示，可即时绑定 / 解绑 / 编辑（参考图 1 的展示形态） -->
+      <!-- 检测异常条件：绑定的规则组只读展示，可即时绑定 / 解绑 / 编辑（参考图 1 的展示形态） -->
       <t-card v-if="tab === 'configuration'" class="monitor-detail__card">
         <template #title>{{ t('ruleGroup.monitor.cardTitle') }}</template>
         <template #actions>
@@ -845,7 +840,7 @@ async function copy() {
   :deep(.t-tabs) {
     margin-bottom: 16px;
   }
-  // 异常条件规则卡片：绑定的规则组逐个只读展示
+  // 检测异常条件卡片：绑定的规则组逐个只读展示
   &__rules-actions {
     display: flex;
     align-items: center;

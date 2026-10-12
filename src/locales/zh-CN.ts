@@ -148,7 +148,7 @@ export default {
     monitor: {
       overview: '概览',
       manage: '监控管理',
-      alertRules: '告警规则',
+      alertRules: '检测异常条件',
     },
     probes: {
       overview: '概览',

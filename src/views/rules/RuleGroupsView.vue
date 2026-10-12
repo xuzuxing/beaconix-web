@@ -17,7 +17,7 @@ import { formatMonitorTime } from '@/utils/monitor-presenter'
 import { countRuleNodes } from '@/utils/rule-presenter'
 
 /**
- * 告警规则（规则组）管理：当前组织下的规则组列表，含项目级规则组。
+ * 检测异常条件（规则组）管理：当前组织下的规则组列表，含项目级规则组。
  * 列表提供搜索 / 范围 / 状态筛选、新建、编辑与只读详情；
  * 接口见 `GET|POST /organizations/:orgId/rule-groups`。
  */
