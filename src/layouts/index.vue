@@ -44,8 +44,10 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
         route.name === 'dashboard' ||
         route.name === 'monitor' ||
         route.name === 'monitor-detail' ||
+        route.path.startsWith('/probes') ||
         route.path.startsWith('/teams'),
       'layout--monitor': route.name === 'monitor' || route.name === 'monitor-detail',
+      'layout--probes': route.path.startsWith('/probes'),
       'layout--notifications':
         route.name === 'notifications' || route.name === 'notification-detail',
     }"
@@ -170,7 +172,8 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
       }
     }
   }
-  &--monitor {
+  &--monitor,
+  &--probes {
     .layout__content-body {
       padding: 24px;
     }

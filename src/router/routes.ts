@@ -96,18 +96,19 @@ export const layoutChildren: RouteRecordRaw[] = [
   {
     path: 'probes/overview',
     name: 'probes-overview',
-    component: () => import('@/views/common/PlaceholderView.vue'),
-    meta: { titleKey: 'submenu.probes.overview', group: 'main' },
+    component: () => import('@/views/probes/ProbesOverviewView.vue'),
+    meta: { titleKey: 'submenu.probes.overview', group: 'main', keepAlive: false },
   },
   {
     path: 'probes',
     name: 'probes',
-    component: () => import('@/views/common/PlaceholderView.vue'),
+    component: () => import('@/views/probes/ProbesView.vue'),
     meta: {
       titleKey: 'menu.probes',
       subTitleKey: 'submenu.probes.nodes',
       icon: ServerIcon,
       group: 'main',
+      keepAlive: false,
     },
   },
 

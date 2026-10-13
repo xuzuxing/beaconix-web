@@ -5,6 +5,7 @@ import monitorPage from './monitor.en-US'
 import notificationCenter from './notification.en-US'
 import ruleGroup from './rule.en-US'
 import statusPage from './status-page.en-US'
+import probePage from './probe.en-US'
 
 export default {
   access,
@@ -13,6 +14,7 @@ export default {
   ruleGroup,
   channelPage,
   statusPage,
+  probePage,
   notificationCenter,
   app: {
     title: 'Beacon Web',
