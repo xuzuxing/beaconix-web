@@ -39,6 +39,7 @@ const cliCommands = ['npm install -g @beacon/cli@latest', t('overview.integratio
     </template>
 
     <div class="token-guide__rows">
+      <t-alert theme="info" :message="t('access.patHint')" />
       <div class="token-guide__row">
         <span class="token-guide__label">{{ t('overview.tokenGuide.baseUrl') }}</span>
         <code class="token-guide__value">{{ baseUrl }}</code>

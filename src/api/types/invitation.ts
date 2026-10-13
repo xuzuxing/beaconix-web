@@ -7,3 +7,8 @@ export interface UserInvitation extends Omit<Invitation, 'token'> {
 }
 
 export type InvitationAction = 'accept' | 'decline'
+export interface PublicInvitationPreview {
+  organizationName: string
+  status: string
+  requiresLogin: boolean
+}

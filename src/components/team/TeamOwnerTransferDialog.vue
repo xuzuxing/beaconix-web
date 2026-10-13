@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 
 import { transferOwnership } from '@/api'
 import type { Membership } from '@/api/types'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { permissionEpoch } from '@/utils/access-context'
 import { memberIdentity } from '@/utils/team-presenter'
 
 /**
@@ -17,6 +19,7 @@ const visible = defineModel<boolean>('visible', { required: true })
 const props = defineProps<{ orgId: string; members: Membership[]; ownerId: string }>()
 const emit = defineEmits<{ transferred: [] }>()
 const { t } = useI18n()
+const permissions = usePermissionsStore()
 
 const target = ref('')
 const submitting = ref(false)
@@ -61,11 +64,20 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    await transferOwnership(props.orgId, target.value)
+    const id = props.orgId
+    await permissions.ensureOrganization(id, true)
+    if (
+      token !== generation ||
+      !visible.value ||
+      permissions.organizations[id]?.data?.organizationRole !== 'OWNER'
+    )
+      return
+    await transferOwnership(id, target.value)
     if (token !== generation) return
     MessagePlugin.success(t('workspace.team.transferDone'))
     confirmVisible.value = false
     visible.value = false
+    window.dispatchEvent(new Event('beacon-permissions-changed'))
     emit('transferred')
   } catch (cause) {
     if (token === generation)
@@ -74,6 +86,13 @@ async function submit() {
     if (token === generation) submitting.value = false
   }
 }
+watch(
+  () => [props.orgId, permissionEpoch.value],
+  () => {
+    visible.value = false
+  },
+  { flush: 'sync' },
+)
 </script>
 
 <template>

@@ -11,16 +11,7 @@
 export type RuleField = 'success' | 'latency' | 'certDaysRemaining' | 'statusCode' | 'bodyContains'
 
 export type RuleOperator =
-  | 'eq'
-  | 'neq'
-  | 'gt'
-  | 'gte'
-  | 'lt'
-  | 'lte'
-  | 'in'
-  | 'not_in'
-  | 'contains'
-  | 'statusClass'
+  'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'not_in' | 'contains' | 'statusClass'
 
 /** 叶子条件：某字段与阈值的比较 */
 export interface ConditionNode {
@@ -75,7 +66,7 @@ export interface RuleGroup {
   projectId: string | null
   name: string
   description: string | null
-  tree: RuleNode
+  tree?: RuleNode
   /** 树中用到的字段名（后端冗余字段，便于按字段反查） */
   fieldsUsed: string[]
   enabled: boolean
@@ -99,6 +90,13 @@ export interface UpdateRuleGroupParams {
   tree?: RuleNode
   enabled?: boolean
 }
+export type BoundRuleGroup =
+  | RuleGroup
+  | (Pick<RuleGroup, 'id' | 'name' | 'description' | 'enabled'> & {
+      projectId?: undefined
+      organizationId?: undefined
+      tree?: undefined
+    })
 
 /** monitor ↔ 规则组 的绑定关系 */
 export interface MonitorRuleBinding {
@@ -110,8 +108,8 @@ export interface MonitorRuleBinding {
   enabled: boolean
   createdAt: string
   updatedAt: string
-  /** GET /rule-bindings 会一并返回规则组本体 */
-  ruleGroup?: RuleGroup
+  /** Shared organization templates can contain only an authorized summary. */
+  ruleGroup?: BoundRuleGroup
 }
 
 export interface BindRuleParams {

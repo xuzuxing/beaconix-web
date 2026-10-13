@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 
 import { createNotificationChannel, updateNotificationChannel } from '@/api'
 import type { NotificationChannel, NotificationChannelType } from '@/api/types/notification'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { permissionEpoch } from '@/utils/access-context'
 import {
   CHANNEL_TYPES,
   isWebhookChannelType,
@@ -21,6 +23,7 @@ const visible = defineModel<boolean>('visible', { required: true })
 const props = defineProps<{ orgId: string; channel?: NotificationChannel }>()
 const emit = defineEmits<{ saved: [channel: NotificationChannel] }>()
 const { t } = useI18n()
+const permissions = usePermissionsStore()
 
 const submitting = ref(false)
 const error = ref('')
@@ -112,7 +115,7 @@ watch(
 )
 // 切换团队或切换编辑对象时关闭弹窗，避免把上一个渠道的配置提交到新作用域
 watch(
-  () => [props.orgId, props.channel?.id],
+  () => [props.orgId, props.channel?.id, permissionEpoch.value],
   () => {
     visible.value = false
   },
@@ -120,7 +123,7 @@ watch(
 )
 
 async function save() {
-  if (submitting.value) return
+  if (submitting.value || !permissions.canOrganization(props.orgId)) return
   error.value = validate()
   if (error.value) return
   const orgId = props.orgId
@@ -128,6 +131,8 @@ async function save() {
   const token = generation
   submitting.value = true
   try {
+    await permissions.ensureOrganization(orgId, true)
+    if (token !== generation || !visible.value || !permissions.canOrganization(orgId)) return
     const payload = {
       type: form.type,
       name: form.name.trim(),
@@ -171,10 +176,7 @@ async function save() {
 
       <template v-if="isWebhook">
         <t-form-item :label="t('channelPage.webhookUrl')"
-          ><t-input
-            v-model="form.webhookUrl"
-            :maxlength="2048"
-            :placeholder="webhookPlaceholder"
+          ><t-input v-model="form.webhookUrl" :maxlength="2048" :placeholder="webhookPlaceholder"
         /></t-form-item>
         <t-form-item :label="t('channelPage.secret')"
           ><t-input

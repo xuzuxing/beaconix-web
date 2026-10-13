@@ -1,4 +1,5 @@
 import adminPage from './admin.zh-CN'
+import access from './access.zh-CN'
 import channelPage from './channel.zh-CN'
 import monitorPage from './monitor.zh-CN'
 import notificationCenter from './notification.zh-CN'
@@ -6,6 +7,7 @@ import ruleGroup from './rule.zh-CN'
 import statusPage from './status-page.zh-CN'
 
 export default {
+  access,
   adminPage,
   monitorPage,
   ruleGroup,
@@ -91,6 +93,7 @@ export default {
   common: {
     confirm: '确定',
     cancel: '取消',
+    close: '关闭',
     reset: '重置',
     backHome: '返回首页',
     loading: '加载中…',

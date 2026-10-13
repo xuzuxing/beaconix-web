@@ -11,12 +11,12 @@ import RuleTreeView from './RuleTreeView.vue'
 defineOptions({ name: 'RuleGroupDetailDrawer' })
 
 const visible = defineModel<boolean>('visible', { required: true })
-const props = defineProps<{ group: RuleGroup | null }>()
+const props = defineProps<{ group: RuleGroup | null; editable?: boolean }>()
 const emit = defineEmits<{ edit: [group: RuleGroup] }>()
 const { t, locale } = useI18n()
 
 const counts = computed(() =>
-  props.group ? countRuleNodes(props.group.tree) : { conditions: 0, logics: 0 },
+  props.group?.tree ? countRuleNodes(props.group.tree) : { conditions: 0, logics: 0 },
 )
 const fields = computed(() =>
   (props.group?.fieldsUsed ?? []).map((field) => {
@@ -47,9 +47,11 @@ const fields = computed(() =>
           <dt>{{ t('ruleGroup.fieldsLabel') }}</dt>
           <dd>{{ fields.join(' · ') || '-' }}</dd>
         </div>
-        <div>
+        <div v-if="group.tree">
           <dt>{{ t('ruleGroup.rulesLabel') }}</dt>
-          <dd>{{ t('ruleGroup.rulesCount', { rules: counts.conditions, groups: counts.logics }) }}</dd>
+          <dd>
+            {{ t('ruleGroup.rulesCount', { rules: counts.conditions, groups: counts.logics }) }}
+          </dd>
         </div>
         <div>
           <dt>{{ t('ruleGroup.createdAt') }}</dt>
@@ -61,14 +63,14 @@ const fields = computed(() =>
         </div>
       </dl>
       <p v-if="group.description" class="rule-group-detail__desc">{{ group.description }}</p>
-      <section class="rule-group-detail__tree">
+      <section v-if="group.tree" class="rule-group-detail__tree">
         <div class="rule-group-detail__tree-head">
           <h4>{{ t('ruleGroup.treeTitle') }}</h4>
-          <t-button size="small" variant="outline" @click="emit('edit', group)">{{
+          <t-button v-if="editable" size="small" variant="outline" @click="emit('edit', group)">{{
             t('ruleGroup.edit')
           }}</t-button>
         </div>
-        <RuleTreeView :tree="group.tree" />
+        <RuleTreeView v-if="group.tree" :tree="group.tree" />
       </section>
     </div>
   </t-drawer>

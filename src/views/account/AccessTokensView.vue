@@ -87,7 +87,7 @@ function revoke(token: PersonalAccessToken) {
     <t-card class="access-tokens__panel">
       <template #title>{{ t('workspace.pat.title') }}</template>
 
-      <p class="access-tokens__subtitle">{{ t('workspace.pat.subtitle') }}</p>
+      <p class="access-tokens__subtitle">{{ t('access.patHint') }}</p>
 
       <div v-if="error" class="access-tokens__state">
         <t-alert theme="error" :message="t('workspace.pat.loadFailed')" />
@@ -135,7 +135,12 @@ function revoke(token: PersonalAccessToken) {
               :content="t('workspace.pat.revokeConfirm')"
               @confirm="revoke(token)"
             >
-              <t-button variant="text" theme="danger" size="small" :loading="pendingId === token.id">
+              <t-button
+                variant="text"
+                theme="danger"
+                size="small"
+                :loading="pendingId === token.id"
+              >
                 {{ t('workspace.pat.revoke') }}
               </t-button>
             </t-popconfirm>

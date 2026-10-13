@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useI18n } from 'vue-i18n'
 
 import type { Organization } from '@/api/types'
@@ -31,6 +32,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{ select: []; manage: []; members: [] }>()
 const { t } = useI18n()
+const permissions = usePermissionsStore()
 
 const planLabel = computed(() => props.plan?.name ?? t('usage.package.freePlan'))
 </script>
@@ -49,6 +51,7 @@ const planLabel = computed(() => props.plan?.name ?? t('usage.package.freePlan')
       <span class="team-card__name">{{ org.name }}</span>
       <span v-if="selected" class="team-card__current">{{ t('workspace.team.current') }}</span>
       <t-tag
+        v-if="plan"
         class="team-card__plan beacon-plan-badge"
         :class="`beacon-plan--${planTier(plan)}`"
         :theme="planTagTheme(plan)"
@@ -71,7 +74,7 @@ const planLabel = computed(() => props.plan?.name ?? t('usage.package.freePlan')
     </ul>
 
     <div class="team-card__foot">
-      <div class="team-card__entries">
+      <div v-if="permissions.canOrganization(org.id)" class="team-card__entries">
         <button
           type="button"
           class="team-card__entry"

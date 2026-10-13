@@ -1,10 +1,18 @@
-import { useOrganizationRole } from './useOrganizationRole'
+import { computed, type MaybeRefOrGetter } from 'vue'
+import { useRoute } from 'vue-router'
+import { useOrganizationStore } from '@/stores'
+import { useProjectAccess } from './useProjectAccess'
 
 /**
- * 监控模块的角色权限。
- * 监控项与通知渠道的管理规则一致，统一由组织角色派生（见 useOrganizationRole）。
+ * Monitor capabilities always use the resource's project, including deep links.
  */
-export function useMonitorAccess() {
-  const { canManage, canCheck } = useOrganizationRole()
-  return { canManage, canCheck }
+export function useMonitorAccess(projectId?: MaybeRefOrGetter<string>) {
+  const route = useRoute()
+  const org = useOrganizationStore()
+  return useProjectAccess(
+    projectId ??
+      computed(() =>
+        typeof route.params.projectId === 'string' ? route.params.projectId : org.currentProjectId,
+      ),
+  )
 }

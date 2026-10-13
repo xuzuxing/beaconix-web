@@ -40,8 +40,11 @@ export function useMonitorDetail(
       monitor.value = item
       insights.value = data
     } catch (cause) {
-      if (token === generation)
+      if (token === generation) {
+        monitor.value = undefined
+        insights.value = undefined
         error.value = cause instanceof Error ? cause.message : 'Unable to load monitor'
+      }
     } finally {
       if (token === generation) loading.value = false
     }

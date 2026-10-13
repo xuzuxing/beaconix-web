@@ -241,8 +241,12 @@ export interface Invitation {
   organizationId: string
   role: InvitableRole
   status: InvitationStatus
-  /** 邀请令牌，接受/拒绝接口使用 */
-  token: string
+  accessMode: import('./types/permissions').AccessMode
+  projects: {
+    projectId: string
+    projectName: string
+    role: import('./types/permissions').ProjectRole
+  }[]
   expiresAt: string
   sentById: string
   acceptedAt: string | null
@@ -253,6 +257,7 @@ export interface Invitation {
 export interface CreateInvitationParams {
   email: string
   role?: InvitableRole
+  projects?: import('./types/permissions').ProjectGrant[]
 }
 
 // ============================================================
@@ -291,7 +296,18 @@ export interface UpdateProjectParams {
 // 监控
 // ============================================================
 
-export type MonitorType = 'HTTP' | 'TCP' | 'PING' | 'DNS' | 'MYSQL' | 'POSTGRESQL' | 'REDIS' | 'MONGODB' | 'DOCKER' | 'GRPC' | 'WEBSOCKET'
+export type MonitorType =
+  | 'HTTP'
+  | 'TCP'
+  | 'PING'
+  | 'DNS'
+  | 'MYSQL'
+  | 'POSTGRESQL'
+  | 'REDIS'
+  | 'MONGODB'
+  | 'DOCKER'
+  | 'GRPC'
+  | 'WEBSOCKET'
 
 // ---------- 协议配置（CreateMonitorDto.config / MonitorEntity.config） ----------
 
@@ -429,7 +445,7 @@ export interface Monitor {
   availabilityThreshold: number | null
   availabilityWindow: number | null
   /** 绑定的告警渠道，空表示走组织级兜底 */
-  notificationChannelIds: string[]
+  notificationChannelIds?: string[]
   status: MonitorStatus
   failCount: number
   lastCheckAt: string | null

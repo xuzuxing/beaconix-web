@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 
 import { createStatusPage, updateStatusPage } from '@/api'
 import type { StatusPage } from '@/api/types/status-page'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { permissionEpoch } from '@/utils/access-context'
 import { useOrganizationMonitors } from '@/composables/useOrganizationMonitors'
 import {
   isValidStatusPageSlug,
@@ -25,15 +27,22 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ saved: [page: StatusPage] }>()
 const { t } = useI18n()
+const permissions = usePermissionsStore()
 
 const submitting = ref(false)
 const error = ref('')
 let generation = 0
 
 /** 只有对话框打开时才加载可选监控项：避免页面一进入就发起跨项目请求 */
-const monitorScope = computed(() => (visible.value ? props.orgId : undefined))
-const { monitors, loading: monitorsLoading, error: monitorsError, load: reloadMonitors } =
-  useOrganizationMonitors(monitorScope)
+const monitorScope = computed(() =>
+  visible.value && permissions.canOrganization(props.orgId) ? props.orgId : undefined,
+)
+const {
+  monitors,
+  loading: monitorsLoading,
+  error: monitorsError,
+  load: reloadMonitors,
+} = useOrganizationMonitors(monitorScope)
 const monitorOptions = computed(() =>
   monitors.value.map((monitor) => ({
     label: `${monitor.projectName} · ${monitor.name}`,
@@ -87,7 +96,7 @@ watch(
 )
 // 切换团队或切换编辑对象时关闭弹窗，避免把上一个状态页的配置提交到新作用域
 watch(
-  () => [props.orgId, props.page?.id],
+  () => [props.orgId, props.page?.id, permissionEpoch.value],
   () => {
     visible.value = false
   },
@@ -95,7 +104,7 @@ watch(
 )
 
 async function save() {
-  if (submitting.value) return
+  if (submitting.value || !permissions.canOrganization(props.orgId)) return
   error.value = validate()
   if (error.value) return
   const orgId = props.orgId
@@ -103,6 +112,8 @@ async function save() {
   const token = generation
   submitting.value = true
   try {
+    await permissions.ensureOrganization(orgId, true)
+    if (token !== generation || !visible.value || !permissions.canOrganization(orgId)) return
     const payload = {
       title: form.title.trim(),
       slug: form.slug.trim(),
@@ -148,10 +159,16 @@ async function save() {
 
     <t-form :data="form" label-align="top" :colon="false">
       <t-form-item :label="t('statusPage.titleLabel')"
-        ><t-input v-model="form.title" :maxlength="100" :placeholder="t('statusPage.titlePlaceholder')"
+        ><t-input
+          v-model="form.title"
+          :maxlength="100"
+          :placeholder="t('statusPage.titlePlaceholder')"
       /></t-form-item>
       <t-form-item :label="t('statusPage.slugLabel')"
-        ><t-input v-model="form.slug" :maxlength="64" :placeholder="t('statusPage.slugPlaceholder')"
+        ><t-input
+          v-model="form.slug"
+          :maxlength="64"
+          :placeholder="t('statusPage.slugPlaceholder')"
       /></t-form-item>
       <t-form-item :label="t('statusPage.descriptionLabel')"
         ><t-textarea

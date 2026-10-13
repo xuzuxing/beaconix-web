@@ -45,13 +45,36 @@ const RANGE_OPTIONS = [
   { value: '30d', labelKey: 'dashboard.range.d30' },
 ]
 const projectId = computed(() => orgStore.currentProjectId || undefined)
-const { dashboard, availability, statusCodes, loading, error, refresh } = useMonitoringDashboard(projectId, range, tz)
-const timeline = computed(() => dashboard.value ? adaptTimeline(dashboard.value) :
-  { labels: [], checks: [], failures: [], avgLatency: [], latencyP50: [], latencyP95: [], latencyP99: [], availability: [] })
-const kpis = computed(() => dashboard.value ? adaptKpis(dashboard.value) : [])
-const updatedAt = computed(() => dashboard.value ? dashboard.value.asOf.replace('T', ' ').slice(0, 19) : '-')
-const truncated = computed(() => dashboard.value && Object.entries(dashboard.value.history).some(([key, value]) =>
-  /Current|current|Previous|previous/.test(key) && value === 'TRUNCATED'))
+const { dashboard, availability, statusCodes, loading, error, refresh } = useMonitoringDashboard(
+  projectId,
+  range,
+  tz,
+)
+const timeline = computed(() =>
+  dashboard.value
+    ? adaptTimeline(dashboard.value)
+    : {
+        labels: [],
+        checks: [],
+        failures: [],
+        avgLatency: [],
+        latencyP50: [],
+        latencyP95: [],
+        latencyP99: [],
+        availability: [],
+      },
+)
+const kpis = computed(() => (dashboard.value ? adaptKpis(dashboard.value) : []))
+const updatedAt = computed(() =>
+  dashboard.value ? dashboard.value.asOf.replace('T', ' ').slice(0, 19) : '-',
+)
+const truncated = computed(
+  () =>
+    dashboard.value &&
+    Object.entries(dashboard.value.history).some(
+      ([key, value]) => /Current|current|Previous|previous/.test(key) && value === 'TRUNCATED',
+    ),
+)
 
 /** 轻量指标卡（纯 SVG 折线），与 echarts 图表混合使用 */
 const svgMetrics = computed(() => [
@@ -99,8 +122,14 @@ const svgMetrics = computed(() => [
           <t-tag variant="light-outline" size="small">
             {{ orgStore.currentOrganization?.name ?? t('dashboard.scope.noOrg') }}
           </t-tag>
-          <t-tag class="beacon-plan-badge" :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
-            :theme="planTagTheme(orgStore.currentPlan)" variant="light" size="small">
+          <t-tag
+            v-if="orgStore.subscription"
+            class="beacon-plan-badge"
+            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+            :theme="planTagTheme(orgStore.currentPlan)"
+            variant="light"
+            size="small"
+          >
             {{ planLabel }}
           </t-tag>
           <t-tag variant="light-outline" size="small">
@@ -113,7 +142,16 @@ const svgMetrics = computed(() => [
       </div>
 
       <div class="dashboard__range">
-        <t-select v-model="tz" :options="['Asia/Shanghai', 'UTC', 'America/New_York', 'Europe/London', 'Asia/Kolkata', tz].filter((v, i, a) => a.indexOf(v) === i).map(value => ({ label: value, value }))" aria-label="Time zone" style="width: 184px" />
+        <t-select
+          v-model="tz"
+          :options="
+            ['Asia/Shanghai', 'UTC', 'America/New_York', 'Europe/London', 'Asia/Kolkata', tz]
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .map((value) => ({ label: value, value }))
+          "
+          aria-label="Time zone"
+          style="width: 184px"
+        />
         <span class="dashboard__range-label">{{ t('dashboard.range.label') }}</span>
         <t-radio-group v-model="range" variant="default-filled" size="small">
           <t-radio-button v-for="option in RANGE_OPTIONS" :key="option.value" :value="option.value">
@@ -124,84 +162,99 @@ const svgMetrics = computed(() => [
     </header>
     <t-loading v-if="loading" :text="t('dashboard.live.loading')" />
     <t-alert v-else-if="error" theme="error" :message="error">
-      <template #operation><t-button variant="text" @click="refresh">{{ t('dashboard.live.retry') }}</t-button></template>
+      <template #operation
+        ><t-button variant="text" @click="refresh">{{
+          t('dashboard.live.retry')
+        }}</t-button></template
+      >
     </t-alert>
     <t-empty v-else-if="!projectId" :description="t('dashboard.scope.noProject')" />
     <template v-if="dashboard && availability && statusCodes">
-    <t-alert v-if="truncated || availability.history.status === 'TRUNCATED' || statusCodes.history.status === 'TRUNCATED'" theme="warning" :message="t('dashboard.live.truncated')" />
+      <t-alert
+        v-if="
+          truncated ||
+          availability.history.status === 'TRUNCATED' ||
+          statusCodes.history.status === 'TRUNCATED'
+        "
+        theme="warning"
+        :message="t('dashboard.live.truncated')"
+      />
 
-    <!-- 状态条：监控项状态 / 探针 / 告警 / 证书 -->
-    <MonitorSummaryStrip :summary="dashboard.summary" />
+      <!-- 状态条：监控项状态 / 探针 / 告警 / 证书 -->
+      <MonitorSummaryStrip :summary="dashboard.summary" />
 
-    <!-- 核心指标 -->
-    <section class="dashboard__section">
-      <div class="dashboard__section-head">
-        <h3 class="dashboard__section-title">{{ t('dashboard.section.kpi') }}</h3>
-      </div>
-      <MonitorKpiGrid :kpis="kpis" />
-    </section>
+      <!-- 核心指标 -->
+      <section class="dashboard__section">
+        <div class="dashboard__section-head">
+          <h3 class="dashboard__section-title">{{ t('dashboard.section.kpi') }}</h3>
+        </div>
+        <MonitorKpiGrid :kpis="kpis" />
+      </section>
 
-    <!-- 数据概览：保留原有 SVG 指标卡 -->
-    <section class="dashboard__section">
-      <div class="dashboard__section-head">
-        <h3 class="dashboard__section-title">{{ t('dashboard.section.dataOverview') }}</h3>
-      </div>
-      <div class="dashboard__charts">
-        <MetricChartCard
-          v-for="metric in svgMetrics"
-          :key="metric.key"
-          :title="metric.title"
-          :tip="metric.tip"
-          :values="metric.values"
-          :labels="metric.labels"
-          :auto-scale="metric.autoScale"
+      <!-- 数据概览：保留原有 SVG 指标卡 -->
+      <section class="dashboard__section">
+        <div class="dashboard__section-head">
+          <h3 class="dashboard__section-title">{{ t('dashboard.section.dataOverview') }}</h3>
+        </div>
+        <div class="dashboard__charts">
+          <MetricChartCard
+            v-for="metric in svgMetrics"
+            :key="metric.key"
+            :title="metric.title"
+            :tip="metric.tip"
+            :values="metric.values"
+            :labels="metric.labels"
+            :auto-scale="metric.autoScale"
+          />
+        </div>
+      </section>
+
+      <!-- 性能趋势 -->
+      <section class="dashboard__section">
+        <div class="dashboard__section-head">
+          <h3 class="dashboard__section-title">{{ t('dashboard.section.trend') }}</h3>
+          <span class="dashboard__section-extra">
+            {{ t('dashboard.section.trendTip') }}
+          </span>
+        </div>
+        <MonitorTrendCharts :timeline="timeline" />
+      </section>
+
+      <!-- 可用性与状态码 -->
+      <section class="dashboard__section">
+        <div class="dashboard__section-head">
+          <h3 class="dashboard__section-title">{{ t('dashboard.section.availability') }}</h3>
+          <span class="dashboard__section-extra">
+            {{ t('dashboard.section.availabilityTip') }}
+          </span>
+        </div>
+        <MonitorAvailabilityPanel :heatmap="availability" :codes="statusCodes" />
+      </section>
+
+      <!-- 监控分布 -->
+      <section class="dashboard__section">
+        <div class="dashboard__section-head">
+          <h3 class="dashboard__section-title">{{ t('dashboard.section.distribution') }}</h3>
+          <span class="dashboard__section-extra">
+            {{ t('dashboard.section.distributionTip') }}
+          </span>
+        </div>
+        <MonitorDistributionCharts
+          :summary="dashboard.summary"
+          :distribution="dashboard.distribution"
         />
-      </div>
-    </section>
+      </section>
 
-    <!-- 性能趋势 -->
-    <section class="dashboard__section">
-      <div class="dashboard__section-head">
-        <h3 class="dashboard__section-title">{{ t('dashboard.section.trend') }}</h3>
-        <span class="dashboard__section-extra">
-          {{ t('dashboard.section.trendTip') }}
-        </span>
-      </div>
-      <MonitorTrendCharts :timeline="timeline" />
-    </section>
-
-    <!-- 可用性与状态码 -->
-    <section class="dashboard__section">
-      <div class="dashboard__section-head">
-        <h3 class="dashboard__section-title">{{ t('dashboard.section.availability') }}</h3>
-        <span class="dashboard__section-extra">
-          {{ t('dashboard.section.availabilityTip') }}
-        </span>
-      </div>
-      <MonitorAvailabilityPanel :heatmap="availability" :codes="statusCodes" />
-    </section>
-
-    <!-- 监控分布 -->
-    <section class="dashboard__section">
-      <div class="dashboard__section-head">
-        <h3 class="dashboard__section-title">{{ t('dashboard.section.distribution') }}</h3>
-        <span class="dashboard__section-extra">
-          {{ t('dashboard.section.distributionTip') }}
-        </span>
-      </div>
-      <MonitorDistributionCharts :summary="dashboard.summary" :distribution="dashboard.distribution" />
-    </section>
-
-    <!-- 慢项与告警 -->
-    <section class="dashboard__section">
-      <div class="dashboard__section-head">
-        <h3 class="dashboard__section-title">{{ t('dashboard.section.detail') }}</h3>
-        <span class="dashboard__section-extra">
-          {{ t('dashboard.section.detailTip') }}
-        </span>
-      </div>
-      <MonitorDetailPanel :slowest="dashboard.slowestMonitors" :events="dashboard.recentAlerts" />
-    </section>
+      <!-- 慢项与告警 -->
+      <section class="dashboard__section">
+        <div class="dashboard__section-head">
+          <h3 class="dashboard__section-title">{{ t('dashboard.section.detail') }}</h3>
+          <span class="dashboard__section-extra">
+            {{ t('dashboard.section.detailTip') }}
+          </span>
+        </div>
+        <MonitorDetailPanel :slowest="dashboard.slowestMonitors" :events="dashboard.recentAlerts" />
+      </section>
     </template>
   </div>
 </template>
@@ -308,12 +361,20 @@ const svgMetrics = computed(() => [
     gap: @beacon-gap-l;
   }
   @media (max-width: 1100px) {
-    &__hero { flex-direction: column; }
-    &__charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    &__hero {
+      flex-direction: column;
+    }
+    &__charts {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
   @media (max-width: 600px) {
-    &__charts { grid-template-columns: minmax(0, 1fr); }
-    &__section-head { flex-wrap: wrap; }
+    &__charts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    &__section-head {
+      flex-wrap: wrap;
+    }
   }
 }
 </style>

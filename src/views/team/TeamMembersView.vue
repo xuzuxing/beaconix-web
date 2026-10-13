@@ -8,11 +8,14 @@ import type { Invitation, Membership, MembershipRole } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import MemberInviteDialog from '@/components/team/MemberInviteDialog.vue'
+import MemberProjectPermissionsDrawer from '@/components/team/MemberProjectPermissionsDrawer.vue'
+import InvitationScope from '@/components/team/InvitationScope.vue'
 import { useOrganizationRole } from '@/composables/useOrganizationRole'
 import { useTeamMembers } from '@/composables/useTeamMembers'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
 import { useOrganizationStore, useUserStore } from '@/stores'
 import { formatDateTime } from '@/utils/billing'
+import { permissionEpoch } from '@/utils/access-context'
 import {
   ASSIGNABLE_ROLES,
   MEMBER_ROLES,
@@ -35,7 +38,7 @@ defineOptions({ name: 'TeamMembersView' })
 const { t } = useI18n()
 const orgStore = useOrganizationStore()
 const userStore = useUserStore()
-const { canManage } = useOrganizationRole()
+const { canManage, canGrantAdmin } = useOrganizationRole()
 
 const orgId = computed(() => orgStore.currentOrganizationId)
 const { members, invitations, loading, error, invitationsDenied, pendingKey, load, act } =
@@ -46,6 +49,24 @@ const roleFilter = ref<MembershipRole | 'all'>('all')
 const pageSize = ref(10)
 const page = ref(1)
 const inviteVisible = ref(false)
+const permissionsVisible = ref(false)
+const permissionUserId = ref('')
+const roleChange = ref<{ member: Membership; role: MembershipRole; orgId: string } | null>(null)
+const roleChangeVisible = computed({
+  get: () => roleChange.value !== null,
+  set: (value: boolean) => {
+    if (!value) roleChange.value = null
+  },
+})
+watch(
+  () => [orgId.value, permissionEpoch.value],
+  () => {
+    roleChange.value = null
+    inviteVisible.value = false
+    permissionsVisible.value = false
+  },
+  { flush: 'sync' },
+)
 
 const filtered = computed(() => selectMembers(members.value, keyword.value, roleFilter.value))
 const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)))
@@ -61,7 +82,7 @@ const roleFilterOptions = computed(() => [
   ...MEMBER_ROLES.map((role) => ({ label: t(`workspace.member.roleOption.${role}`), value: role })),
 ])
 const assignableOptions = computed(() =>
-  ASSIGNABLE_ROLES.map((role) => ({
+  ASSIGNABLE_ROLES.filter((role) => role !== 'ADMIN' || canGrantAdmin.value).map((role) => ({
     label: t(`workspace.member.roleOption.${role}`),
     value: role,
   })),
@@ -84,7 +105,14 @@ function permissions(member: Membership) {
   return memberPermissions(member, {
     currentUserId: userStore.user?.id,
     canManage: canManage.value,
+    canGrantAdmin: canGrantAdmin.value,
   })
+}
+
+function openProjectPermissions(member: Membership) {
+  if (!canManage.value || ['OWNER', 'ADMIN'].includes(member.role)) return
+  permissionUserId.value = member.userId
+  permissionsVisible.value = true
 }
 
 /** 不能操作时的原因提示（自己 / 所有者） */
@@ -96,12 +124,32 @@ function lockHint(member: Membership): string {
 }
 
 async function changeRole(member: Membership, value: unknown) {
+  if (!permissions(member).canChangeRole) return
   const role = String(value) as MembershipRole
   if (!ASSIGNABLE_ROLES.includes(role) || role === member.role) return
+  if (role === 'ADMIN' && !canGrantAdmin.value) return
+  roleChange.value = { member, role, orgId: orgId.value }
+}
+
+async function confirmRoleChange() {
+  const change = roleChange.value
+  if (!change || change.orgId !== orgId.value) return
+  const { member, role } = change
+  if (!permissions(member).canChangeRole || (role === 'ADMIN' && !canGrantAdmin.value)) return
   await act(member.userId, async () => {
+    if (
+      roleChange.value !== change ||
+      !permissions(member).canChangeRole ||
+      (role === 'ADMIN' && !canGrantAdmin.value)
+    )
+      return
     try {
-      await updateMemberRole(orgId.value, member.userId, role)
+      await updateMemberRole(change.orgId, member.userId, role)
       MessagePlugin.success(t('workspace.member.updated'))
+      roleChange.value = null
+      window.dispatchEvent(new Event('beacon-permissions-changed'))
+    } catch {
+      // The request layer reports the server rejection.
     } finally {
       // 无论成功与否都重载，保证下拉与后端一致
       await load()
@@ -110,6 +158,7 @@ async function changeRole(member: Membership, value: unknown) {
 }
 
 function remove(member: Membership) {
+  if (!permissions(member).canRemove) return
   void act(member.userId, async () => {
     try {
       await removeMember(orgId.value, member.userId)
@@ -123,6 +172,7 @@ function remove(member: Membership) {
 }
 
 function revoke(invitation: Invitation) {
+  if (!canManage.value) return
   void act(invitation.id, async () => {
     try {
       await revokeInvitation(orgId.value, invitation.id)
@@ -149,6 +199,20 @@ function clearFilters() {
 
 <template>
   <section class="members">
+    <t-dialog
+      v-model:visible="roleChangeVisible"
+      :header="t('workspace.member.changeRole')"
+      width="min(480px, calc(100vw - 32px))"
+      :confirm-btn="{ content: t('common.confirm'), loading: !!pendingKey }"
+      @confirm="confirmRoleChange"
+    >
+      <p>{{ t('access.roleImpact') }}</p>
+      <p v-if="roleChange">
+        {{ identity(roleChange.member).name }}:
+        {{ t(`workspace.member.roleOption.${roleChange.member.role}`) }} →
+        {{ t(`workspace.member.roleOption.${roleChange.role}`) }}
+      </p>
+    </t-dialog>
     <HeaderActions>
       <t-tooltip :content="t('workspace.teamSelect.refresh')"
         ><t-button
@@ -238,6 +302,13 @@ function clearFilters() {
             <span class="member-row__joined">{{ formatDateTime(member.joinedAt) }}</span>
 
             <div class="member-row__actions">
+              <t-button
+                v-if="canManage && !['OWNER', 'ADMIN'].includes(member.role)"
+                variant="text"
+                size="small"
+                @click="openProjectPermissions(member)"
+                >{{ t('access.projectPermissions') }}</t-button
+              >
               <t-popconfirm
                 v-if="permissions(member).canRemove"
                 :content="t('workspace.member.removeConfirm')"
@@ -292,6 +363,7 @@ function clearFilters() {
           <t-tag size="small" variant="light-outline">
             {{ t(`workspace.member.roleOption.${invitation.role}`) }}
           </t-tag>
+          <InvitationScope :invitation="invitation" />
           <t-tag
             size="small"
             variant="light"
@@ -333,6 +405,12 @@ function clearFilters() {
       :invitations="invitations"
       @saved="load"
     />
+    <MemberProjectPermissionsDrawer
+      v-model:visible="permissionsVisible"
+      :org-id="orgId"
+      :user-id="permissionUserId"
+      @saved="load"
+    />
   </section>
 </template>
 
@@ -371,7 +449,7 @@ function clearFilters() {
   &__table-head,
   .member-row {
     display: grid;
-    grid-template-columns: minmax(200px, 1fr) 150px 150px 96px;
+    grid-template-columns: minmax(200px, 1fr) 150px 150px 180px;
     align-items: center;
     gap: 16px;
     padding: 12px 16px;
@@ -451,6 +529,7 @@ function clearFilters() {
   &__actions {
     display: flex;
     justify-content: flex-end;
+    flex-wrap: wrap;
   }
 
   &__locked {
@@ -461,7 +540,7 @@ function clearFilters() {
 
 .invite-row {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 110px 96px 72px;
+  grid-template-columns: minmax(200px, 1fr) 110px minmax(100px, 1fr) 96px 72px;
   align-items: center;
   gap: 16px;
   padding: 12px 16px;

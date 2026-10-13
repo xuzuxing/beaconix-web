@@ -6,6 +6,8 @@ import { useI18n } from 'vue-i18n'
 
 import { createApiKey } from '@/api'
 import type { ApiKeyScope } from '@/api/types/team'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { permissionEpoch } from '@/utils/access-context'
 import { API_KEY_SCOPES, apiKeyScopeLabelKey } from '@/utils/team-presenter'
 
 /**
@@ -18,6 +20,7 @@ const visible = defineModel<boolean>('visible', { required: true })
 const props = defineProps<{ orgId: string }>()
 const emit = defineEmits<{ created: [key: string] }>()
 const { t } = useI18n()
+const permissions = usePermissionsStore()
 
 const form = reactive({
   name: '',
@@ -50,7 +53,7 @@ watch(
 
 // 切换团队时关闭弹窗，避免把密钥建到上一个团队
 watch(
-  () => props.orgId,
+  () => [props.orgId, permissionEpoch.value],
   () => {
     visible.value = false
   },
@@ -69,7 +72,7 @@ function validate(): string {
 }
 
 async function submit() {
-  if (submitting.value) return
+  if (submitting.value || !permissions.canOrganization(props.orgId)) return
   const message = validate()
   if (message) {
     error.value = message
@@ -80,7 +83,10 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    const result = await createApiKey(props.orgId, {
+    const id = props.orgId
+    await permissions.ensureOrganization(id, true)
+    if (token !== generation || !visible.value || !permissions.canOrganization(id)) return
+    const result = await createApiKey(id, {
       name: form.name.trim(),
       scopes: [...form.scopes],
       ...(form.expiry === 'custom' ? { expiresAt: dayjs(form.expiresAt).toISOString() } : {}),

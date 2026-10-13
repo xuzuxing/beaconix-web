@@ -3,9 +3,22 @@ import { useI18n } from 'vue-i18n'
 import type { Monitor } from '@/api/types'
 import type { MonitorAction } from '@/composables/useMonitorActions'
 import AppIcon from '@/components/AppIcon.vue'
-import { Delete02Icon, Edit02Icon, FlashIcon, PauseIcon, PlayIcon } from '@/icons'
+import {
+  Delete02Icon,
+  Edit02Icon,
+  FlashIcon,
+  PauseIcon,
+  PlayIcon,
+  Notification03Icon,
+} from '@/icons'
 
-defineProps<{ monitor: Monitor; pending?: boolean; canManage: boolean; canCheck: boolean }>()
+defineProps<{
+  monitor: Monitor
+  pending?: boolean
+  canManage: boolean
+  canCheck: boolean
+  canTestAlert?: boolean
+}>()
 const emit = defineEmits<{ action: [action: MonitorAction]; edit: [] }>()
 const { t } = useI18n()
 </script>
@@ -23,6 +36,22 @@ const { t } = useI18n()
         ><template #icon><AppIcon :icon="FlashIcon" /></template
       ></t-button>
     </t-tooltip>
+    <t-popconfirm
+      v-if="canTestAlert"
+      :content="t('access.testAlertConfirm')"
+      @confirm="emit('action', 'test-alert')"
+    >
+      <t-tooltip :content="t('access.testAlert')">
+        <t-button
+          variant="text"
+          shape="square"
+          :aria-label="t('access.testAlert')"
+          :disabled="pending"
+        >
+          <AppIcon :icon="Notification03Icon" />
+        </t-button>
+      </t-tooltip>
+    </t-popconfirm>
     <template v-if="canManage">
       <t-tooltip
         :content="t(monitor.enabled ? 'workspace.monitor.pause' : 'workspace.monitor.resume')"

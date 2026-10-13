@@ -26,7 +26,7 @@ const route = useRoute()
 const router = useRouter()
 const org = useOrganizationStore()
 const projectId = computed(() => org.currentProjectId)
-const { canManage, canCheck } = useMonitorAccess()
+const { canManage, canCheck, canTestAlert } = useMonitorAccess()
 const { monitors, loading, error, load } = useMonitorList(projectId)
 const dialog = ref(false)
 const editing = ref<Monitor>()
@@ -248,6 +248,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
               :pending="pending[monitor.id]"
               :can-manage="canManage"
               :can-check="canCheck"
+              :can-test-alert="canTestAlert"
               @edit="edit(monitor)"
               @action="act(projectId, monitor, $event)"
             />

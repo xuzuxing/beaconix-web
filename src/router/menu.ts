@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 import type { GlobalRole } from '@/api/types'
 import type { MenuItem } from '@/types'
+import { canVisitNavigation } from '@/utils/navigation-access'
 
 /** 拼接父子路由的完整路径 */
 function resolvePath(basePath: string, path: string): string {
@@ -55,7 +56,12 @@ export function buildMenu(
   }
 
   routes.forEach((route) => {
-    if (route.meta?.menuExcluded || (!includeHidden && route.meta?.hidden) || !isVisible(route)) {
+    if (
+      route.meta?.menuExcluded ||
+      (!includeHidden && route.meta?.hidden) ||
+      !isVisible(route) ||
+      !canVisitNavigation(resolvePath(basePath, route.path))
+    ) {
       return
     }
 

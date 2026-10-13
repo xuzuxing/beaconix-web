@@ -2,8 +2,13 @@ import { MessagePlugin } from 'tdesign-vue-next'
 import { onScopeDispose, ref, watch, type Ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { deleteNotificationChannel, testNotificationChannel, updateNotificationChannel } from '@/api'
+import {
+  deleteNotificationChannel,
+  testNotificationChannel,
+  updateNotificationChannel,
+} from '@/api'
 import type { NotificationChannel } from '@/api/types/notification'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 
 export type ChannelAction = 'test' | 'toggle' | 'delete'
 
@@ -14,6 +19,7 @@ export type ChannelAction = 'test' | 'toggle' | 'delete'
  */
 export function useChannelActions(scope: Ref<string>, done: () => Promise<void>) {
   const { t } = useI18n()
+  const permissions = usePermissionsStore()
   const pending = ref<Record<string, boolean>>({})
   const actionError = ref('')
   let generation = 0
@@ -31,11 +37,13 @@ export function useChannelActions(scope: Ref<string>, done: () => Promise<void>)
   })
 
   async function act(orgId: string, channel: NotificationChannel, action: ChannelAction) {
-    if (pending.value[channel.id]) return
+    if (pending.value[channel.id] || !permissions.canOrganization(orgId)) return
     const token = generation
     pending.value[channel.id] = true
     actionError.value = ''
     try {
+      await permissions.ensureOrganization(orgId, true)
+      if (token !== generation || !permissions.canOrganization(orgId)) return
       if (action === 'test') {
         const result = await testNotificationChannel(orgId, channel.id)
         if (token !== generation) return

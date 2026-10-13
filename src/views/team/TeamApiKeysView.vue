@@ -71,6 +71,7 @@ function revoke(key: ApiKey) {
 
 <template>
   <section class="api-keys">
+    <t-alert theme="info" :message="t('access.keyHint')" />
     <HeaderActions>
       <t-tooltip :content="t('workspace.teamSelect.refresh')"
         ><t-button

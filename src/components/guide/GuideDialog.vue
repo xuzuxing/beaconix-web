@@ -99,7 +99,7 @@ watch(
   <t-dialog
     v-model:visible="visible"
     class="guide-dialog"
-    width="960px"
+    width="min(960px, calc(100vw - 24px))"
     :footer="false"
     :close-btn="false"
     :close-on-overlay-click="true"
@@ -119,6 +119,7 @@ watch(
     </template>
 
     <div class="guide-dialog__body">
+      <t-alert theme="info" :message="t('access.patHint')" />
       <!-- 一级分类：标题 + 说明 -->
       <ul class="guide-dialog__categories">
         <li v-for="category in categories" :key="category.key">

@@ -3,8 +3,12 @@ import { MessagePlugin } from 'tdesign-vue-next'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { sendInvitation } from '@/api'
-import type { Invitation, InvitableRole, Membership } from '@/api/types'
+import { sendInvitation, listProjects } from '@/api'
+import type { Invitation, InvitableRole, Membership, Project } from '@/api/types'
+import type { ProjectGrant } from '@/api/types/permissions'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { permissionEpoch } from '@/utils/access-context'
+import ProjectGrantSelector from './ProjectGrantSelector.vue'
 import { INVITABLE_ROLES } from '@/utils/team-presenter'
 
 /**
@@ -25,10 +29,19 @@ const { t } = useI18n()
 const form = reactive({ email: '', role: 'MEMBER' as InvitableRole })
 const submitting = ref(false)
 const error = ref('')
+const projects = ref<Project[]>([])
+const grants = ref<ProjectGrant[]>([])
+const loadingProjects = ref(false)
+const adminConfirmed = ref(false)
+const permissions = usePermissionsStore()
+const allowed = computed(() => permissions.canOrganization(props.orgId, 'inviteMembers'))
 let generation = 0
 
 const roleOptions = computed(() =>
-  INVITABLE_ROLES.map((role) => ({ label: t(`workspace.member.roleOption.${role}`), value: role })),
+  INVITABLE_ROLES.filter(
+    (role) =>
+      role !== 'ADMIN' || permissions.canOrganization(props.orgId, 'grantOrganizationAdmin'),
+  ).map((role) => ({ label: t(`workspace.member.roleOption.${role}`), value: role })),
 )
 
 /** 已占用邮箱：现役成员 + 待处理邀请 */
@@ -48,8 +61,44 @@ watch(
     if (!value) return
     form.email = ''
     form.role = 'MEMBER'
+    grants.value = []
+    projects.value = []
+    adminConfirmed.value = false
+    void loadProjects()
   },
   { flush: 'sync' },
+)
+async function loadProjects() {
+  if (!allowed.value || !visible.value) return
+  const token = generation
+  loadingProjects.value = true
+  try {
+    await permissions.ensureOrganization(props.orgId, true)
+    if (token !== generation || !visible.value || !allowed.value) return
+    const result = await listProjects(props.orgId)
+    if (token === generation)
+      projects.value = result.filter((project) => project.status === 'ACTIVE')
+  } catch {
+    if (token === generation) error.value = t('access.loadFailed')
+  } finally {
+    if (token === generation) loadingProjects.value = false
+  }
+}
+watch(
+  permissionEpoch,
+  () => {
+    visible.value = false
+  },
+  { flush: 'sync' },
+)
+watch(
+  () => form.role,
+  (role, previous) => {
+    adminConfirmed.value = false
+    if (role === 'ADMIN' || previous === 'ADMIN') grants.value = []
+    if (role === 'VIEWER')
+      grants.value = grants.value.map((grant) => ({ ...grant, role: 'VIEWER' }))
+  },
 )
 
 // 切换团队时关闭弹窗，避免把邀请发到上一个团队
@@ -62,6 +111,22 @@ watch(
 )
 
 function validate(): string {
+  if (!allowed.value) return t('access.noPermission')
+  if (loadingProjects.value) return t('common.loading')
+  if (form.role === 'ADMIN') {
+    if (
+      !permissions.canOrganization(props.orgId, 'grantOrganizationAdmin') ||
+      !adminConfirmed.value
+    )
+      return t('access.adminConfirm')
+  } else if (
+    !grants.value.length ||
+    grants.value.length > 100 ||
+    new Set(grants.value.map((grant) => grant.projectId)).size !== grants.value.length ||
+    grants.value.some((grant) => !projects.value.some((project) => project.id === grant.projectId))
+  ) {
+    return t('access.selectRequired')
+  }
   const email = form.email.trim()
   if (!email) return t('workspace.member.inviteRequired')
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return t('workspace.member.inviteInvalidEmail')
@@ -81,9 +146,20 @@ async function submit() {
   submitting.value = true
   error.value = ''
   try {
-    await sendInvitation(props.orgId, { email: form.email.trim(), role: form.role })
+    await permissions.ensureOrganization(props.orgId, true)
+    if (token !== generation || !visible.value || !allowed.value) return
+    const latestError = validate()
+    if (latestError) {
+      error.value = latestError
+      return
+    }
+    await sendInvitation(props.orgId, {
+      email: form.email.trim(),
+      role: form.role,
+      ...(form.role === 'ADMIN' ? {} : { projects: grants.value }),
+    })
     if (token !== generation) return
-    MessagePlugin.success(t('workspace.member.sent'))
+    MessagePlugin.success(t('workspace.invitation.sent'))
     visible.value = false
     emit('saved')
   } catch (cause) {
@@ -99,8 +175,12 @@ async function submit() {
   <t-dialog
     v-model:visible="visible"
     :header="t('workspace.member.inviteTitle')"
-    width="min(480px, calc(100vw - 32px))"
-    :confirm-btn="{ content: t('workspace.member.inviteSend'), loading: submitting }"
+    width="min(640px, calc(100vw - 32px))"
+    :confirm-btn="{
+      content: t('workspace.member.inviteSend'),
+      loading: submitting,
+      disabled: !allowed || loadingProjects,
+    }"
     :cancel-btn="t('common.cancel')"
     :close-on-overlay-click="!submitting"
     @confirm="submit"
@@ -117,6 +197,19 @@ async function submit() {
       </t-form-item>
       <t-form-item :label="t('workspace.member.inviteRole')">
         <t-select v-model="form.role" :options="roleOptions" />
+      </t-form-item>
+      <t-checkbox v-if="form.role === 'ADMIN'" v-model="adminConfirmed">{{
+        t('access.adminConfirm')
+      }}</t-checkbox>
+      <t-form-item v-else :label="t('access.projects')">
+        <t-loading v-if="loadingProjects" />
+        <ProjectGrantSelector
+          v-else
+          v-model="grants"
+          :projects="projects"
+          :viewer="form.role === 'VIEWER'"
+          :disabled="submitting || !allowed"
+        />
       </t-form-item>
     </t-form>
   </t-dialog>

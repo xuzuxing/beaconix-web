@@ -13,6 +13,7 @@ import TeamOwnerTransferDialog from '@/components/team/TeamOwnerTransferDialog.v
 import { useOrganizationRole } from '@/composables/useOrganizationRole'
 import { RefreshIcon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 import { formatDateTime } from '@/utils/billing'
 import { memberIdentity, shortId } from '@/utils/team-presenter'
 
@@ -26,6 +27,7 @@ const { t } = useI18n()
 const router = useRouter()
 const orgStore = useOrganizationStore()
 const { role, canManage } = useOrganizationRole()
+const permissions = usePermissionsStore()
 
 const org = computed(() => orgStore.currentOrganization)
 const orgId = computed(() => orgStore.currentOrganizationId)
@@ -106,7 +108,7 @@ function buildPayload(): UpdateOrganizationParams {
 }
 
 async function save() {
-  if (submitting.value) return
+  if (submitting.value || !canManage.value) return
   const message = validate()
   if (message) {
     error.value = message
@@ -123,6 +125,8 @@ async function save() {
   submitting.value = true
   error.value = ''
   try {
+    await permissions.ensureOrganization(id, true)
+    if (token !== generation || id !== orgId.value || !canManage.value) return
     await updateOrganization(id, payload)
     if (token !== generation) return
     MessagePlugin.success(t('workspace.team.updated'))
@@ -139,7 +143,7 @@ async function save() {
 async function loadMembers() {
   const id = orgId.value
   const request = ++membersRequest
-  if (!id) {
+  if (!id || !canManage.value) {
     members.value = []
     return
   }

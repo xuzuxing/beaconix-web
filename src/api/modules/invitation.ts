@@ -1,5 +1,5 @@
 import type { CreateInvitationParams, Invitation } from '../types'
-import type { UserInvitation } from '../types/invitation'
+import type { UserInvitation, PublicInvitationPreview } from '../types/invitation'
 import { del, get, post } from '@/utils/request'
 
 /** 发送邀请（ADMIN+） */
@@ -18,8 +18,17 @@ export function revokeInvitation(orgId: string, id: string) {
 }
 
 /** 受邀人查看邀请详情（公开，凭令牌） */
-export function getInvitationByToken(token: string) {
-  return get<Invitation>(`/invitations/${encodeURIComponent(token)}`)
+export async function getInvitationByToken(token: string) {
+  const value = await get<PublicInvitationPreview>(
+    `/invitations/${encodeURIComponent(token)}`,
+    undefined,
+    { headers: { 'X-Anonymous': '1', 'X-Silent-Error': '1' } },
+  )
+  return {
+    organizationName: value.organizationName,
+    status: value.status,
+    requiresLogin: value.requiresLogin,
+  }
 }
 
 /** 接受邀请（需登录） */
@@ -47,6 +56,13 @@ function withoutToken(invitation: UserInvitation): UserInvitation {
     updatedAt: invitation.updatedAt,
     organization: invitation.organization,
     sentBy: invitation.sentBy,
+    accessMode: invitation.accessMode,
+    projects:
+      invitation.projects?.map((project) => ({
+        projectId: project.projectId,
+        projectName: project.projectName,
+        role: project.role,
+      })) ?? [],
   }
 }
 

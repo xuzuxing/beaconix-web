@@ -1,5 +1,6 @@
 import type { GlobalRole } from '@/api/types'
 import type { IconData } from '@/icons'
+import { canVisitNavigation } from './navigation-access'
 
 /**
  * 顶栏全局搜索的纯逻辑层：把路由 meta 归一化后的「功能源」整理成功能入口列表，
@@ -57,6 +58,7 @@ type TitledSource = FeatureSource & { titleKey: string }
 function isFeature(source: FeatureSource, roles: readonly GlobalRole[]): source is TitledSource {
   if (!source.titleKey || source.menuExcluded || source.searchExcluded) return false
   if (source.path.includes(':')) return false
+  if (!canVisitNavigation(source.path)) return false
   if (source.roles?.length && !source.roles.some((role) => roles.includes(role))) return false
   return true
 }

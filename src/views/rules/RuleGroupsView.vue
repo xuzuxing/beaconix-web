@@ -10,6 +10,7 @@ import RuleGroupDetailDrawer from '@/components/rules/RuleGroupDetailDrawer.vue'
 import RuleGroupEditorDialog from '@/components/rules/RuleGroupEditorDialog.vue'
 import { fieldLabelKey } from '@/config/rules'
 import { useMonitorAccess } from '@/composables/useMonitorAccess'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useRuleMeta } from '@/composables/useRuleMeta'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
@@ -28,6 +29,15 @@ const route = useRoute()
 const router = useRouter()
 const org = useOrganizationStore()
 const { canManage } = useMonitorAccess()
+const permissions = usePermissionsStore()
+function canEdit(group: RuleGroup) {
+  return (
+    !!group.tree &&
+    (group.projectId
+      ? permissions.canProject(group.projectId, 'rule.manage')
+      : permissions.canOrganization(group.organizationId))
+  )
+}
 const { load: loadMeta } = useRuleMeta()
 
 const orgId = computed(() => org.currentOrganizationId)
@@ -73,6 +83,11 @@ async function load() {
   loading.value = true
   try {
     const result = await listRuleGroups(id, { signal: controller.signal })
+    for (const project of new Set(
+      result.map((group) => group.projectId).filter((value): value is string => !!value),
+    )) {
+      await permissions.ensureProject(project)
+    }
     if (token === generation) groups.value = result
   } catch (cause) {
     if (token === generation)
@@ -119,14 +134,17 @@ const fieldLabels = (group: RuleGroup) =>
     const key = fieldLabelKey(field)
     return key ? t(key) : field
   })
-const counts = (group: RuleGroup) => countRuleNodes(group.tree)
+const counts = (group: RuleGroup) =>
+  group.tree ? countRuleNodes(group.tree) : { conditions: 0, logics: 0 }
 
 function create() {
+  if (!canManage.value && !permissions.canOrganization(orgId.value)) return
   editing.value = null
   dialog.value = true
   void loadMeta()
 }
 function edit(group: RuleGroup) {
+  if (!canEdit(group)) return
   editing.value = group
   detailVisible.value = false
   dialog.value = true
@@ -151,7 +169,10 @@ function openDetail(group: RuleGroup) {
           @click="load"
           ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
-      <t-button v-if="canManage" :disabled="!orgId" @click="create()"
+      <t-button
+        v-if="canManage || permissions.canOrganization(orgId)"
+        :disabled="!orgId"
+        @click="create()"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('ruleGroup.create') }}</t-button
       >
@@ -231,18 +252,19 @@ function openDetail(group: RuleGroup) {
               <p class="rule-group-row__fields">{{ fieldLabels(group).join(' · ') || '-' }}</p>
             </div>
             <div class="rule-group-row__count">
-              <span>{{
+              <span v-if="group.tree">{{
                 t('ruleGroup.rulesCount', {
                   rules: counts(group).conditions,
                   groups: counts(group).logics,
                 })
               }}</span>
+              <span v-else>-</span>
             </div>
             <time class="rule-group-row__time">{{
               formatMonitorTime(group.updatedAt, locale)
             }}</time>
             <div class="rule-group-row__actions">
-              <t-button v-if="canManage" variant="text" @click.stop="edit(group)">{{
+              <t-button v-if="canEdit(group)" variant="text" @click.stop="edit(group)">{{
                 t('ruleGroup.edit')
               }}</t-button>
               <t-button variant="text" @click.stop="openDetail(group)">{{
@@ -266,7 +288,12 @@ function openDetail(group: RuleGroup) {
       :project-id="projectId"
       @saved="load"
     />
-    <RuleGroupDetailDrawer v-model:visible="detailVisible" :group="detail" @edit="edit" />
+    <RuleGroupDetailDrawer
+      v-model:visible="detailVisible"
+      :group="detail"
+      :editable="!!detail && canEdit(detail)"
+      @edit="edit"
+    />
   </section>
 </template>
 

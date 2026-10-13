@@ -7,6 +7,8 @@ import type { RuleGroup, RuleNode } from '@/api/types/rule'
 import RuleTreeEditor from '@/components/rules/RuleTreeEditor.vue'
 import { useRuleMeta } from '@/composables/useRuleMeta'
 import { cloneRuleTree, defaultRuleTree, validateRuleTree } from '@/utils/rule-presenter'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { permissionEpoch } from '@/utils/access-context'
 
 /**
  * 规则组新建 / 编辑弹窗：基本信息（名称、描述、作用范围、启用）+ 规则树编辑器。
@@ -27,6 +29,12 @@ const props = defineProps<{
 const emit = defineEmits<{ saved: [group: RuleGroup] }>()
 
 const { t } = useI18n()
+const permissions = usePermissionsStore()
+const canOrganization = computed(() => permissions.canOrganization(props.orgId))
+const canSave = computed(() => {
+  const projectId = props.group?.projectId ?? (form.scope === 'project' ? props.projectId : null)
+  return projectId ? permissions.canProject(projectId, 'rule.manage') : canOrganization.value
+})
 const { meta, error: metaError, load: loadMeta } = useRuleMeta()
 const submitting = ref(false)
 const error = ref('')
@@ -52,13 +60,17 @@ watch(
     form.description = group?.description ?? ''
     form.scope = group ? (group.projectId ? 'project' : 'org') : props.projectId ? 'project' : 'org'
     form.enabled = group?.enabled ?? true
-    form.tree = group ? cloneRuleTree(group.tree) : defaultRuleTree(props.monitorType)
+    if (group && !group.tree) {
+      visible.value = false
+      return
+    }
+    form.tree = group?.tree ? cloneRuleTree(group.tree) : defaultRuleTree(props.monitorType)
   },
   { flush: 'sync' },
 )
 // 切换编辑目标 / 组织时关闭弹窗，避免把上一份表单写进另一个规则组
 watch(
-  () => [props.orgId, props.group?.id],
+  () => [props.orgId, props.group?.id, props.projectId, permissionEpoch.value],
   () => {
     visible.value = false
   },
@@ -68,7 +80,7 @@ watch(
 const editing = computed(() => Boolean(props.group?.id))
 const issues = computed(() => validateRuleTree(form.tree, meta.value))
 const scopeOptions = computed(() => [
-  { label: t('ruleGroup.editor.scopeOrg'), value: 'org' },
+  ...(canOrganization.value ? [{ label: t('ruleGroup.editor.scopeOrg'), value: 'org' }] : []),
   { label: t('ruleGroup.editor.scopeProject'), value: 'project' },
 ])
 
@@ -77,7 +89,7 @@ function resetTemplate() {
 }
 
 async function save() {
-  if (submitting.value) return
+  if (submitting.value || !canSave.value || (form.scope === 'org' && !canOrganization.value)) return
   error.value = ''
   const name = form.name.trim()
   if (!name) {
@@ -98,6 +110,10 @@ async function save() {
   const description = form.description.trim()
   submitting.value = true
   try {
+    const project = group?.projectId ?? (form.scope === 'project' ? props.projectId : null)
+    if (project) await permissions.ensureProject(project, true)
+    else await permissions.ensureOrganization(orgId, true)
+    if (token !== generation || !visible.value || !canSave.value) return
     const result = group
       ? await updateRuleGroup(orgId, group.id, {
           name,
@@ -112,7 +128,9 @@ async function save() {
           tree: form.tree,
         })
     if (token !== generation || orgId !== props.orgId) return
-    MessagePlugin.success(t(editing.value ? 'ruleGroup.editor.updated' : 'ruleGroup.editor.created'))
+    MessagePlugin.success(
+      t(editing.value ? 'ruleGroup.editor.updated' : 'ruleGroup.editor.created'),
+    )
     visible.value = false
     emit('saved', result)
   } catch (cause) {
@@ -129,7 +147,11 @@ async function save() {
     v-model:visible="visible"
     :header="t(editing ? 'ruleGroup.editor.editTitle' : 'ruleGroup.editor.createTitle')"
     width="min(960px, calc(100vw - 32px))"
-    :confirm-btn="{ content: t('common.confirm'), loading: submitting, disabled: !meta }"
+    :confirm-btn="{
+      content: t('common.confirm'),
+      loading: submitting,
+      disabled: !meta || !canSave,
+    }"
     :cancel-btn="t('common.cancel')"
     :close-on-overlay-click="!submitting"
     @confirm="save"
@@ -144,7 +166,10 @@ async function save() {
     <t-form :data="form" label-align="top" :colon="false">
       <div class="rule-group-editor__grid">
         <t-form-item :label="t('ruleGroup.editor.name')"
-          ><t-input v-model="form.name" :maxlength="100" :placeholder="t('ruleGroup.editor.namePlaceholder')"
+          ><t-input
+            v-model="form.name"
+            :maxlength="100"
+            :placeholder="t('ruleGroup.editor.namePlaceholder')"
         /></t-form-item>
         <t-form-item :label="t('ruleGroup.editor.scope')">
           <t-select v-if="!editing" v-model="form.scope" :options="scopeOptions" />

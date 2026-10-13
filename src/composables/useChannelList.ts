@@ -2,6 +2,7 @@ import { onScopeDispose, ref, toValue, watch, type MaybeRefOrGetter } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { listNotificationChannels } from '@/api'
 import type { NotificationChannel } from '@/api/types/notification'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 
 /**
  * 当前团队的通知渠道列表：切换团队时清空并重新加载。
@@ -10,6 +11,7 @@ import type { NotificationChannel } from '@/api/types/notification'
  */
 export function useChannelList(orgId: MaybeRefOrGetter<string | undefined>) {
   const { t } = useI18n()
+  const permissions = usePermissionsStore()
   const channels = ref<NotificationChannel[]>([])
   const loading = ref(false)
   const error = ref('')
@@ -22,7 +24,7 @@ export function useChannelList(orgId: MaybeRefOrGetter<string | undefined>) {
     controller?.abort()
     controller = new AbortController()
     error.value = ''
-    if (!organization) {
+    if (!organization || !permissions.canOrganization(organization)) {
       channels.value = []
       loading.value = false
       return

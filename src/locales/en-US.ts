@@ -1,4 +1,5 @@
 import adminPage from './admin.en-US'
+import access from './access.en-US'
 import channelPage from './channel.en-US'
 import monitorPage from './monitor.en-US'
 import notificationCenter from './notification.en-US'
@@ -6,6 +7,7 @@ import ruleGroup from './rule.en-US'
 import statusPage from './status-page.en-US'
 
 export default {
+  access,
   adminPage,
   monitorPage,
   ruleGroup,
@@ -91,6 +93,7 @@ export default {
   common: {
     confirm: 'Confirm',
     cancel: 'Cancel',
+    close: 'Close',
     reset: 'Reset',
     backHome: 'Back to home',
     loading: 'Loading…',
@@ -1083,7 +1086,8 @@ export default {
       team: 'Team',
       project: 'Current project',
       security: 'Security',
-      securityPending: 'Change your password or set up two-factor authentication on the Security page.',
+      securityPending:
+        'Change your password or set up two-factor authentication on the Security page.',
     },
     profile: {
       securityTitle: 'Sign-in and security',

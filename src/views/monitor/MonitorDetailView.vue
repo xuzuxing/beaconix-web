@@ -13,7 +13,7 @@ import {
   unbindRuleGroup,
 } from '@/api'
 import type { MonitorDetailRange } from '@/api/types/monitor-detail'
-import type { MonitorRuleBinding, RuleGroup } from '@/api/types/rule'
+import type { BoundRuleGroup, MonitorRuleBinding, RuleGroup } from '@/api/types/rule'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import MonitorActions from '@/components/monitor/MonitorActions.vue'
@@ -29,6 +29,7 @@ import { useMonitorDetail } from '@/composables/useMonitorDetail'
 import { usePageHeader } from '@/composables/usePageHeader'
 import { Copy01Icon, RefreshIcon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 import { certificateDays, formatMonitorTime } from '@/utils/monitor-presenter'
 
 defineOptions({ name: 'MonitorDetailView' })
@@ -36,6 +37,7 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const org = useOrganizationStore()
+const permissions = usePermissionsStore()
 const routeProject = computed(() => String(route.params.projectId ?? ''))
 const monitorId = computed(() => String(route.params.monitorId ?? ''))
 const ready = ref(false)
@@ -56,10 +58,14 @@ async function resolveWorkspace() {
   workspaceLoading.value = true
   if (org.projects.some((project) => project.id === routeProject.value)) {
     committingWorkspace = true
-    org.switchProject(routeProject.value)
-    committingWorkspace = false
-    ready.value = true
-    workspaceLoading.value = false
+    try {
+      await org.switchProject(routeProject.value)
+      if (token === workspaceGeneration)
+        ready.value = permissions.canProject(routeProject.value, 'monitor.read')
+    } finally {
+      committingWorkspace = false
+      if (token === workspaceGeneration) workspaceLoading.value = false
+    }
     return
   }
   try {
@@ -67,6 +73,10 @@ async function resolveWorkspace() {
       signal: workspaceController.signal,
     })
     if (token !== workspaceGeneration) return
+    const authority = await permissions.ensureOrganization(item.organizationId)
+    const projectAuthority = await permissions.ensureProject(routeProject.value)
+    if (!authority || !projectAuthority || projectAuthority.organizationId !== item.organizationId)
+      throw new Error(t('access.unavailable'))
     const [organizations, projects] = await Promise.all([
       listOrganizations(),
       listProjects(item.organizationId),
@@ -126,7 +136,7 @@ const tab = ref('overview')
 const autoRefresh = ref(false)
 const dialog = ref(false)
 const checkPage = ref(1)
-const { canManage, canCheck } = useMonitorAccess()
+const { canManage, canCheck, canTestAlert } = useMonitorAccess()
 const { monitor, insights, loading, error, refresh } = useMonitorDetail(
   projectId,
   monitorId,
@@ -190,6 +200,7 @@ const ruleBindings = ref<MonitorRuleBinding[]>([])
 const ruleGroups = ref<RuleGroup[]>([])
 const rulesLoading = ref(false)
 const rulesError = ref('')
+let rulesGeneration = 0
 const ruleDialog = ref(false)
 const ruleEditing = ref<RuleGroup | null>(null)
 
@@ -197,7 +208,7 @@ const orgId = computed(() => org.currentOrganizationId)
 const boundGroups = computed(() =>
   ruleBindings.value
     .map((binding) => binding.ruleGroup)
-    .filter((group): group is RuleGroup => Boolean(group)),
+    .filter((group): group is BoundRuleGroup => Boolean(group)),
 )
 /** 可绑定的规则组：已启用、组织级或当前项目级，且尚未绑定 */
 const bindOptions = computed(() =>
@@ -215,6 +226,7 @@ const bindOptions = computed(() =>
 )
 
 async function loadRules() {
+  const token = ++rulesGeneration
   const project = projectId.value
   const id = monitorId.value
   const organizationId = orgId.value
@@ -225,21 +237,23 @@ async function loadRules() {
   rulesLoading.value = true
   try {
     const [groups, bindings] = await Promise.all([
-      listRuleGroups(organizationId),
+      canManage.value ? listRuleGroups(organizationId) : Promise.resolve([]),
       listMonitorRuleBindings(project, id),
     ])
+    if (token !== rulesGeneration || project !== projectId.value || id !== monitorId.value) return
     ruleGroups.value = groups
     ruleBindings.value = bindings
   } catch (cause) {
+    if (token !== rulesGeneration) return
     rulesError.value = cause instanceof Error ? cause.message : t('ruleGroup.monitor.loadFailed')
   } finally {
-    rulesLoading.value = false
+    if (token === rulesGeneration) rulesLoading.value = false
   }
 }
 async function bindRule(value: unknown) {
   const ruleGroupId = value === null || value === undefined ? '' : String(value)
   const project = projectId.value
-  if (!ruleGroupId || !project) return
+  if (!ruleGroupId || !project || !canManage.value) return
   try {
     await bindRuleGroup(project, monitorId.value, { ruleGroupId })
     await loadRules()
@@ -249,7 +263,7 @@ async function bindRule(value: unknown) {
 }
 async function unbindRule(ruleGroupId: string) {
   const project = projectId.value
-  if (!project) return
+  if (!project || !canManage.value) return
   try {
     await unbindRuleGroup(project, monitorId.value, ruleGroupId)
     await loadRules()
@@ -257,7 +271,20 @@ async function unbindRule(ruleGroupId: string) {
     MessagePlugin.warning(t('ruleGroup.monitor.unbindFailed'))
   }
 }
-function openRuleEditor(group?: RuleGroup) {
+function isFullRuleGroup(group: BoundRuleGroup): group is RuleGroup {
+  return typeof group.organizationId === 'string' && group.projectId !== undefined
+}
+function openRuleEditor(group?: BoundRuleGroup) {
+  if (
+    !canManage.value ||
+    (group &&
+      (!isFullRuleGroup(group) ||
+        !group.tree ||
+        (group.projectId
+          ? !permissions.canProject(group.projectId, 'rule.manage')
+          : !permissions.canOrganization(orgId.value))))
+  )
+    return
   ruleEditing.value = group ?? null
   ruleDialog.value = true
 }
@@ -282,19 +309,26 @@ const info = computed(() => {
     ['expected', m.type === 'HTTP' ? String(m.expectedStatus) : '-'],
     ['createdAt', time(m.createdAt)],
     ['modifiedAt', time(m.updatedAt)],
-    [
-      'boundChannels',
-      m.notificationChannelIds.length
-        ? t('monitorPage.channels', { count: m.notificationChannelIds.length })
-        : t('monitorPage.organizationFallback'),
-    ],
+    ...(m.notificationChannelIds !== undefined
+      ? [
+          [
+            'boundChannels',
+            m.notificationChannelIds.length
+              ? t('monitorPage.channels', { count: m.notificationChannelIds.length })
+              : t('monitorPage.organizationFallback'),
+          ],
+        ]
+      : []),
     [
       'rules',
       ruleBindings.value.length
         ? t('monitorPage.rulesBound', { count: ruleBindings.value.length })
         : t('monitorPage.rulesNone'),
     ],
-    ['availabilityThreshold', m.availabilityThreshold === null ? '-' : `${m.availabilityThreshold}%`],
+    [
+      'availabilityThreshold',
+      m.availabilityThreshold === null ? '-' : `${m.availabilityThreshold}%`,
+    ],
     ['availabilityWindow', m.availabilityWindow === null ? '-' : String(m.availabilityWindow)],
   ]
 })
@@ -330,6 +364,7 @@ async function copy() {
         :pending="pending[monitor.id]"
         :can-manage="canManage"
         :can-check="canCheck"
+        :can-test-alert="canTestAlert"
         @edit="dialog = true"
         @action="act(projectId, monitor, $event)"
       />
@@ -586,7 +621,7 @@ async function copy() {
                 >{{ t('ruleGroup.monitor.unbind') }}</t-button
               >
             </div>
-            <RuleTreeView :tree="group.tree" />
+            <RuleTreeView v-if="group.tree" :tree="group.tree" />
           </article>
         </div>
         <p v-else class="monitor-detail__rules-empty">{{ t('ruleGroup.monitor.empty') }}</p>

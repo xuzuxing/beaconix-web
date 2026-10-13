@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.app.json",
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "test/**/*.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "vite.acl.config.ts"
+  ],
+  "exclude": [],
+  "compilerOptions": { "types": ["node", "vitest/globals"], "noEmit": true }
+}

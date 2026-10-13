@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import { getProfile, isTwoFactorChallenge, login as loginApi, logout as logoutApi } from '@/api'
 import type { AuthResponse, LoginParams, LoginResult, User } from '@/api/types'
 import type { AuthTokens } from '@/utils/request'
+import { invalidateSession, sessionEpoch } from '@/utils/access-context'
 
 /**
  * 用户状态：登录态（access + refresh 令牌）与当前用户资料。
@@ -15,11 +16,14 @@ export const useUserStore = defineStore(
     const accessToken = ref('')
     const refreshToken = ref('')
     const user = ref<User | null>(null)
+    const identityVerified = ref(false)
 
     const isLogin = computed(() => Boolean(accessToken.value))
     const nickname = computed(() => user.value?.name ?? '')
     /** 平台超级管理员（可访问 /admin/* 接口） */
-    const isSuperAdmin = computed(() => user.value?.globalRole === 'SUPER_ADMIN')
+    const isSuperAdmin = computed(
+      () => identityVerified.value && user.value?.globalRole === 'SUPER_ADMIN',
+    )
 
     /** 请求层续期成功后回写令牌对 */
     function setTokens(tokens: AuthTokens) {
@@ -29,18 +33,28 @@ export const useUserStore = defineStore(
 
     function setUser(value: User | null) {
       user.value = value
+      identityVerified.value = Boolean(value)
     }
 
     /** 登录 / 邮箱验证成功后写入令牌与用户 */
     function applyAuth(result: AuthResponse) {
+      invalidateSession()
       setTokens(result)
       setUser(result.user)
     }
 
     /** 拉取当前用户资料（路由守卫在缺少 user 时调用） */
     async function loadUser() {
-      user.value = await getProfile()
-      return user.value
+      const session = sessionEpoch.value
+      try {
+        const result = await getProfile()
+        if (session !== sessionEpoch.value) return user.value
+        setUser(result)
+        return user.value
+      } catch (cause) {
+        if (session === sessionEpoch.value) identityVerified.value = false
+        throw cause
+      }
     }
 
     /**
@@ -57,14 +71,13 @@ export const useUserStore = defineStore(
 
     async function logout() {
       const token = refreshToken.value
+      reset()
       try {
         if (token) {
           await logoutApi(token)
         }
       } catch {
         // 注销接口失败也要清掉本地状态
-      } finally {
-        reset()
       }
     }
 
@@ -72,6 +85,8 @@ export const useUserStore = defineStore(
       accessToken.value = ''
       refreshToken.value = ''
       user.value = null
+      identityVerified.value = false
+      invalidateSession()
     }
 
     return {
@@ -79,6 +94,7 @@ export const useUserStore = defineStore(
       refreshToken,
       user,
       isLogin,
+      identityVerified,
       nickname,
       isSuperAdmin,
       setTokens,

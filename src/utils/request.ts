@@ -8,6 +8,26 @@ import axios, {
 import { MessagePlugin } from 'tdesign-vue-next'
 
 import { REQUEST_TIMEOUT } from '@/config'
+import { accessContext, isCurrentContext, StaleAccessError } from './access-context'
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+    public readonly path?: string,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+type ContextConfig = InternalAxiosRequestConfig & {
+  __retried?: boolean
+  __context?: ReturnType<typeof accessContext>
+}
+function accountOnly(url = '') {
+  return !/^\/(?:organizations|projects|tasks|monitors|rule-groups)\//.test(url)
+}
 
 /**
  * 后端统一响应包装：TransformInterceptor 把成功响应包成 { data, meta }。
@@ -35,6 +55,7 @@ interface RequestAuthHooks {
   setTokens: (tokens: AuthTokens) => void
   /** 登录失效且无法刷新时的处理（清状态、跳登录） */
   onUnauthorized: () => void
+  onAccessDenied: (status: number, path: string) => void
 }
 
 const hooks: RequestAuthHooks = {
@@ -42,6 +63,7 @@ const hooks: RequestAuthHooks = {
   getRefreshToken: () => undefined,
   setTokens: () => undefined,
   onUnauthorized: () => undefined,
+  onAccessDenied: () => undefined,
 }
 
 /**
@@ -78,8 +100,11 @@ const service: AxiosInstance = axios.create({
 })
 
 service.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const contextual = config as ContextConfig
+  contextual.__context ??= accessContext()
+  if (!isCurrentContext(contextual.__context, accountOnly(config.url))) throw new StaleAccessError()
   const token = hooks.getAccessToken()
-  if (token) {
+  if (token && !config.headers['X-Anonymous']) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
@@ -87,9 +112,16 @@ service.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 /** 解包 { data, meta }；文件流等非包装响应原样返回 */
 function unwrap(response: AxiosResponse) {
+  const config = response.config as ContextConfig
+  if (config.__context && !isCurrentContext(config.__context, accountOnly(config.url))) {
+    throw new StaleAccessError()
+  }
   if (response.config.headers['X-Monitoring-Conditional']) {
-    return { status: response.status, etag: response.headers.etag,
-      body: response.status === 304 ? undefined : response.data?.data }
+    return {
+      status: response.status,
+      etag: response.headers.etag,
+      body: response.status === 304 ? undefined : response.data?.data,
+    }
   }
   const { responseType } = response.config
   if (responseType === 'blob' || responseType === 'arraybuffer') {
@@ -148,10 +180,11 @@ function fallbackMessage(status?: number): string {
 }
 
 // ---------- access token 自动续期 ----------
-let refreshing: Promise<string> | null = null
+let refreshing: { session: number; promise: Promise<string> } | null = null
 
 async function requestNewAccessToken(): Promise<string> {
   const refreshToken = hooks.getRefreshToken()
+  const context = accessContext()
   if (!refreshToken) {
     throw new Error('missing refresh token')
   }
@@ -163,36 +196,51 @@ async function requestNewAccessToken(): Promise<string> {
     { timeout: REQUEST_TIMEOUT },
   )
   const tokens = response.data.data
+  if (!isCurrentContext(context, true) || hooks.getRefreshToken() !== refreshToken)
+    throw new StaleAccessError()
   hooks.setTokens(tokens)
   return tokens.accessToken
 }
 
 /** 并发 401 只发起一次刷新，其余请求共享同一个 Promise */
 function refreshAccessToken(): Promise<string> {
-  refreshing ??= requestNewAccessToken().finally(() => {
-    refreshing = null
+  const session = accessContext().session
+  if (refreshing?.session === session) return refreshing.promise
+  const promise = requestNewAccessToken().finally(() => {
+    if (refreshing?.promise === promise) refreshing = null
   })
-  return refreshing
+  refreshing = { session, promise }
+  return promise
 }
 
 service.interceptors.response.use(
   (response: AxiosResponse) => unwrap(response) as unknown as AxiosResponse,
   async (error: AxiosError) => {
-    const config = error.config as (InternalAxiosRequestConfig & { __retried?: boolean }) | undefined
+    const config = error.config as ContextConfig | undefined
+    if (
+      error instanceof StaleAccessError ||
+      (config?.__context && !isCurrentContext(config.__context, accountOnly(config.url)))
+    )
+      return Promise.reject(new StaleAccessError())
     const status = error.response?.status
-    const skipRefresh = isAuthEndpoint(config?.url)
+    const skipRefresh = isAuthEndpoint(config?.url) || Boolean(config?.headers['X-Anonymous'])
 
     // access token 过期：刷新一次并重放原请求
     if (status === 401 && config && !config.__retried && !skipRefresh && hooks.getRefreshToken()) {
       config.__retried = true
+      let token: string
       try {
-        const token = await refreshAccessToken()
-        config.headers.Authorization = `Bearer ${token}`
-        return (await service.request(config)) as unknown as AxiosResponse
-      } catch {
+        token = await refreshAccessToken()
+      } catch (cause) {
+        if (cause instanceof StaleAccessError) return Promise.reject(cause)
+        if (config.__context && !isCurrentContext(config.__context, accountOnly(config.url)))
+          return Promise.reject(new StaleAccessError())
         hooks.onUnauthorized()
-        return Promise.reject(error)
+        return Promise.reject(new ApiError(fallbackMessage(401), 401, config.url))
       }
+      config.headers.Authorization = `Bearer ${token}`
+      // Replay failures are business errors, not refresh failures.
+      return service.request(config)
     }
 
     if (status === 401 && !skipRefresh) {
@@ -200,9 +248,16 @@ service.interceptors.response.use(
     }
 
     if (axios.isCancel(error)) return Promise.reject(error)
+    if (
+      (status === 403 || status === 404) &&
+      config?.url &&
+      !config.url.includes('my-permissions')
+    ) {
+      hooks.onAccessDenied(status, config.url)
+    }
     const message = readErrorMessage(error.response?.data) ?? fallbackMessage(status)
-    MessagePlugin.error(message)
-    return Promise.reject(new Error(message))
+    if (!config?.headers['X-Silent-Error']) MessagePlugin.error(message)
+    return Promise.reject(new ApiError(message, status, config?.url))
   },
 )
 

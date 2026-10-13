@@ -22,6 +22,8 @@ import type { InvitationAction, UserInvitation } from '@/api/types/invitation'
 import type { NotificationReadFilter, UserNotification } from '@/api/types/notification-center'
 import { useOrganizationStore } from './organization'
 import { useUserStore } from './user'
+import { usePermissionsStore } from './permissions'
+import { permissionEpoch } from '@/utils/access-context'
 import {
   canActOnInvitation,
   notificationInvitationId,
@@ -41,6 +43,7 @@ export const RECENT_NOTIFICATION_LIMIT = 8
 export const useNotificationStore = defineStore('notification', () => {
   const user = useUserStore()
   const organization = useOrganizationStore()
+  const permissions = usePermissionsStore()
   // ---------- 未读数 ----------
   const unreadCount = ref(0)
   const hasUnread = computed(() => unreadCount.value > 0)
@@ -148,7 +151,7 @@ export const useNotificationStore = defineStore('notification', () => {
       if (request !== unreadGeneration) return
       syncUnread(result?.count ?? 0)
     } catch {
-      // 请求层已统一提示，这里保持上一次的角标即可
+      if (request === unreadGeneration) syncUnread(0)
     }
   }
 
@@ -310,8 +313,8 @@ export const useNotificationStore = defineStore('notification', () => {
       if (action === 'accept') {
         try {
           await organization.loadOrganizations()
-          if (session === sessionGeneration && !organization.projects.length)
-            await organization.loadProjects()
+          if (session === sessionGeneration) await organization.loadWorkspace(true)
+          window.dispatchEvent(new Event('beacon-permissions-changed'))
         } catch {
           invitationErrors.value[id] = 'refreshFailed'
         }
@@ -347,6 +350,13 @@ export const useNotificationStore = defineStore('notification', () => {
     const orgs = await listOrganizations()
     if (!orgs.some((item) => item.id === organizationId)) throw new Error('Workspace unavailable')
     const projects = await listProjects(organizationId)
+    const authority = await permissions.ensureOrganization(organizationId, true)
+    if (!authority) throw new Error('Workspace unavailable')
+    if (projectId) {
+      const project = await permissions.ensureProject(projectId, true)
+      if (!project || project.organizationId !== organizationId)
+        throw new Error('Project unavailable')
+    }
     if (session !== sessionGeneration) throw new Error('Workspace changed')
     const selected =
       projectId ??
@@ -373,14 +383,11 @@ export const useNotificationStore = defineStore('notification', () => {
     if (user.user?.id && item.userId !== user.user.id) return
     const duplicate = seen.has(item.id)
     seen.add(item.id)
-    const cached = recent.value.find((entry) => entry.id === item.id)
     // A replay must not undo a local read or reinsert an ignored notification.
     if (duplicate) {
-      if (cached) cached.meta = item.meta
       return
     }
-    const matches = filter.value === 'all' || (filter.value === 'read' ? item.isRead : !item.isRead)
-    if (matches) recent.value = [item, ...recent.value].slice(0, RECENT_NOTIFICATION_LIMIT)
+    // SSE is an invalidation signal; only fresh authorized REST data supplies content.
     filterTotals.value = {}
     revision.value++
     const invitationId = notificationReceivedInvitationId(item)
@@ -412,14 +419,19 @@ export const useNotificationStore = defineStore('notification', () => {
     if (!token) return
     const controller = new AbortController()
     stream = controller
-    void consumeNotificationStream(token, controller.signal, receiveNotification)
+    const session = sessionGeneration
+    void consumeNotificationStream(token, controller.signal, (item) => {
+      if (session === sessionGeneration && stream === controller && !controller.signal.aborted)
+        receiveNotification(item)
+    })
       .catch(() => {
         // REST requests below also run the existing access-token refresh flow.
       })
       .finally(() => {
-        if (controller.signal.aborted) return
+        if (controller.signal.aborted || session !== sessionGeneration) return
         retryTimer = setTimeout(() => {
-          void refreshUnreadCount()
+          window.dispatchEvent(new Event('beacon-permissions-revalidate'))
+          void refresh()
           startStream(user.accessToken)
         }, 5000)
       })
@@ -477,6 +489,36 @@ export const useNotificationStore = defineStore('notification', () => {
     { immediate: true, flush: 'sync' },
   )
   onScopeDispose(stopStream)
+  watch(
+    permissionEpoch,
+    () => {
+      sessionGeneration++
+      generation++
+      unreadGeneration++
+      pendingGeneration++
+      stopStream()
+      recent.value = []
+      total.value = 0
+      loaded.value = false
+      loading.value = false
+      filterTotals.value = {}
+      syncUnread(0)
+      seen.clear()
+      invitations.value = {}
+      invitationPending.value = {}
+      invitationErrors.value = {}
+      invitationBlocked.value = {}
+      pendingInvitations.value = []
+      invitationRequests.clear()
+      revision.value++
+      if (user.isLogin) {
+        startStream(user.accessToken)
+        void refresh()
+        void loadPendingInvitations()
+      }
+    },
+    { flush: 'sync' },
+  )
 
   /** 全部标记已读 */
   async function markAllAsRead() {

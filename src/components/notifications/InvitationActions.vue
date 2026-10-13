@@ -6,6 +6,7 @@ import { MessagePlugin } from 'tdesign-vue-next'
 import type { InvitationAction } from '@/api/types/invitation'
 import type { UserNotification } from '@/api/types/notification-center'
 import AppIcon from '@/components/AppIcon.vue'
+import InvitationScope from '@/components/team/InvitationScope.vue'
 import { Cancel01Icon, CheckmarkCircle02Icon, RefreshIcon } from '@/icons'
 import { useNotificationStore } from '@/stores/modules/notification'
 import {
@@ -112,6 +113,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div v-if="id" class="invitation-actions">
+    <InvitationScope v-if="ready && invitation" :invitation="invitation" />
     <div class="invitation-actions__row">
       <t-tag :theme="theme" variant="light" size="small">
         {{ t(`notificationCenter.invitation.status.${status ?? 'unknown'}`) }}

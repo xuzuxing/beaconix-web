@@ -288,7 +288,12 @@ export const layoutChildren: RouteRecordRaw[] = [
     path: 'about',
     name: 'about',
     component: () => import('@/views/common/AboutView.vue'),
-    meta: { titleKey: 'nav.about', icon: InformationCircleIcon, hidden: true, searchExcluded: true },
+    meta: {
+      titleKey: 'nav.about',
+      icon: InformationCircleIcon,
+      hidden: true,
+      searchExcluded: true,
+    },
   },
 ]
 
@@ -298,6 +303,16 @@ export const layoutChildren: RouteRecordRaw[] = [
  * - 空白布局（BlankLayout）：整屏无框架，用于 404、登录等页面
  */
 const routes: RouteRecordRaw[] = [
+  {
+    path: '/invitations/:token',
+    component: () => import('@/views/auth/InvitationView.vue'),
+    meta: { public: true, hidden: true },
+  },
+  {
+    path: '/access-unavailable',
+    component: PlainLayout,
+    children: [{ path: '', component: () => import('@/views/common/AccessUnavailableView.vue') }],
+  },
   {
     path: '/',
     name: 'root',

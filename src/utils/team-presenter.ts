@@ -94,15 +94,23 @@ export function selectMembers(
  */
 export function memberPermissions(
   member: Membership,
-  options: { currentUserId?: string; canManage: boolean },
+  options: { currentUserId?: string; canManage: boolean; canGrantAdmin?: boolean },
 ) {
   const isSelf = Boolean(options.currentUserId) && member.userId === options.currentUserId
   const isOwner = member.role === 'OWNER'
   return {
     isSelf,
     isOwner,
-    canChangeRole: options.canManage && !isSelf && !isOwner,
-    canRemove: options.canManage && !isSelf && !isOwner,
+    canChangeRole:
+      options.canManage &&
+      !isSelf &&
+      !isOwner &&
+      (member.role !== 'ADMIN' || options.canGrantAdmin === true),
+    canRemove:
+      options.canManage &&
+      !isSelf &&
+      !isOwner &&
+      (member.role !== 'ADMIN' || options.canGrantAdmin === true),
   }
 }
 

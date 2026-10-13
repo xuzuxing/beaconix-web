@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 
 import { listStatusPages } from '@/api'
 import type { StatusPage } from '@/api/types/status-page'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 
 /**
  * 当前团队的状态页列表：切换团队时清空并重新加载。
@@ -11,6 +12,7 @@ import type { StatusPage } from '@/api/types/status-page'
  */
 export function useStatusPageList(orgId: MaybeRefOrGetter<string | undefined>) {
   const { t } = useI18n()
+  const permissions = usePermissionsStore()
   const pages = ref<StatusPage[]>([])
   const loading = ref(false)
   const error = ref('')
@@ -23,7 +25,7 @@ export function useStatusPageList(orgId: MaybeRefOrGetter<string | undefined>) {
     controller?.abort()
     controller = new AbortController()
     error.value = ''
-    if (!organization) {
+    if (!organization || !permissions.canOrganization(organization)) {
       pages.value = []
       loading.value = false
       return
