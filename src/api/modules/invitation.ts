@@ -24,8 +24,16 @@ export async function getInvitationByToken(token: string) {
     undefined,
     { headers: { 'X-Anonymous': '1', 'X-Silent-Error': '1' } },
   )
+  // 显式挑选公开字段：即便后端多返回了账号或令牌相关字段也不透传到页面
   return {
     organizationName: value.organizationName,
+    organizationSlug: value.organizationSlug,
+    organizationLogoUrl: value.organizationLogoUrl ?? null,
+    inviterName: value.inviterName,
+    role: value.role,
+    accessMode: value.accessMode,
+    projectCount: value.projectCount,
+    expiresAt: value.expiresAt,
     status: value.status,
     requiresLogin: value.requiresLogin,
   }

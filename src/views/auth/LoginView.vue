@@ -14,12 +14,13 @@ import {
   verifyTwoFactorLogin as verifyTwoFactorLoginApi,
 } from '@/api'
 import loginBackground from '@/assets/login-background.jpg'
-import defaultIcon from '@/assets/logo/icon.png'
+import defaultLogo from '@/assets/logo/default.png'
+import whiteLogo from '@/assets/logo/white-logo.png'
 import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { APP_TITLE, HOME_PATH } from '@/config'
 import { LockPasswordIcon, Mail01Icon, SecurityCheckIcon, UserIcon } from '@/icons'
-import { useUserStore } from '@/stores'
+import { useAppStore, useUserStore } from '@/stores'
 
 /**
  * 登录页模式。
@@ -39,6 +40,10 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const appStore = useAppStore()
+
+/** 品牌整标随明暗主题切换（暗色用白色版） */
+const logoSrc = computed(() => (appStore.isDark ? whiteLogo : defaultLogo))
 
 const mode = ref<LoginMode>('login')
 /** register / forgot 的第二步（输入邮箱验证码） */
@@ -298,17 +303,14 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="auth-page">
+  <div class="auth-page" :class="{ 'auth-page--dark': appStore.isDark }">
     <div class="auth-page__main">
       <div class="auth-page__bg" aria-hidden="true">
         <img class="auth-page__bg-image" :src="loginBackground" alt="" />
       </div>
 
       <header class="auth-page__brand">
-        <div class="auth-page__brand-left">
-          <img class="auth-page__brand-logo" :src="defaultIcon" :alt="APP_TITLE" />
-          <span class="auth-page__brand-text">{{ APP_TITLE }}</span>
-        </div>
+        <img class="auth-page__brand-logo" :src="logoSrc" :alt="APP_TITLE" />
         <LanguageSwitcher />
       </header>
 
@@ -361,7 +363,9 @@ async function onSubmit() {
             </div>
 
             <div v-if="showPassword" class="auth-field">
-              <label class="auth-field__label" for="password">{{ t('login.field.password') }}</label>
+              <label class="auth-field__label" for="password">{{
+                t('login.field.password')
+              }}</label>
               <t-input
                 id="password"
                 v-model="form.password"
@@ -575,24 +579,11 @@ async function onSubmit() {
     padding: 32px;
   }
 
-  &__brand-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-
+  // 整标（含品牌名），按高度缩放，宽度自适应
   &__brand-logo {
-    width: 24px;
+    width: auto;
     height: 24px;
-    object-fit: contain;
-  }
-
-  &__brand-text {
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 24px;
-    color: @beacon-text-primary;
+    max-width: 100%;
   }
 
   &__card-wrap {
@@ -611,9 +602,23 @@ async function onSubmit() {
     padding: 32px;
     background-color: @beacon-bg-container;
     border-radius: 6px;
-    box-shadow:
-      0 2px 4px rgb(0 0 0 / 5%),
-      0 2px 8px rgb(0 0 0 / 5%);
+    box-shadow: var(--td-shadow-1);
+  }
+
+  // 暗色：参考页的浅蓝位图不再适用，退回令牌底色，改用描边区分层级
+  &--dark {
+    .auth-page__bg {
+      background-color: @beacon-bg-page;
+    }
+
+    .auth-page__bg-image {
+      display: none;
+    }
+
+    .auth-page__card {
+      border: 1px solid @beacon-border;
+      box-shadow: none;
+    }
   }
 }
 
