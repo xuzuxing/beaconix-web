@@ -9,6 +9,7 @@ import { usePermissionsStore } from './stores/modules/permissions'
 import { permissionEpoch, sessionEpoch } from './utils/access-context'
 import { canVisitNavigation, navigationScope } from './utils/navigation-access'
 import { setupRequestAuth } from './utils/request'
+import { createRevalidateScheduler } from './utils/revalidate-schedule'
 
 import 'tdesign-vue-next/es/style/index.css'
 import '@/assets/styles/index.less'
@@ -44,12 +45,12 @@ setupRequestAuth({
       path.includes(`/organizations/${org.currentOrganizationId}/`) ||
       path.includes(`/projects/${org.currentProjectId}/`)
     if (!currentScope) return
-    if (status === 403) void revalidate()
+    if (status === 403) void revalidate.trigger()
   },
 })
 
 let checking: Promise<void> | undefined
-async function revalidate() {
+async function runRevalidate() {
   if (checking || !useUserStore().isLogin) return checking
   const session = sessionEpoch.value
   const org = useOrganizationStore()
@@ -77,7 +78,8 @@ async function revalidate() {
       org.workspaceState !== 'ready' ||
       !canVisitNavigation(router.currentRoute.value.path, projectId)
     ) {
-      await org.loadWorkspace(true)
+      // 组织能力刚在上面强制刷新过，这里不必再 force，避免重复请求同一份 /my-permissions
+      await org.loadWorkspace()
       if (session !== sessionEpoch.value || revision !== org.workspaceRevision) return
       const currentRoute = router.currentRoute.value
       const targetProjectId =
@@ -95,24 +97,37 @@ async function revalidate() {
   })
   return checking
 }
+
+/**
+ * 重验节流：切前台、可见性变化、网络恢复、定时器、多标签页信号与 SSE 重连都会触发
+ * 重验，且在浏览器里常常同时到达。把它们合并成一个有节流的入口，避免在极短时间内
+ * 反复强制刷新 /my-permissions（org + project 两个请求）而触发后端限流。
+ * 60 秒定时重验仍远高于该窗口，节流不会削弱既定的刷新时限。
+ */
+const REVALIDATE_MIN_INTERVAL_MS = 3_000
+const revalidate = createRevalidateScheduler(
+  () => void runRevalidate(),
+  REVALIDATE_MIN_INTERVAL_MS,
+)
+
 watch(
   permissionEpoch,
   () => {
-    void revalidate()
+    revalidate.trigger()
   },
   { flush: 'post' },
 )
 window.addEventListener('focus', () => {
-  void revalidate()
+  revalidate.trigger()
 })
 window.addEventListener('online', () => {
-  void revalidate()
+  revalidate.trigger()
 })
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') void revalidate()
+  if (document.visibilityState === 'visible') revalidate.trigger()
 })
 setInterval(() => {
-  if (document.visibilityState === 'visible') void revalidate()
+  if (document.visibilityState === 'visible') revalidate.trigger()
 }, 60_000)
 const channel =
   typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('beacon-access') : null
@@ -122,7 +137,7 @@ channel?.addEventListener('message', (event) => {
   if (event.data === 'logout') useUserStore().reset()
   if (event.data === 'invalidate') {
     usePermissionsStore().invalidate()
-    void revalidate()
+    revalidate.trigger()
   }
   queueMicrotask(() => {
     remoteSignal = false
@@ -138,10 +153,10 @@ watch(
 window.addEventListener('beacon-permissions-changed', () => {
   usePermissionsStore().invalidate()
   channel?.postMessage('invalidate')
-  void revalidate()
+  revalidate.trigger()
 })
 window.addEventListener('beacon-permissions-revalidate', () => {
-  void revalidate()
+  revalidate.trigger()
 })
 
 app.mount('#app')
