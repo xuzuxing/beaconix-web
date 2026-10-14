@@ -7,7 +7,13 @@ import { useProbeActions } from '@/composables/useProbeActions'
 import { useProbeList } from '@/composables/useProbeList'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { invalidatePermissions, invalidateSession } from '@/utils/access-context'
-import { selectProbes, probeFormError, withoutProbeSecret } from '@/utils/probe-presenter'
+import {
+  selectProbes,
+  probeFormError,
+  withoutProbeSecret,
+  probeInstallCommand,
+  probeActivationCode,
+} from '@/utils/probe-presenter'
 import { tenantProbe } from '../fixtures/probes'
 import { ownerPermissions, orgPermissions } from '../fixtures/access'
 
@@ -154,6 +160,12 @@ describe('tenant probe lifecycle', () => {
   })
 })
 describe('probe presentation and DTO constraints', () => {
+  it('normalizes device authorization codes and rejects ambiguous query values', () => {
+    expect(probeActivationCode(' wdjb - mjht ')).toBe('WDJB-MJHT')
+    expect(probeActivationCode('WDJBMJHT')).toBe('WDJB-MJHT')
+    for (const value of [undefined, ['WDJB-MJHT'], 'invalid', '<script>', 'x'.repeat(33)])
+      expect(probeActivationCode(value)).toBe('')
+  })
   it('combines enabled status, provider and keyword without mutating the list', () => {
     const nodes = [
       tenantProbe('shanghai'),
@@ -181,5 +193,30 @@ describe('probe presentation and DTO constraints', () => {
     const response = { ...tenantProbe(), secret: 'once' }
     expect(withoutProbeSecret(response)).not.toHaveProperty('secret')
     expect(response.secret).toBe('once')
+  })
+  it('adapts legacy API options to the installer and quotes shell metacharacters', () => {
+    const apiUrl = "https://api.example.invalid/api?name=owner's&region=sh"
+    const response = {
+      token: 'bet_once',
+      apiUrl,
+      expiresAt: '2026-10-14T00:15:00Z',
+      command: `curl -fsSL https://custom.invalid/probe/install.sh | sudo sh -s -- --token=bet_once --api-url=${apiUrl}`,
+    }
+    expect(probeInstallCommand(response)).toBe(
+      "curl -fsSL https://custom.invalid/probe/install.sh | sudo sh -s -- --token 'bet_once' --api-url 'https://api.example.invalid/api?name=owner'\\''s&region=sh'",
+    )
+    expect(response.command).toContain('--token=bet_once')
+  })
+  it('preserves already compatible backend commands', () => {
+    const command =
+      "curl -fsSL https://custom.invalid/install.sh | sudo sh -s -- --token 'bet_once' --api-url 'https://api.invalid/api'"
+    expect(
+      probeInstallCommand({
+        token: 'bet_once',
+        command,
+        expiresAt: '',
+        apiUrl: 'https://api.invalid/api',
+      }),
+    ).toBe(command)
   })
 })

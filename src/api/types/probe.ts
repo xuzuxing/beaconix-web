@@ -36,6 +36,26 @@ export interface ProbeEnrollment {
   command: string
   apiUrl: string
 }
+export interface ProbeActivation {
+  userCode: string
+  status: 'pending' | 'approved' | 'denied'
+  requestedAt: string
+  client: {
+    client?: string
+    hostname?: string
+    platform?: string
+    runtime?: string
+  }
+}
+export interface ApproveProbeActivationParams extends ProbeEnrollmentParams {
+  userCode: string
+  organizationId: string
+}
+export interface ProbeActivationApproval {
+  probeId: string
+  organizationId: string
+  status: 'approved'
+}
 export type ProbeExecutionTrigger = 'SCHEDULED' | 'MANUAL' | 'CALLBACK'
 export type ProbeExecutionStatus = 'SUCCESS' | 'FAILED' | 'TIMEOUT' | 'SKIPPED'
 export interface ProbeResult {

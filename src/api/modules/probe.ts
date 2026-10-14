@@ -11,6 +11,9 @@ import type {
   ProbeResult,
   ProbeResultQuery,
   ProbeValidationChallenge,
+  ProbeActivation,
+  ApproveProbeActivationParams,
+  ProbeActivationApproval,
 } from '../types/probe'
 import { del, get, patch, post } from '@/utils/request'
 
@@ -33,6 +36,12 @@ export const validateProbe = (orgId: string, id: string) =>
   post<ProbeValidationChallenge>(`${resource(orgId, id)}/validate`)
 export const createProbeEnrollment = (orgId: string, data: ProbeEnrollmentParams) =>
   post<ProbeEnrollment>(`${base(orgId)}/enroll-token`, data)
+export const getProbeActivation = (code: string, config?: AxiosRequestConfig) =>
+  get<ProbeActivation>('/probes/enroll/activate', { code }, config)
+export const approveProbeActivation = (
+  data: ApproveProbeActivationParams,
+  config?: AxiosRequestConfig,
+) => post<ProbeActivationApproval>('/probes/enroll/approve', data, config)
 export const bindProbeMonitors = (orgId: string, id: string, monitorIds: string[]) =>
   post<TenantProbe>(`${resource(orgId, id)}/monitors`, { monitorIds })
 export const unbindProbeMonitor = (orgId: string, id: string, monitorId: string) =>

@@ -8,6 +8,7 @@ import type { TenantProbe, ProbeValidationChallenge } from '@/api/types/probe'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import ProbeEditorDialog from '@/components/probes/ProbeEditorDialog.vue'
+import ProbeInstallGuide from '@/components/probes/ProbeInstallGuide.vue'
 import ProbeDetailDrawer from '@/components/probes/ProbeDetailDrawer.vue'
 import ProbeCredentialDialog, {
   type ProbeCredential,
@@ -185,6 +186,7 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
     </HeaderActions>
     <t-alert v-if="!canManage" theme="info" :message="t('probePage.noPermission')" />
     <div v-else class="probe-page__surface">
+      <ProbeInstallGuide />
       <header class="probe-page__head">
         <h3>{{ t('probePage.title') }}</h3>
         <span>{{ org.currentOrganization?.name }}</span>

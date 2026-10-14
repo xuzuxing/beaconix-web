@@ -101,4 +101,42 @@ export default {
   namePlaceholder: 'e.g. Shanghai probe',
   regionPlaceholder: 'e.g. cn-shanghai',
   urlPlaceholder: 'https://probe.example.com/beacon/callback',
+  activation: {
+    title: 'Confirm probe enrollment',
+    code: 'Authorization code',
+    codePlaceholder: 'Enter the code shown in the installation terminal',
+    continue: 'Continue',
+    invalidCode:
+      'Enter a valid 8-character code or reopen the confirmation link from the terminal.',
+    hostname: 'Hostname',
+    platform: 'Operating system',
+    requestedAt: 'Requested at',
+    team: 'Team',
+    teamPlaceholder: 'Select the team for this probe',
+    teamRequired: 'Select a team',
+    noTeams: 'No teams you can manage. Ask a team owner or administrator for access.',
+    teamsFailed: 'Failed to load team permissions. Retry.',
+    loadFailed: 'Failed to load probe authorization. Retry.',
+    invalidResponse:
+      'The server returned invalid authorization information. Reopen the confirmation link.',
+    expired: 'This code is unknown or expired. Start login again in the installation terminal.',
+    denied: 'This authorization was denied. Start login again in the installation terminal.',
+    alreadyApproved:
+      'This request is already confirmed. Check the installation terminal for the result.',
+    confirm: 'Confirm enrollment',
+    saveFailed: 'Failed to add the probe. Retry.',
+    success: 'Probe added',
+    successDescription:
+      'Probe information is saved. The installation terminal will collect its credentials and connect automatically.',
+    viewNodes: 'View probe nodes',
+  },
+  installGuide: {
+    title: 'Installation guide',
+    scriptUrl: 'Installation script',
+    requirements:
+      'Requires Linux, systemd, Node.js 18+ and curl. Installation needs root or sudo privileges.',
+    enrollment:
+      'Download and run the script on the target server. Open the login link shown in the terminal, then sign in and confirm the probe information.',
+    connect: 'After installation and the first heartbeat, refresh the node list and bind monitors.',
+  },
 }

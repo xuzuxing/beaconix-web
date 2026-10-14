@@ -1,4 +1,24 @@
-import type { TenantProbe, CreateProbeParams } from '@/api/types/probe'
+import type { TenantProbe, CreateProbeParams, ProbeEnrollment } from '@/api/types/probe'
+
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", "'\\''")}'`
+}
+
+export function probeActivationCode(value: unknown): string {
+  if (typeof value !== 'string' || value.length > 32) return ''
+  const normalized = value
+    .trim()
+    .toUpperCase()
+    .replace(/[\s-]+/g, '')
+  return /^[A-Z0-9]{8}$/.test(normalized) ? `${normalized.slice(0, 4)}-${normalized.slice(4)}` : ''
+}
+
+export function probeInstallCommand(enrollment: ProbeEnrollment): string {
+  // Older API responses use equals-style options that the POSIX installer rejects.
+  return enrollment.command
+    .replace(`--token=${enrollment.token}`, `--token ${shellQuote(enrollment.token)}`)
+    .replace(`--api-url=${enrollment.apiUrl}`, `--api-url ${shellQuote(enrollment.apiUrl)}`)
+}
 
 export function withoutProbeSecret(probe: TenantProbe): TenantProbe {
   const { secret: _secret, ...safe } = probe

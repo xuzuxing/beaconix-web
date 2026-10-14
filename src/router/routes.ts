@@ -342,6 +342,19 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    // 安装后的设备授权确认：与团队选择页共用精简顶栏。
+    path: '/activate',
+    component: PlainLayout,
+    children: [
+      {
+        path: '',
+        name: 'probe-activate',
+        component: () => import('@/views/probes/ProbeActivateView.vue'),
+        meta: { titleKey: 'probePage.activation.title', hidden: true },
+      },
+    ],
+  },
+  {
     // 选择团队：控制台之外的独立整页，只有精简顶栏，不带侧边菜单
     path: '/team',
     component: PlainLayout,

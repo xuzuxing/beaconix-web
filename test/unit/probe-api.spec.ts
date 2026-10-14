@@ -72,3 +72,54 @@ it('uses the actual encoded organization routes and mutation payloads', async ()
   expect(calls[4]?.data).toEqual({ monitorIds: ['monitor-1'] })
   expect(calls[8]?.data).toEqual({ name: 'Node' })
 })
+it('reads a device authorization and approves only through the dedicated confirmation endpoint', async () => {
+  const calls: { url?: string; method?: string; data: unknown; params: unknown }[] = []
+  service.defaults.adapter = async (config) => {
+    calls.push({
+      url: config.url,
+      method: config.method,
+      data: config.data ? JSON.parse(config.data) : undefined,
+      params: config.params,
+    })
+    return {
+      config,
+      status: 200,
+      statusText: 'OK',
+      headers: new AxiosHeaders(),
+      data: {
+        data:
+          config.method === 'get'
+            ? {
+                userCode: 'WDJB-MJHT',
+                status: 'pending',
+                requestedAt: '2026-10-14T00:00:00Z',
+                client: {},
+              }
+            : { probeId: 'probe-1', organizationId: 'o1', status: 'approved' },
+      },
+    }
+  }
+  const activation = await api.getProbeActivation('WDJB-MJHT')
+  expect(activation.status).toBe('pending')
+  const payload = {
+    userCode: 'WDJB-MJHT',
+    organizationId: 'o1',
+    name: 'Shanghai node',
+    region: 'cn-shanghai',
+    provider: 'CUSTOM' as const,
+  }
+  expect(await api.approveProbeActivation(payload)).toEqual({
+    probeId: 'probe-1',
+    organizationId: 'o1',
+    status: 'approved',
+  })
+  expect(calls).toEqual([
+    {
+      url: '/probes/enroll/activate',
+      method: 'get',
+      data: undefined,
+      params: { code: 'WDJB-MJHT' },
+    },
+    { url: '/probes/enroll/approve', method: 'post', data: payload, params: undefined },
+  ])
+})

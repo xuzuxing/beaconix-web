@@ -8,7 +8,7 @@ import type { ProbeCredential } from './ProbeCredentialDialog.vue'
 import { useProbeActions } from '@/composables/useProbeActions'
 import { permissionEpoch, sessionEpoch } from '@/utils/access-context'
 import { PROBE_PROVIDERS, probeProviderLabelKey } from '@/utils/admin-presenter'
-import { probeFormError, withoutProbeSecret } from '@/utils/probe-presenter'
+import { probeFormError, probeInstallCommand, withoutProbeSecret } from '@/utils/probe-presenter'
 
 const visible = defineModel<boolean>('visible', { required: true })
 const props = defineProps<{ orgId: string; probe?: TenantProbe }>()
@@ -75,7 +75,7 @@ async function save() {
     visible.value = false
     emit('credential', {
       kind: 'install',
-      value: result.command,
+      value: probeInstallCommand(result),
       name: payload.name,
       expiresAt: result.expiresAt,
       apiUrl: result.apiUrl,

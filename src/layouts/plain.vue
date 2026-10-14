@@ -7,7 +7,14 @@ import whiteLogo from '@/assets/logo/white-logo.png'
 import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { APP_TITLE } from '@/config'
-import { BookOpen01Icon, ComputerIcon, HelpCircleIcon, Moon01Icon, Sun01Icon, UserIcon } from '@/icons'
+import {
+  BookOpen01Icon,
+  ComputerIcon,
+  HelpCircleIcon,
+  Moon01Icon,
+  Sun01Icon,
+  UserIcon,
+} from '@/icons'
 import { useAppStore } from '@/stores'
 import type { ThemeMode } from '@/types'
 
@@ -47,13 +54,21 @@ function handleThemeSelect(data: { value?: string | number }) {
 
       <div class="plain-layout__extra">
         <t-tooltip :content="t('layout.docs')" placement="bottom">
-          <button type="button" class="plain-layout__icon-btn" :aria-label="t('layout.docs')">
+          <button
+            type="button"
+            class="plain-layout__icon-btn plain-layout__support"
+            :aria-label="t('layout.docs')"
+          >
             <AppIcon :icon="BookOpen01Icon" />
           </button>
         </t-tooltip>
 
         <t-tooltip :content="t('layout.help')" placement="bottom">
-          <button type="button" class="plain-layout__icon-btn" :aria-label="t('layout.help')">
+          <button
+            type="button"
+            class="plain-layout__icon-btn plain-layout__support"
+            :aria-label="t('layout.help')"
+          >
             <AppIcon :icon="HelpCircleIcon" />
           </button>
         </t-tooltip>
@@ -84,7 +99,7 @@ function handleThemeSelect(data: { value?: string | number }) {
 .plain-layout {
   display: flex;
   flex-direction: column;
-  min-width: @beacon-layout-min-width;
+  min-width: 0;
   height: 100vh;
   overflow: hidden;
 
@@ -143,9 +158,21 @@ function handleThemeSelect(data: { value?: string | number }) {
 
   &__body {
     flex: 1;
+    min-width: 0;
     min-height: 0;
     overflow-y: auto;
     background-color: @beacon-bg-page;
+  }
+  @media (max-width: 600px) {
+    &__header {
+      padding: 0 12px;
+    }
+    &__support {
+      display: none;
+    }
+    &__icon-btn {
+      padding: 0 8px;
+    }
   }
 }
 </style>

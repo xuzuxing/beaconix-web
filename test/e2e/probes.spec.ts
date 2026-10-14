@@ -41,7 +41,7 @@ async function setup(page: Page, options: Parameters<typeof mockWorkspace>[1] = 
       return reply({
         token: 'bet_fixture_once',
         command:
-          'curl https://download.example.invalid/install.sh | sh -s -- --token=bet_fixture_once',
+          'curl -fsSL https://download.example.invalid/install.sh | sudo sh -s -- --token=bet_fixture_once --api-url=https://api.example.invalid/api',
         expiresAt: state.enrollmentExpiresAt,
         apiUrl: 'https://api.example.invalid/api',
       })
@@ -365,6 +365,41 @@ test('expired enrollment hides the install command and copy action', async ({ pa
   await expect(page.getByRole('button', { name: '复制', exact: true })).toHaveCount(0)
   await healthy(state)
 })
+test('top installation guide only displays a script link and notes without issuing credentials', async ({
+  page,
+}) => {
+  const state = await setup(page)
+  await page.goto('/probes')
+  const guide = page.locator('.probe-install')
+  await expect(guide.getByRole('heading', { name: '安装指引' })).toBeVisible()
+  const link = guide.getByRole('link', { name: 'https://get.beacon.dev/probe/install.sh' })
+  await expect(link).toHaveAttribute('href', 'https://get.beacon.dev/probe/install.sh')
+  await expect(link).toHaveAttribute('target', '_blank')
+  await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  await expect(guide.locator('li')).toHaveCount(3)
+  await expect(guide).toContainText('Linux、systemd、Node.js 18+')
+  await expect(guide).toContainText('登录后填写探针信息并确认添加')
+  await expect(guide).toContainText('刷新节点列表')
+  await expect(guide.locator('form, button, input, pre')).toHaveCount(0)
+  await expect(page.locator('.probe-row')).toHaveCount(2)
+  const guideBounds = await guide.boundingBox()
+  const rowBounds = await page.locator('.probe-row').first().boundingBox()
+  expect(guideBounds!.y + guideBounds!.height).toBeLessThan(rowBounds!.y)
+  expect(state.workspace.requests.filter((r) => r.path.endsWith('/enroll-token'))).toEqual([])
+  await page.reload()
+  await expect(link).toBeVisible()
+  expect(state.workspace.requests.filter((r) => r.path.endsWith('/enroll-token'))).toEqual([])
+  await page.locator('.app-header__team').click()
+  await page.locator('.team-list__main').filter({ hasText: 'Second Team' }).click()
+  await expect(page.locator('.probe-page__head')).toContainText('Second Team')
+  await expect(link).toBeVisible()
+  expect(state.workspace.requests.filter((r) => r.method === 'POST')).toEqual([])
+  state.workspace.organizationRole = 'MEMBER'
+  await page.evaluate(() => window.dispatchEvent(new Event('beacon-permissions-revalidate')))
+  await expect(page).toHaveURL(/access-unavailable/)
+  await expect(guide).toHaveCount(0)
+  await healthy(state)
+})
 for (const viewport of [
   { width: 1440, height: 900 },
   { width: 768, height: 1024 },
@@ -387,6 +422,13 @@ for (const viewport of [
         fullPage: true,
         animations: 'disabled',
       })
+      const guide = page.locator('.probe-install')
+      await expect(guide.getByRole('heading', { name: 'Installation guide' })).toBeVisible()
+      await expect(guide.getByRole('link')).toBeVisible()
+      await expect(guide).toContainText('sign in and confirm the probe information')
+      expect(await guide.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(
+        true,
+      )
       await page.getByRole('button', { name: 'Probe details', exact: true }).first().click()
       await expect(page.locator('.t-drawer--open')).toBeVisible()
       await expect
