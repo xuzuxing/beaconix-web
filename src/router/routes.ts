@@ -283,6 +283,13 @@ export const layoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/admin/AdminOrdersView.vue'),
     meta: { titleKey: 'submenu.admin.orders', group: 'admin', roles: ADMIN_ROLES },
   },
+  {
+    // 平台级运行时配置：顶部 tab 的分组清单与顺序由 develop.configGroup 决定
+    path: 'admin/settings',
+    name: 'admin-settings',
+    component: () => import('@/views/admin/AdminSettingsView.vue'),
+    meta: { titleKey: 'submenu.admin.settings', group: 'admin', roles: ADMIN_ROLES },
+  },
 
   // ---------- 不在菜单中展示 ----------
   {

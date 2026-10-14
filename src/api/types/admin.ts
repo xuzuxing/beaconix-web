@@ -248,3 +248,48 @@ export interface AdminOrderPage {
   limit: number
   totalPages: number
 }
+
+// ------------------------------------------------------------
+// 平台运行时配置（GET /admin/settings）
+// ------------------------------------------------------------
+
+/** 配置项的值类型，决定管理页用哪个控件编辑 */
+export type SettingValueType = 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON'
+
+/** 配置项的值：标量、数组或对象 */
+export type SettingValue =
+  | string
+  | number
+  | boolean
+  | null
+  | SettingValue[]
+  | { [key: string]: SettingValue }
+
+/**
+ * 平台运行时配置项。
+ *
+ * `group` 由后端显式返回，管理页据此把配置项放进对应 tab；
+ * tab 的清单与顺序来自 `develop.configGroup` 这一项的值（字符串数组，可任意增删）。
+ */
+export interface AdminSetting {
+  key: string
+  name: string
+  /** 所属分组，例如 storage / monitor，与 tab 一一对应 */
+  group: string
+  value: SettingValue
+  valueType: SettingValueType
+  description: string | null
+  /** 密文项：后端不回显值，只允许整值覆盖写入 */
+  isSecret: boolean
+  /** 值与后端内置默认一致，即尚未被平台覆盖过 */
+  isDefault: boolean
+  /** 最后一次写入者，从未覆盖过时为 null */
+  updatedById: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+/** 写入配置项（PATCH /admin/settings/{key}）：值必填，其余字段由后端维护 */
+export interface UpdateAdminSettingParams {
+  value: SettingValue
+}

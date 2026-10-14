@@ -89,6 +89,16 @@ export default {
       average: 'Avg {value}',
       empty: 'No data to plot yet',
     },
+    heatmap: {
+      title: 'Checks in the last {days} days',
+      tip: 'Hourly check success rate; grey cells had no checks in that hour.',
+      worst: 'Lowest {day} {hour}:00 · {value}%',
+      noData: 'No checks in this hour',
+      empty: 'No hourly check data yet',
+      simulated: 'Sample data',
+      simulatedHint:
+        'This is front-end sample data; it is replaced automatically once the backend returns hourly uptime.',
+    },
   },
   template: {
     recommended: 'Recommended',

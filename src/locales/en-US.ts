@@ -186,6 +186,7 @@ export default {
       probes: 'System probes',
       auditLogs: 'Audit logs',
       orders: 'Orders',
+      settings: 'Platform settings',
     },
     storage: {
       overview: 'Overview',

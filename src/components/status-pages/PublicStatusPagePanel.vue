@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 
 import type { PublicStatusPage } from '@/api/types/status-page'
 import MonitorStatusTag from '@/components/monitor/MonitorStatusTag.vue'
+import PublicMonitorAvailability from '@/components/status-pages/PublicMonitorAvailability.vue'
 import PublicMonitorMetricBar from '@/components/status-pages/PublicMonitorMetricBar.vue'
 import PublicStatusCharts from '@/components/status-pages/PublicStatusCharts.vue'
 import { formatDateTime } from '@/utils/billing'
@@ -84,6 +85,12 @@ const maxLatency = computed(() => maxMonitorLatency(props.page.monitors))
         </dl>
 
         <MonitorStatusTag :status="monitor.status" />
+
+        <PublicMonitorAvailability
+          v-if="page.showUptime && monitor.availability"
+          class="public-monitor__heatmap"
+          :availability="monitor.availability"
+        />
       </li>
     </ul>
     <p v-else class="public-panel__empty">{{ t('statusPage.public.noMonitors') }}</p>
@@ -194,6 +201,12 @@ const maxLatency = computed(() => maxMonitorLatency(props.page.monitors))
     border: 1px solid @beacon-border;
     border-radius: 4px;
     background: @beacon-bg-page;
+  }
+
+  &__heatmap {
+    // 外层是 flex-wrap 行，热力图独占一整行
+    flex: 0 0 100%;
+    margin-top: 4px;
   }
 
   &__metrics {

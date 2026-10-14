@@ -88,6 +88,15 @@ export default {
       average: '平均 {value}',
       empty: '暂无可绘制的数据',
     },
+    heatmap: {
+      title: '近 {days} 天检测热力图',
+      tip: '按小时统计的检测成功率；灰色格表示该小时没有检测数据。',
+      worst: '最低 {day} {hour}:00 · {value}%',
+      noData: '该小时没有检测数据',
+      empty: '暂无逐小时检测数据',
+      simulated: '演示数据',
+      simulatedHint: '当前是前端生成的演示数据，后端补上逐小时可用率后会自动替换为真实数据。',
+    },
   },
   template: {
     recommended: '推荐',

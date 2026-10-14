@@ -4,12 +4,14 @@ import AppIcon from '@/components/AppIcon.vue'
 import { CodeIcon } from '@/icons'
 
 const { t } = useI18n()
-const installScriptUrl = 'https://get.beacon.dev/probe/install.sh'
+const installScriptUrl = 'https://get.beaconix.app/install.sh'
 </script>
 
 <template>
   <section class="probe-install" :aria-label="t('probePage.installGuide.title')">
-    <h3><AppIcon :icon="CodeIcon" />{{ t('probePage.installGuide.title') }}</h3>
+    <h3>
+      <AppIcon :icon="CodeIcon" />{{ t('probePage.installGuide.title') }}
+    </h3>
     <div class="probe-install__link">
       <span>{{ t('probePage.installGuide.scriptUrl') }}</span>
       <a :href="installScriptUrl" target="_blank" rel="noopener noreferrer">
@@ -32,6 +34,7 @@ const installScriptUrl = 'https://get.beacon.dev/probe/install.sh'
   padding-bottom: 20px;
   margin-bottom: 20px;
   border-bottom: 1px solid @beacon-border;
+
   h3 {
     display: flex;
     align-items: center;
@@ -39,23 +42,28 @@ const installScriptUrl = 'https://get.beacon.dev/probe/install.sh'
     margin: 0;
     font-size: 14px;
   }
+
   &__link {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
     gap: 8px;
     font-size: 13px;
+
     span {
       color: @beacon-text-secondary;
     }
+
     a {
       color: @beacon-brand;
       overflow-wrap: anywhere;
+
       &:hover {
         text-decoration: underline;
       }
     }
   }
+
   ul {
     display: grid;
     gap: 4px;

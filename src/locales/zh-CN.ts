@@ -186,6 +186,7 @@ export default {
       probes: '系统探针',
       auditLogs: '审计日志',
       orders: '订单管理',
+      settings: '平台配置',
     },
     storage: {
       overview: '概览',

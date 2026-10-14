@@ -8,6 +8,7 @@ import type { PublicStatusPage } from '@/api/types/status-page'
 import AppIcon from '@/components/AppIcon.vue'
 import PublicStatusPagePanel from '@/components/status-pages/PublicStatusPagePanel.vue'
 import { RefreshIcon } from '@/icons'
+import { withSimulatedAvailability } from '@/utils/status-page-simulated'
 
 /**
  * 公开状态页 `/status/:slug`（BlankLayout，不带控制台框架）。
@@ -38,7 +39,8 @@ async function load() {
   loading.value = true
   try {
     const result = await getPublicStatusPage(slug.value, { signal: controller.signal })
-    if (token === generation) statusPage.value = result
+    // 后端尚未返回 monitors[].availability，这里按开关补一份演示数据（不覆盖真实数据）
+    if (token === generation) statusPage.value = withSimulatedAvailability(result)
   } catch (cause) {
     if (token === generation) {
       statusPage.value = undefined

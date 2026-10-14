@@ -372,7 +372,7 @@ export const slowestMonitors: SlowMonitor[] = [
   {
     id: 'm-1042',
     name: '订单结算接口',
-    target: 'https://api.beacon.dev/v2/orders/settle',
+    target: 'https://api.beaconix.app/v2/orders/settle',
     type: 'HTTP',
     avgLatency: 862,
     p95: 1420,
@@ -382,7 +382,7 @@ export const slowestMonitors: SlowMonitor[] = [
   {
     id: 'm-1038',
     name: '报表导出服务',
-    target: 'https://api.beacon.dev/v2/reports/export',
+    target: 'https://api.beaconix.app/v2/reports/export',
     type: 'HTTP',
     avgLatency: 734,
     p95: 1180,
@@ -402,7 +402,7 @@ export const slowestMonitors: SlowMonitor[] = [
   {
     id: 'm-1031',
     name: '文件上传网关',
-    target: 'https://oss.beacon.dev/upload',
+    target: 'https://oss.beaconix.app/upload',
     type: 'HTTP',
     avgLatency: 312,
     p95: 528,
@@ -412,7 +412,7 @@ export const slowestMonitors: SlowMonitor[] = [
   {
     id: 'm-1024',
     name: '海外 CDN 边缘节点',
-    target: 'edge-sfo.beacon.dev',
+    target: 'edge-sfo.beaconix.app',
     type: 'PING',
     avgLatency: 268,
     p95: 410,
@@ -458,7 +458,7 @@ export function buildRecentAlerts(): AlertEvent[] {
       id: 'a-2081',
       level: 'critical',
       monitor: '订单结算接口',
-      target: 'https://api.beacon.dev/v2/orders/settle',
+      target: 'https://api.beaconix.app/v2/orders/settle',
       messageKey: 'dashboard.alert.message.timeout',
       time: now.subtract(6, 'minute').format('YYYY-MM-DD HH:mm:ss'),
       durationMinutes: null,
@@ -468,7 +468,7 @@ export function buildRecentAlerts(): AlertEvent[] {
       id: 'a-2079',
       level: 'warning',
       monitor: '海外 CDN 边缘节点',
-      target: 'edge-sfo.beacon.dev',
+      target: 'edge-sfo.beaconix.app',
       messageKey: 'dashboard.alert.message.packetLoss',
       time: now.subtract(42, 'minute').format('YYYY-MM-DD HH:mm:ss'),
       durationMinutes: 18,
@@ -488,7 +488,7 @@ export function buildRecentAlerts(): AlertEvent[] {
       id: 'a-2066',
       level: 'recovered',
       monitor: '文件上传网关',
-      target: 'https://oss.beacon.dev/upload',
+      target: 'https://oss.beaconix.app/upload',
       messageKey: 'dashboard.alert.message.recovered',
       time: now.subtract(5, 'hour').format('YYYY-MM-DD HH:mm:ss'),
       durationMinutes: 12,
@@ -498,7 +498,7 @@ export function buildRecentAlerts(): AlertEvent[] {
       id: 'a-2058',
       level: 'warning',
       monitor: '报表导出服务',
-      target: 'https://api.beacon.dev/v2/reports/export',
+      target: 'https://api.beaconix.app/v2/reports/export',
       messageKey: 'dashboard.alert.message.slowResponse',
       time: now.subtract(9, 'hour').format('YYYY-MM-DD HH:mm:ss'),
       durationMinutes: 26,
@@ -517,6 +517,6 @@ export interface ExpiringCertificate {
 }
 
 export const expiringCertificates: ExpiringCertificate[] = [
-  { host: 'api.beacon.dev', daysLeft: 12, issuer: "Let's Encrypt" },
-  { host: 'oss.beacon.dev', daysLeft: 26, issuer: 'DigiCert' },
+  { host: 'api.beaconix.app', daysLeft: 12, issuer: "Let's Encrypt" },
+  { host: 'oss.beaconix.app', daysLeft: 26, issuer: 'DigiCert' },
 ]
