@@ -53,6 +53,9 @@ const GROUP_LABEL_KEYS: Record<string, string> = {
   sprint: 'adminPage.setting.group.sprint',
   monitor: 'adminPage.setting.group.monitor',
   shared: 'adminPage.setting.group.shared',
+  storage: 'adminPage.setting.group.storage',
+  attachments: 'adminPage.setting.group.attachments',
+  smtp: 'adminPage.setting.group.smtp',
 }
 
 function groupLabel(key: string) {

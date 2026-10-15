@@ -76,8 +76,18 @@ export default {
     lastCheck: '最近检查',
   },
   public: {
+    brandTagline: '服务状态',
+    brandAlt: 'Beacon',
+    footer: '© {year} Beacon，保留所有权利。',
     overall: '整体状态',
+    monitorsTitle: '监控项',
     updatedAt: '更新于',
+    summary: {
+      monitors: '监控项',
+      uptime: '平均可用率',
+      latency: '平均延迟',
+      lastCheck: '最近检查',
+    },
     noMonitors: '该状态页暂未展示任何监控项',
     loadFailed: '状态页不存在或未启用',
     chart: {
@@ -90,9 +100,9 @@ export default {
     },
     heatmap: {
       title: '近 {days} 天检测热力图',
-      tip: '按小时统计的检测成功率；灰色格表示该小时没有检测数据。',
+      tip: '按小时统计的检测成功率；灰色格表示该小时历史数据不足，空白格表示该小时没有检测数据。',
       worst: '最低 {day} {hour}:00 · {value}%',
-      noData: '该小时没有检测数据',
+      noData: '该小时历史数据不足',
       empty: '暂无逐小时检测数据',
       simulated: '演示数据',
       simulatedHint: '当前是前端生成的演示数据，后端补上逐小时可用率后会自动替换为真实数据。',

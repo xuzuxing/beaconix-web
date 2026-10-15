@@ -296,6 +296,9 @@ export default {
       sprint: 'Sprint',
       monitor: 'Monitoring',
       shared: 'Shared',
+      storage: 'Storage',
+      attachments: 'Attachments',
+      smtp: 'Mail (SMTP)',
     },
     groupHint: {
       system: 'Site name, logo, footer and system email shown to the outside.',
@@ -306,6 +309,10 @@ export default {
       sprint: 'Defaults and limits for the sprint module.',
       monitor: 'Default check interval, retries and alert cooldown.',
       shared: 'Announcement, help entry, status pages and other shared resources.',
+      storage:
+        'Attachment storage driver and public base URLs; switching to OSS requires the credentials to be configured in the environment first.',
+      attachments: 'Upload size limits per attachment kind.',
+      smtp: 'Connection parameters for a self-hosted SMTP channel; system mail currently goes through Resend.',
     },
   },
 }

@@ -203,3 +203,33 @@ export function monitorStatusTone(status: MonitorStatus): StatusPageStatusTone {
   const tagTheme = monitorStatusTheme[status]
   return tagTheme === 'default' ? 'neutral' : tagTheme
 }
+
+/** 公开页头部摘要：监控项数、平均可用率、平均延迟与最近一次检查时间 */
+export function summarizePublicMonitorMetrics(monitors: PublicStatusPageMonitor[]) {
+  const uptimes: number[] = []
+  const latencies: number[] = []
+  let lastCheckAt: string | null = null
+
+  monitors.forEach((monitor) => {
+    if (typeof monitor.uptimePercent === 'number' && Number.isFinite(monitor.uptimePercent)) {
+      uptimes.push(monitor.uptimePercent)
+    }
+    if (typeof monitor.latency === 'number' && Number.isFinite(monitor.latency)) {
+      latencies.push(monitor.latency)
+    }
+    const checkedAt = monitor.lastCheckAt
+    if (typeof checkedAt === 'string' && (!lastCheckAt || checkedAt > lastCheckAt)) {
+      lastCheckAt = checkedAt
+    }
+  })
+
+  const average = (values: number[]) =>
+    values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null
+
+  return {
+    total: monitors.length,
+    averageUptime: average(uptimes),
+    averageLatency: average(latencies),
+    lastCheckAt,
+  }
+}

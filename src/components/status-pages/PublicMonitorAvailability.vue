@@ -23,6 +23,14 @@ const props = defineProps<{ availability: PublicMonitorAvailability }>()
 const { t } = useI18n()
 const theme = useChartTheme()
 
+/** 后端返回完整日期（YYYY-MM-DD）；卡片上只展示月-日 */
+function shortDay(day: string) {
+  return day.length > 5 ? day.slice(5) : day
+}
+
+/** Y 轴与提示里的日期都用月-日，避免完整日期撑破卡片宽度 */
+const dayLabels = computed(() => props.availability.days.map(shortDay))
+
 const unavailable = computed(() => props.availability.unavailableCells ?? [])
 const hasCells = computed(
   () => props.availability.cells.length > 0 || unavailable.value.length > 0,
@@ -36,7 +44,7 @@ const extraText = computed(() => {
   if (worst) {
     parts.push(
       t('statusPage.public.heatmap.worst', {
-        day: worst.day,
+        day: shortDay(worst.day),
         hour: String(worst.hour).padStart(2, '0'),
         value: worst.value.toFixed(2),
       }),
@@ -60,7 +68,7 @@ const option = computed<ChartOption>(() => {
       ...chartTooltip(palette, 'item'),
       formatter: (params: unknown) => {
         const { value } = params as { value: [number, number, number] }
-        const day = props.availability.days[value[1]] ?? ''
+        const day = dayLabels.value[value[1]] ?? ''
         const hour = String(value[0]).padStart(2, '0')
         return `${day} ${hour}:00 &nbsp; <b>${value[2].toFixed(2)}%</b>`
       },
@@ -76,7 +84,7 @@ const option = computed<ChartOption>(() => {
     },
     yAxis: {
       type: 'category',
-      data: props.availability.days,
+      data: dayLabels.value,
       splitArea: { show: false },
       axisLine: { lineStyle: { color: palette.axisLine } },
       axisTick: { show: false },

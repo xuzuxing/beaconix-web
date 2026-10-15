@@ -32,6 +32,15 @@ const textValue = computed(() => (typeof props.draft === 'string' ? props.draft 
 const numberValue = computed(() => (typeof props.draft === 'number' ? props.draft : undefined))
 const booleanValue = computed(() => props.draft === true)
 
+/** 候选项：后端给了 options 就把自由输入换成下拉，避免拼错枚举值 */
+const selectOptions = computed(() =>
+  (props.item.options ?? []).map((option) => ({
+    label: option.label,
+    value: String(option.value),
+  })),
+)
+const hasOptions = computed(() => selectOptions.value.length > 0)
+
 /** 输入事件的值类型由 TDesign 的泛型决定，这里统一按 unknown 收窄 */
 function onTextChange(value: unknown) {
   emit('update:draft', typeof value === 'string' ? value : value == null ? '' : String(value))
@@ -75,8 +84,16 @@ function onBooleanChange(value: unknown) {
     </template>
 
     <div class="admin-setting-field__body">
+      <t-select
+        v-if="item.valueType === 'STRING' && hasOptions"
+        class="admin-setting-field__control"
+        :value="textValue"
+        :options="selectOptions"
+        :disabled="disabled"
+        @change="onTextChange"
+      />
       <t-input
-        v-if="item.valueType === 'STRING'"
+        v-else-if="item.valueType === 'STRING'"
         class="admin-setting-field__control"
         :type="item.isSecret ? 'password' : 'text'"
         :value="textValue"

@@ -282,6 +282,9 @@ export default {
       sprint: '迭代',
       monitor: '监控',
       shared: '共享',
+      storage: '存储',
+      attachments: '附件',
+      smtp: '邮件服务',
     },
     groupHint: {
       system: '站点名称、Logo、页脚与系统邮件等对外展示的配置。',
@@ -292,6 +295,9 @@ export default {
       sprint: '迭代模块的默认值与上限。',
       monitor: '检测间隔、重试与告警冷却的默认参数。',
       shared: '公告、帮助入口与状态页等公共资源。',
+      storage: '附件存储驱动与两个公网地址，切换 OSS 需先在环境变量里配好凭据。',
+      attachments: '各类附件的上传体积上限。',
+      smtp: '自建 SMTP 发信通道的连接参数；当前系统邮件仍走 Resend。',
     },
   },
 }

@@ -287,6 +287,18 @@ export interface AdminSetting {
   updatedById: string | null
   createdAt: string | null
   updatedAt: string | null
+  /** 后端给了候选项就渲染下拉，不给则是普通输入框 */
+  options?: SettingOption[]
+  /** 数值项的取值范围，用于前端提示 */
+  min?: number
+  max?: number
+}
+
+/** 配置项的候选项 */
+export interface SettingOption {
+  label: string
+  labelEn?: string
+  value: string | number
 }
 
 /** 写入配置项（PATCH /admin/settings/{key}）：值必填，其余字段由后端维护 */

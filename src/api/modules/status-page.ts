@@ -45,7 +45,23 @@ export function deleteStatusPage(orgId: string, id: string) {
 /**
  * 公开状态页：无需登录，供 `/status/{slug}` 与概览页的整体状态聚合使用。
  * 页面被停用或不存在时后端返回 404。
+ *
+ * `tz` 取访客所在时区：后端按它把检测样本分到当地日期与小时，
+ * 若交给服务端默认时区，海外访客会看到错位的一天。
  */
 export function getPublicStatusPage(slug: string, config?: AxiosRequestConfig) {
-  return get<PublicStatusPage>(`/status/${encodeURIComponent(slug)}`, undefined, config)
+  return get<PublicStatusPage>(
+    `/status/${encodeURIComponent(slug)}`,
+    { tz: visitorTimeZone() },
+    config,
+  )
+}
+
+/** 访客的 IANA 时区；取不到时省略参数，由后端使用默认时区。 */
+function visitorTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined
+  } catch {
+    return undefined
+  }
 }

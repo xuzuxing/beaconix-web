@@ -6,10 +6,9 @@ import { get, patch } from '@/utils/request'
  * 管理后台 · 平台运行时配置（仅 SUPER_ADMIN）。
  * 契约：GET /admin/settings、GET /admin/settings/:key、PATCH /admin/settings/:key。
  *
- * 后端接口仍在调整，先用内存 mock 顶替：
- * 把下面的开关改成 false 即切回真实接口，页面与 composable 不需要改动。
+ * 后端契约已就绪，默认走真实接口；把开关改成 true 可切回内存 mock（src/api/mock/admin-settings.ts）。
  */
-export const SETTINGS_USE_MOCK = true
+export const SETTINGS_USE_MOCK = false
 
 /** 全部配置项：已配置的值 + 后端内置默认 */
 export function listAdminSettings() {

@@ -190,7 +190,11 @@ const latencyOption = computed(() =>
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
-  margin-bottom: 24px;
+
+  // 与 hero / 监控卡片保持同一套圆角
+  :deep(.chart-card) {
+    border-radius: 4px;
+  }
 
   &__empty {
     display: grid;

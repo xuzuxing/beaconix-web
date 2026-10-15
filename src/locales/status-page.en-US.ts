@@ -77,8 +77,18 @@ export default {
     lastCheck: 'Last check',
   },
   public: {
+    brandTagline: 'Service status',
+    brandAlt: 'Beacon',
+    footer: '© {year} Beacon. All rights reserved.',
     overall: 'Overall',
+    monitorsTitle: 'Monitors',
     updatedAt: 'Updated',
+    summary: {
+      monitors: 'Monitors',
+      uptime: 'Avg uptime',
+      latency: 'Avg latency',
+      lastCheck: 'Last check',
+    },
     noMonitors: 'No monitor is shown on this status page yet',
     loadFailed: 'Status page not found or disabled',
     chart: {
@@ -91,9 +101,9 @@ export default {
     },
     heatmap: {
       title: 'Checks in the last {days} days',
-      tip: 'Hourly check success rate; grey cells had no checks in that hour.',
+      tip: 'Hourly check success rate; grey cells lack reliable history, blank cells had no checks.',
       worst: 'Lowest {day} {hour}:00 · {value}%',
-      noData: 'No checks in this hour',
+      noData: 'Not enough history for this hour',
       empty: 'No hourly check data yet',
       simulated: 'Sample data',
       simulatedHint:
