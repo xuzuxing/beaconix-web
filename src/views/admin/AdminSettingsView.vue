@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { useMediaQuery } from '@vueuse/core'
 import { MessagePlugin } from 'tdesign-vue-next'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppIcon from '@/components/AppIcon.vue'
@@ -36,6 +37,11 @@ const {
 } = useAdminSettings()
 
 const activeTab = ref('')
+
+/** 窄屏把标签挪到输入框上方，避免左列标签挤扁控件 */
+const isNarrow = useMediaQuery('(max-width: 720px)')
+const labelAlign = computed(() => (isNarrow.value ? 'top' : 'left'))
+const labelWidth = computed(() => (isNarrow.value ? undefined : 160))
 
 /** 分组 key → 文案 key；未收录的分组直接显示 key 本身，方便后端新增分组时先顶着用 */
 const GROUP_LABEL_KEYS: Record<string, string> = {
@@ -161,7 +167,12 @@ onMounted(() => {
           </div>
 
           <template v-else>
-            <div class="admin-settings__fields">
+            <t-form
+              class="admin-settings__form"
+              :label-align="labelAlign"
+              :label-width="labelWidth"
+              :colon="false"
+            >
               <AdminSettingField
                 v-for="item in tab.items"
                 :key="item.key"
@@ -171,7 +182,7 @@ onMounted(() => {
                 :disabled="savingGroup === tab.key"
                 @update:draft="(value) => setDraft(item.key, value)"
               />
-            </div>
+            </t-form>
 
             <div class="admin-settings__actions">
               <t-button
@@ -232,10 +243,8 @@ onMounted(() => {
     color: @beacon-text-secondary;
   }
 
-  &__fields {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 12px;
+  &__form {
+    max-width: 860px;
   }
 
   &__actions {
