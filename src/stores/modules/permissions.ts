@@ -24,10 +24,13 @@ export const usePermissionsStore = defineStore('permissions', () => {
   const organizations = ref<Record<string, Entry<OrganizationPermissions>>>({})
   const projects = ref<Record<string, Entry<ProjectPermissions>>>({})
   const pending = new Map<string, Promise<unknown>>()
+  /** 每个 key 最近一次成功加载的时间，用于 force 请求的新鲜度窗口 */
+  const loadedAt = new Map<string, number>()
   let generation = 0
   function reset() {
     generation++
     pending.clear()
+    loadedAt.clear()
     organizations.value = {}
     projects.value = {}
   }
@@ -39,6 +42,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
     kind: 'organization' | 'project',
     id: string,
     force: boolean,
+    maxAgeMs = 0,
   ): Promise<T | null> {
     if (!id) return null
     const key = `${kind}:${id}`
@@ -49,6 +53,12 @@ export const usePermissionsStore = defineStore('permissions', () => {
     if (pending.has(key)) return pending.get(key) as Promise<T | null>
     const previous = records[id]
     if (!force && previous?.state === 'ready') return previous.data
+    // 强刷也允许在一个短窗口内复用刚取到的能力：导航、切换与重验常在同一时刻多层
+    // 触发同一份 /my-permissions。maxAgeMs 为 0（默认）时保持“强制必刷”的原有语义。
+    if (force && maxAgeMs > 0 && previous?.state === 'ready') {
+      const refreshedAt = loadedAt.get(key)
+      if (refreshedAt !== undefined && Date.now() - refreshedAt <= maxAgeMs) return previous.data
+    }
     const token = generation
     const context = accessContext()
     if (!previous?.data) records[id] = { state: 'loading', data: null, error: '' }
@@ -98,6 +108,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
           Entry<T>
         >
         current[id] = { state: 'ready', data, error: '' }
+        loadedAt.set(key, Date.now())
         return data
       } catch (error) {
         if (token !== generation || !isCurrentContext(context)) return null
@@ -117,6 +128,7 @@ export const usePermissionsStore = defineStore('permissions', () => {
           data: null,
           error: error instanceof Error ? error.message : '',
         }
+        loadedAt.delete(key)
         return null
       } finally {
         if (token === generation) pending.delete(key)
@@ -125,10 +137,10 @@ export const usePermissionsStore = defineStore('permissions', () => {
     pending.set(key, work)
     return work
   }
-  const ensureOrganization = (id: string, force = false) =>
-    load<OrganizationPermissions>('organization', id, force)
-  const ensureProject = (id: string, force = false) =>
-    load<ProjectPermissions>('project', id, force)
+  const ensureOrganization = (id: string, force = false, maxAgeMs = 0) =>
+    load<OrganizationPermissions>('organization', id, force, maxAgeMs)
+  const ensureProject = (id: string, force = false, maxAgeMs = 0) =>
+    load<ProjectPermissions>('project', id, force, maxAgeMs)
   const canOrganization = (
     id: string,
     key: keyof OrganizationPermissions['capabilities'] = 'manageOrganization',

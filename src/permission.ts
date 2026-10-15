@@ -8,6 +8,14 @@ import { sessionEpoch } from '@/utils/access-context'
 const WHITE_LIST = ['/login']
 
 /**
+ * 导航门禁的权限新鲜度窗口。
+ * 每次导航都强刷组织与项目两份 /my-permissions，会让“点一下菜单”固定产生两次请求；
+ * 窗口内复用刚取到的能力即可。失效信号会清空缓存与窗口，仍能立即重取，
+ * 且该窗口远小于 60 秒的既定刷新上限。
+ */
+const ENTRY_REFRESH_MAX_AGE_MS = 5_000
+
+/**
  * 全局路由守卫：
  * - 白名单（登录页）与 meta.public 的路由（如公开状态页 /status/:slug）直接放行
  * - 未登录时跳登录页，并带上来源地址，登录后回跳
@@ -45,11 +53,15 @@ router.beforeEach(async (to) => {
     const permissions = usePermissionsStore()
     if (org.workspaceState !== 'ready') await org.loadWorkspace()
     if (!org.currentOrganizationId) return { path: '/team' }
-    const authority = await permissions.ensureOrganization(org.currentOrganizationId, true)
+    const authority = await permissions.ensureOrganization(
+      org.currentOrganizationId,
+      true,
+      ENTRY_REFRESH_MAX_AGE_MS,
+    )
     if (!authority) return { path: '/access-unavailable' }
     const id = typeof to.params.projectId === 'string' ? to.params.projectId : org.currentProjectId
     if (scope === 'project' && id) {
-      const project = await permissions.ensureProject(id, true)
+      const project = await permissions.ensureProject(id, true, ENTRY_REFRESH_MAX_AGE_MS)
       if (!project) return { path: '/access-unavailable' }
       if (project.organizationId !== org.currentOrganizationId) {
         await org.switchOrganization(project.organizationId)
