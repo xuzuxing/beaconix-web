@@ -9,7 +9,7 @@ import { ArrowDown01Icon, ArrowRight01Icon, Cancel01Icon, LinkSquare02Icon } fro
 import CodeBlock from './CodeBlock.vue'
 
 /**
- * 接入指引弹窗：一级分类（框架集成 / Beacon MCP）→ 二级分类 → 场景 → 分步指引。
+ * 接入指引弹窗：一级分类（框架集成 / Beaconix MCP）→ 二级分类 → 场景 → 分步指引。
  * 每一步内含可折叠面板、说明与代码页签。
  */
 defineOptions({ name: 'GuideDialog' })

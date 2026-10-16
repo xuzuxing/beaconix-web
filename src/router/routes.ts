@@ -349,6 +349,32 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    // 服务条款：公开页面，无需登录，登录页协议链接跳转到这里
+    path: '/terms',
+    component: BlankLayout,
+    children: [
+      {
+        path: '',
+        name: 'terms',
+        component: () => import('@/views/common/TermsView.vue'),
+        meta: { titleKey: 'legal.terms.title', public: true, hidden: true },
+      },
+    ],
+  },
+  {
+    // 隐私政策：公开页面，无需登录，登录页协议链接跳转到这里
+    path: '/privacy',
+    component: BlankLayout,
+    children: [
+      {
+        path: '',
+        name: 'privacy',
+        component: () => import('@/views/common/PrivacyView.vue'),
+        meta: { titleKey: 'legal.privacy.title', public: true, hidden: true },
+      },
+    ],
+  },
+  {
     // 安装后的设备授权确认：与团队选择页共用精简顶栏。
     path: '/activate',
     component: PlainLayout,

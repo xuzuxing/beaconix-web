@@ -17,7 +17,7 @@ export default {
   probePage,
   notificationCenter,
   app: {
-    title: 'Beacon Web',
+    title: 'Beaconix Web',
     language: '语言',
   },
   nav: {
@@ -81,9 +81,9 @@ export default {
     primaryAccountId: '主账号 ID',
     loginAccountId: '登录账号 ID',
     userProfile: '账号信息',
-    userSite: 'Beacon 官网',
+    userSite: 'Beaconix 官网',
     userEditor: '在线编辑器',
-    userConsole: 'Beacon 控制台',
+    userConsole: 'Beaconix 控制台',
     userDocs: '去文档站',
     userSupport: '获取支持',
     userSwitchAccount: '切换账号',
@@ -101,7 +101,7 @@ export default {
     loading: '加载中…',
   },
   home: {
-    welcome: '欢迎使用 Beacon Web',
+    welcome: '欢迎使用 Beaconix Web',
     desc: '开箱即用的 Vue 3 技术栈：Vite + TypeScript + Vue Router + Pinia + TDesign',
     stack: '技术栈',
     counter: 'Pinia 示例',
@@ -121,6 +121,164 @@ export default {
   notFound: {
     title: '404',
     desc: '抱歉，你访问的页面不存在',
+  },
+  legal: {
+    updatedAt: '更新日期：2025 年 6 月 1 日',
+    back: '返回登录',
+    footer: '© {year} Beaconix Web · 保留所有权利',
+    terms: {
+      title: '服务条款',
+      sections: [
+        {
+          heading: '一、条款的接受',
+          paragraphs: [
+            '欢迎使用 Beaconix Web 云监控服务（以下简称「本服务」）。你在注册、登录或使用本服务前，请仔细阅读并充分理解本《服务条款》（以下简称「本条款」）。',
+            '当你勾选同意、注册账号或以其他方式使用本服务时，即表示你已阅读、理解并同意接受本条款的全部内容。如果你不同意本条款的任何内容，请停止注册或使用本服务。',
+          ],
+        },
+        {
+          heading: '二、服务说明',
+          paragraphs: [
+            '本服务提供网站与接口的可用性监控、响应时间监测、告警通知、探针节点管理与公开状态页等功能，具体功能以产品实际提供的页面为准。',
+            '我们可能根据业务发展不时更新、调整或新增服务功能；对服务所做的实质性变更，我们会以适当方式向你告知。',
+          ],
+        },
+        {
+          heading: '三、账号注册与安全',
+          paragraphs: [
+            '你在注册时应提供真实、准确、完整的资料，并在资料发生变化时及时更新。因资料不真实、不准确或不完整而产生的一切后果，由你自行承担。',
+            '你应妥善保管账号与密码等凭据，并对通过该账号进行的所有操作负责。发现账号被未授权使用时，请立即通知我们。',
+          ],
+        },
+        {
+          heading: '四、用户行为规范',
+          paragraphs: [
+            '你承诺不利用本服务从事违反法律法规、侵犯他人合法权益或干扰本服务正常运行的行为，包括但不限于：上传或传播恶意代码、进行未授权访问、干扰或破坏监控系统、滥用接口等。',
+            '如你违反上述约定，我们有权视情节采取警告、限制功能、暂停或终止服务等措施，并保留依法追究责任的权利。',
+          ],
+        },
+        {
+          heading: '五、服务费用与套餐',
+          paragraphs: [
+            '本服务部分功能可能按套餐收费，具体价格、计费方式与有效期以产品页面展示为准。',
+            '你应按时支付已确认的订单费用；除法律法规另有规定外，已支付费用原则上不予退还。',
+          ],
+        },
+        {
+          heading: '六、服务变更与中断',
+          paragraphs: [
+            '为保障服务稳定与安全，我们可能对系统进行维护或升级，期间服务可能短暂中断，我们将尽量提前通知。',
+            '因不可抗力、网络故障、第三方服务等非我们可控原因导致的服务中断，我们不承担相应责任，但会尽力协助恢复。',
+          ],
+        },
+        {
+          heading: '七、知识产权',
+          paragraphs: [
+            '本服务中包含的软件、商标、文档、界面设计等内容的知识产权归我们或相应权利人所有。',
+            '未经书面许可，你不得复制、修改、出租、出售、反向工程或以其他方式使用上述内容，但为使用本服务所必需的除外。',
+          ],
+        },
+        {
+          heading: '八、免责声明',
+          paragraphs: [
+            '本服务按「现状」提供，我们不对服务的可用性、准确性、及时性作任何明示或默示的保证，但会尽合理努力保障服务质量。',
+            '监控结果仅供你参考，不构成任何形式的承诺或保证；你基于监控结果作出的决策及其后果由你自行承担。',
+          ],
+        },
+        {
+          heading: '九、责任限制',
+          paragraphs: [
+            '在法律允许的最大范围内，对于因使用或无法使用本服务产生的间接损失、利润损失、数据丢失等，我们不承担责任。',
+            '我们对任何单一事件所承担的累计赔偿责任，不超过你在该事件发生前十二个月内实际支付的服务费用；如你未付费，则不超过适用法律允许的最低金额。',
+          ],
+        },
+        {
+          heading: '十、条款的变更与终止',
+          paragraphs: [
+            '我们可能不时修订本条款，修订后的条款将在页面公布。你继续使用本服务即视为接受修订后的条款。',
+            '你可以随时停止使用本服务；如你违反本条款，我们有权终止向你提供服务。',
+          ],
+        },
+        {
+          heading: '十一、法律适用与争议解决',
+          paragraphs: [
+            '本条款的订立、执行与解释适用中华人民共和国法律。',
+            '因本条款产生的争议，双方应友好协商解决；协商不成的，任何一方可向我们所在地有管辖权的人民法院提起诉讼。',
+          ],
+        },
+        {
+          heading: '十二、联系我们',
+          paragraphs: [
+            '如你对本条款有任何疑问或建议，可通过产品内的反馈渠道与我们联系，或发送邮件至 contacts@beaconix.app。',
+          ],
+        },
+      ],
+    },
+    privacy: {
+      title: '隐私政策',
+      sections: [
+        {
+          heading: '一、我们收集的信息',
+          paragraphs: [
+            '我们仅收集为提供服务所必需的信息，包括：注册时你主动提供的姓名、邮箱等账号信息；使用过程中产生的配置数据（如监控项、通知渠道、团队成员等）；以及访问日志、设备与网络信息等技术数据。',
+            '我们不会收集与提供服务无关的个人信息。',
+          ],
+        },
+        {
+          heading: '二、信息的使用',
+          paragraphs: [
+            '我们会将收集的信息用于：创建与管理账号、提供与改进监控服务、发送服务通知与告警、保障账号与系统安全、履行法律法规要求等。',
+            '我们不会将你的个人信息用于与上述目的无关的用途。',
+          ],
+        },
+        {
+          heading: '三、信息的共享',
+          paragraphs: [
+            '除以下情形外，我们不会向第三方共享你的个人信息：获得你的明确同意；为提供服务所必需（如短信、邮件通知服务商）；根据法律法规或监管机构的要求。',
+            '与第三方合作时，我们会要求其采取不低于本政策标准的保护措施。',
+          ],
+        },
+        {
+          heading: '四、信息的存储与安全',
+          paragraphs: [
+            '你的信息将存储在中华人民共和国境内的服务器上，存储期限为实现处理目的所必需的最短时间。',
+            '我们采取加密、访问控制、审计等合理的安全措施保护你的信息，但请理解任何安全措施都无法做到绝对安全。',
+          ],
+        },
+        {
+          heading: '五、Cookie 与同类技术',
+          paragraphs: [
+            '为保障服务正常运行与提升体验，我们可能使用 Cookie 及同类技术记录登录状态、偏好设置等信息。',
+            '你可以通过浏览器设置管理或删除 Cookie，但这可能影响部分功能的使用。',
+          ],
+        },
+        {
+          heading: '六、你的权利',
+          paragraphs: [
+            '你有权查询、更正、删除你的个人信息，或撤回授权、注销账号。你可以通过产品内的设置功能或联系我们行使上述权利。',
+            '我们会在验证你的身份后，在法律规定的期限内响应你的请求。',
+          ],
+        },
+        {
+          heading: '七、未成年人保护',
+          paragraphs: [
+            '本服务面向企业用户，我们不会有意收集未成年人的个人信息。如果你是未成年人，请在监护人指导下使用本服务。',
+          ],
+        },
+        {
+          heading: '八、隐私政策的变更',
+          paragraphs: [
+            '我们可能不时更新本政策，更新后的版本将在页面公布；重大变更我们会以显著方式通知你。',
+          ],
+        },
+        {
+          heading: '九、联系我们',
+          paragraphs: [
+            '如你对本政策或个人信息保护有任何疑问，可通过产品内的反馈渠道与我们联系，或发送邮件至 contacts@beaconix.app。',
+          ],
+        },
+      ],
+    },
   },
   menu: {
     dashboard: '概览',
@@ -210,7 +368,7 @@ export default {
         desc: '主流框架快速接入，开箱即用',
       },
       mcp: {
-        title: 'Beacon MCP',
+        title: 'Beaconix MCP',
         desc: '通过 MCP 连接你的 AI 开发工具，实现 AI 原生开发体验。',
       },
     },
@@ -236,14 +394,14 @@ export default {
       cursor: 'Cursor',
     },
     desc: {
-      miniInstall: '在小程序项目根目录安装 Beacon 小程序 SDK。',
+      miniInstall: '在小程序项目根目录安装 Beaconix 小程序 SDK。',
       miniInit: '在 app.js 中初始化 SDK，填入你的环境 ID。',
       frontendInstall: '安装 Web SDK，支持任意前端框架。',
       frontendInit: '在应用入口初始化 SDK。',
       nodeInstall:
-        '`@beacon/node-sdk` 可以让您在 Node.js 服务端使用 JavaScript/TypeScript 访问 Beacon 的服务与资源。',
+        '`@beacon/node-sdk` 可以让您在 Node.js 服务端使用 JavaScript/TypeScript 访问 Beaconix 的服务与资源。',
       nodeInit: '新增如下代码到您的 Node.js 项目',
-      mobileInit: '在应用入口初始化 SDK，即可在跨端项目中使用 Beacon 能力。',
+      mobileInit: '在应用入口初始化 SDK，即可在跨端项目中使用 Beaconix 能力。',
       mcpConfig: '在 AI 工具的 MCP 配置文件中加入以下内容。',
       mcpUse: '配置完成后，即可用自然语言完成从后端集成到部署上线的全流程开发。',
     },
@@ -258,7 +416,7 @@ export default {
   },
   overview: {
     hero: {
-      welcome: '欢迎使用 Beacon Web，高效搞定应用开发',
+      welcome: '欢迎使用 Beaconix Web，高效搞定应用开发',
     },
     metrics: {
       title: '数据概览',
@@ -288,8 +446,8 @@ export default {
       tokenDesc: '支持混元、DeepSeek、Kimi、GLM、Qwen 等最新模型，兼容 OpenAI 与 Anthropic 协议',
       enable: '启用模型',
       docs: '查看文档',
-      mcpName: 'Beacon MCP / Skill',
-      mcpDesc: '集成 Beacon MCP，用自然语言完成「后端集成到部署上线」的全流程开发',
+      mcpName: 'Beaconix MCP / Skill',
+      mcpDesc: '集成 Beaconix MCP，用自然语言完成「后端集成到部署上线」的全流程开发',
       integrate: '集成至 AI 工具',
     },
     tokenGuide: {
@@ -308,7 +466,7 @@ export default {
       jsSdk: 'JS SDK',
       nodeSdk: 'Node SDK',
       httpApi: 'HTTP API',
-      cli: 'Beacon CLI',
+      cli: 'Beaconix CLI',
       cliDesc: '通过命令行工具管理项目资源',
       cliDocs: '查看文档',
       cliVerify: 'beacon -v # 验证安装成功',
@@ -448,7 +606,7 @@ export default {
       twoFactor: '两步验证',
     },
     subtitle: {
-      login: '使用邮箱与密码登录 Beacon 控制台',
+      login: '使用邮箱与密码登录 Beaconix 控制台',
       register: '注册后需用邮箱验证码激活账号',
       forgot: '我们会向该邮箱发送 6 位重置验证码',
       twoFactor: '该账号已启用两步验证，请输入身份验证器中的动态验证码',
@@ -835,7 +993,7 @@ export default {
     },
     apiKey: {
       title: 'API 密钥',
-      subtitle: '在 CI、脚本或第三方系统中以编程方式调用 Beacon 接口。',
+      subtitle: '在 CI、脚本或第三方系统中以编程方式调用 Beaconix 接口。',
       create: '创建密钥',
       createTitle: '创建 API 密钥',
       name: '名称',
@@ -865,7 +1023,7 @@ export default {
       revoked: '密钥已作废',
       revokeFailed: '作废失败，请稍后重试',
       empty: '还没有 API 密钥',
-      emptyHint: '创建密钥后即可在自动化流程中调用 Beacon 接口。',
+      emptyHint: '创建密钥后即可在自动化流程中调用 Beaconix 接口。',
       noPermission: '只有管理员可以管理 API 密钥。',
       state: {
         active: '可用',
@@ -1147,7 +1305,7 @@ export default {
       savedConfirm: '我已妥善保存',
       refresh: '刷新',
       accessTokensTitle: '个人访问令牌',
-      accessTokensHint: '在 CI、脚本或本地工具中以个人身份调用 Beacon 接口，令牌继承你的权限。',
+      accessTokensHint: '在 CI、脚本或本地工具中以个人身份调用 Beaconix 接口，令牌继承你的权限。',
       gotoAccessTokens: '前往访问令牌',
       validation: {
         currentRequired: '请输入当前密码',
@@ -1164,7 +1322,7 @@ export default {
     },
     pat: {
       title: '个人访问令牌',
-      subtitle: '在 CI、脚本或本地工具中以个人身份调用 Beacon 接口，令牌继承你的权限。',
+      subtitle: '在 CI、脚本或本地工具中以个人身份调用 Beaconix 接口，令牌继承你的权限。',
       create: '创建令牌',
       createTitle: '创建个人访问令牌',
       name: '名称',
@@ -1191,7 +1349,7 @@ export default {
       revoked: '令牌已吊销',
       revokeFailed: '吊销失败，请稍后重试',
       empty: '还没有个人访问令牌',
-      emptyHint: '创建令牌后即可在自动化流程中以个人身份调用 Beacon 接口。',
+      emptyHint: '创建令牌后即可在自动化流程中以个人身份调用 Beaconix 接口。',
       state: {
         active: '可用',
         expired: '已过期',

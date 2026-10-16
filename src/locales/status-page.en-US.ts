@@ -78,8 +78,8 @@ export default {
   },
   public: {
     brandTagline: 'Service status',
-    brandAlt: 'Beacon',
-    footer: '© {year} Beacon. All rights reserved.',
+    brandAlt: 'Beaconix',
+    footer: '© {year} Beaconix. All rights reserved.',
     overall: 'Overall',
     monitorsTitle: 'Monitors',
     updatedAt: 'Updated',

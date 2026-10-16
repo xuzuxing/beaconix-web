@@ -17,7 +17,7 @@ export default {
   probePage,
   notificationCenter,
   app: {
-    title: 'Beacon Web',
+    title: 'Beaconix Web',
     language: 'Language',
   },
   nav: {
@@ -81,9 +81,9 @@ export default {
     primaryAccountId: 'Primary account ID',
     loginAccountId: 'Login account ID',
     userProfile: 'Account info',
-    userSite: 'Beacon website',
+    userSite: 'Beaconix website',
     userEditor: 'Online editor',
-    userConsole: 'Beacon console',
+    userConsole: 'Beaconix console',
     userDocs: 'Documentation',
     userSupport: 'Support',
     userSwitchAccount: 'Switch account',
@@ -101,7 +101,7 @@ export default {
     loading: 'Loading…',
   },
   home: {
-    welcome: 'Welcome to Beacon Web',
+    welcome: 'Welcome to Beaconix Web',
     desc: 'A ready-to-use Vue 3 stack: Vite + TypeScript + Vue Router + Pinia + TDesign',
     stack: 'Tech stack',
     counter: 'Pinia demo',
@@ -121,6 +121,164 @@ export default {
   notFound: {
     title: '404',
     desc: 'Sorry, the page you visited does not exist',
+  },
+  legal: {
+    updatedAt: 'Last updated: June 1, 2025',
+    back: 'Back to sign in',
+    footer: '© {year} Beaconix Web · All rights reserved',
+    terms: {
+      title: 'Terms of Service',
+      sections: [
+        {
+          heading: '1. Acceptance of the Terms',
+          paragraphs: [
+            'Welcome to the Beaconix Web monitoring service (the "Service"). Before you register, sign in, or use the Service, please read these Terms of Service (the "Terms") carefully.',
+            'By checking the agreement box, creating an account, or otherwise using the Service, you confirm that you have read, understood, and agree to be bound by all of the Terms. If you do not agree with any part of the Terms, please stop registering for or using the Service.',
+          ],
+        },
+        {
+          heading: '2. Description of the Service',
+          paragraphs: [
+            'The Service provides website and API availability monitoring, response time monitoring, alert notifications, probe node management, and public status pages. Specific features are subject to what the product actually provides.',
+            'We may update, adjust, or add features from time to time. We will notify you of material changes to the Service in an appropriate manner.',
+          ],
+        },
+        {
+          heading: '3. Account Registration and Security',
+          paragraphs: [
+            'You must provide true, accurate, and complete information when registering, and keep it up to date. You are solely responsible for any consequences caused by untrue, inaccurate, or incomplete information.',
+            'You must keep your account and password credentials secure and are responsible for all actions taken through your account. Please notify us immediately if you find any unauthorized use of your account.',
+          ],
+        },
+        {
+          heading: '4. Acceptable Use',
+          paragraphs: [
+            'You agree not to use the Service for any activity that violates laws or regulations, infringes the rights of others, or disrupts the normal operation of the Service, including but not limited to uploading or spreading malicious code, unauthorized access, interfering with or damaging the monitoring systems, or abusing APIs.',
+            'If you violate these rules, we may take actions such as warning, restricting features, suspending, or terminating the Service, and we reserve the right to pursue legal liability.',
+          ],
+        },
+        {
+          heading: '5. Fees and Plans',
+          paragraphs: [
+            'Some features of the Service may be offered under paid plans. Pricing, billing methods, and validity periods are shown on the product pages.',
+            'You must pay confirmed orders on time. Except as required by law, paid fees are generally non-refundable.',
+          ],
+        },
+        {
+          heading: '6. Service Changes and Interruptions',
+          paragraphs: [
+            'To keep the Service stable and secure, we may perform maintenance or upgrades that cause brief interruptions, and we will try to notify you in advance.',
+            'We are not liable for interruptions caused by force majeure, network failures, third-party services, or other causes beyond our reasonable control, but we will make reasonable efforts to restore the Service.',
+          ],
+        },
+        {
+          heading: '7. Intellectual Property',
+          paragraphs: [
+            'All software, trademarks, documentation, interface designs, and other content in the Service are owned by us or the respective rights holders.',
+            'Without written permission, you may not copy, modify, rent, sell, reverse engineer, or otherwise use such content, except as necessary to use the Service.',
+          ],
+        },
+        {
+          heading: '8. Disclaimer',
+          paragraphs: [
+            'The Service is provided on an "as is" basis. We make no express or implied warranties regarding availability, accuracy, or timeliness, but we will use reasonable efforts to maintain service quality.',
+            'Monitoring results are for reference only and do not constitute any promise or guarantee. You are solely responsible for decisions made based on monitoring results and their consequences.',
+          ],
+        },
+        {
+          heading: '9. Limitation of Liability',
+          paragraphs: [
+            'To the maximum extent permitted by law, we are not liable for indirect losses, lost profits, data loss, or similar damages arising from the use of or inability to use the Service.',
+            'Our aggregate liability for any single event will not exceed the fees you actually paid in the twelve months before the event, or the minimum amount permitted by applicable law if you have paid nothing.',
+          ],
+        },
+        {
+          heading: '10. Changes and Termination',
+          paragraphs: [
+            'We may revise the Terms from time to time, and the revised Terms will be posted on the page. Your continued use of the Service constitutes acceptance of the revised Terms.',
+            'You may stop using the Service at any time. If you breach the Terms, we may terminate your access to the Service.',
+          ],
+        },
+        {
+          heading: '11. Governing Law and Dispute Resolution',
+          paragraphs: [
+            'The formation, performance, and interpretation of the Terms are governed by the laws of the People\'s Republic of China.',
+            'Any dispute arising from the Terms shall be resolved through friendly negotiation. If negotiation fails, either party may bring a lawsuit before a competent court where we are located.',
+          ],
+        },
+        {
+          heading: '12. Contact Us',
+          paragraphs: [
+            'If you have any questions or suggestions about the Terms, please contact us through the feedback channels in the product or by email at contacts@beaconix.app.',
+          ],
+        },
+      ],
+    },
+    privacy: {
+      title: 'Privacy Policy',
+      sections: [
+        {
+          heading: '1. Information We Collect',
+          paragraphs: [
+            'We only collect information necessary to provide the Service, including: account information you provide during registration, such as your name and email; configuration data generated while using the Service, such as monitors, notification channels, and team members; and technical data such as access logs, device, and network information.',
+            'We do not collect personal information unrelated to providing the Service.',
+          ],
+        },
+        {
+          heading: '2. How We Use Information',
+          paragraphs: [
+            'We use the collected information to: create and manage accounts, provide and improve the monitoring service, send service notifications and alerts, protect account and system security, and comply with legal requirements.',
+            'We do not use your personal information for purposes unrelated to the above.',
+          ],
+        },
+        {
+          heading: '3. How We Share Information',
+          paragraphs: [
+            'We do not share your personal information with third parties except: with your explicit consent; when necessary to provide the Service (such as SMS or email notification providers); or as required by laws, regulations, or regulators.',
+            'When working with third parties, we require them to apply protections no less stringent than this policy.',
+          ],
+        },
+        {
+          heading: '4. Storage and Security',
+          paragraphs: [
+            'Your information is stored on servers located in the People\'s Republic of China, and only for the shortest period necessary to fulfill the processing purposes.',
+            'We use encryption, access control, auditing, and other reasonable security measures to protect your information. However, no security measure can be absolutely secure.',
+          ],
+        },
+        {
+          heading: '5. Cookies and Similar Technologies',
+          paragraphs: [
+            'To keep the Service running properly and improve your experience, we may use cookies and similar technologies to record sign-in status, preferences, and other information.',
+            'You can manage or delete cookies through your browser settings, but this may affect some features.',
+          ],
+        },
+        {
+          heading: '6. Your Rights',
+          paragraphs: [
+            'You have the right to access, correct, and delete your personal information, withdraw consent, or delete your account. You can do so through the product settings or by contacting us.',
+            'After verifying your identity, we will respond to your request within the period required by law.',
+          ],
+        },
+        {
+          heading: '7. Protection of Minors',
+          paragraphs: [
+            'The Service is intended for business users, and we do not knowingly collect personal information from minors. If you are a minor, please use the Service under the guidance of a guardian.',
+          ],
+        },
+        {
+          heading: '8. Changes to This Policy',
+          paragraphs: [
+            'We may update this policy from time to time, and the updated version will be posted on the page. We will notify you of material changes in a prominent way.',
+          ],
+        },
+        {
+          heading: '9. Contact Us',
+          paragraphs: [
+            'If you have any questions about this policy or personal information protection, please contact us through the feedback channels in the product or by email at contacts@beaconix.app.',
+          ],
+        },
+      ],
+    },
   },
   menu: {
     dashboard: 'Overview',
@@ -210,7 +368,7 @@ export default {
         desc: 'Quick start for mainstream frameworks, ready out of the box',
       },
       mcp: {
-        title: 'Beacon MCP',
+        title: 'Beaconix MCP',
         desc: 'Connect your AI dev tools over MCP for an AI-native workflow.',
       },
     },
@@ -224,7 +382,7 @@ export default {
     step: {
       install: 'Install the SDK',
       init: 'Initialize the SDK',
-      usage: 'Call Beacon capabilities',
+      usage: 'Call Beaconix capabilities',
       config: 'Configure MCP',
       use: 'Usage',
     },
@@ -236,14 +394,15 @@ export default {
       cursor: 'Cursor',
     },
     desc: {
-      miniInstall: 'Install the Beacon mini program SDK at the project root.',
+      miniInstall: 'Install the Beaconix mini program SDK at the project root.',
       miniInit: 'Initialize the SDK in app.js with your environment ID.',
       frontendInstall: 'Install the web SDK — works with any frontend framework.',
       frontendInit: 'Initialize the SDK in your app entry.',
       nodeInstall:
-        '`@beacon/node-sdk` lets you access Beacon services and resources from Node.js with JavaScript/TypeScript.',
+        '`@beacon/node-sdk` lets you access Beaconix services and resources from Node.js with JavaScript/TypeScript.',
       nodeInit: 'Add the following code to your Node.js project',
-      mobileInit: 'Initialize the SDK in your app entry to use Beacon in cross-platform projects.',
+      mobileInit:
+        'Initialize the SDK in your app entry to use Beaconix in cross-platform projects.',
       mcpConfig: 'Add the following to your AI tool MCP config file.',
       mcpUse:
         'Once configured, you can complete the whole flow from backend integration to deployment in natural language.',
@@ -259,7 +418,7 @@ export default {
   },
   overview: {
     hero: {
-      welcome: 'Welcome to Beacon Web, ship your app faster',
+      welcome: 'Welcome to Beaconix Web, ship your app faster',
     },
     metrics: {
       title: 'Overview',
@@ -290,9 +449,9 @@ export default {
         'Supports the latest models such as Hunyuan, DeepSeek, Kimi, GLM and Qwen, compatible with OpenAI and Anthropic protocols',
       enable: 'Enable model',
       docs: 'View docs',
-      mcpName: 'Beacon MCP / Skill',
+      mcpName: 'Beaconix MCP / Skill',
       mcpDesc:
-        'Integrate Beacon MCP to finish the whole flow from backend integration to deployment in natural language',
+        'Integrate Beaconix MCP to finish the whole flow from backend integration to deployment in natural language',
       integrate: 'Add to AI tools',
     },
     tokenGuide: {
@@ -311,7 +470,7 @@ export default {
       jsSdk: 'JS SDK',
       nodeSdk: 'Node SDK',
       httpApi: 'HTTP API',
-      cli: 'Beacon CLI',
+      cli: 'Beaconix CLI',
       cliDesc: 'Manage project resources from the command line',
       cliDocs: 'View docs',
       cliVerify: 'beacon -v # verify the install',
@@ -451,7 +610,7 @@ export default {
       twoFactor: 'Two-factor verification',
     },
     subtitle: {
-      login: 'Sign in to the Beacon console with your email',
+      login: 'Sign in to the Beaconix console with your email',
       register: 'Your account must be activated by an email code',
       forgot: 'We will email you a 6-digit reset code',
       twoFactor: 'Two-factor authentication is enabled, enter the code from your app',
@@ -839,7 +998,7 @@ export default {
     },
     apiKey: {
       title: 'API keys',
-      subtitle: 'Call the Beacon API from CI, scripts or third-party systems.',
+      subtitle: 'Call the Beaconix API from CI, scripts or third-party systems.',
       create: 'Create key',
       createTitle: 'Create API key',
       name: 'Name',
@@ -869,7 +1028,7 @@ export default {
       revoked: 'API key revoked',
       revokeFailed: 'Could not revoke the key, please try again',
       empty: 'No API key yet',
-      emptyHint: 'Create a key to call the Beacon API from your automation.',
+      emptyHint: 'Create a key to call the Beaconix API from your automation.',
       noPermission: 'Only admins can manage API keys.',
       state: {
         active: 'Active',
@@ -1160,7 +1319,7 @@ export default {
       refresh: 'Refresh',
       accessTokensTitle: 'Personal access tokens',
       accessTokensHint:
-        'Call the Beacon API as yourself from CI, scripts or local tools; tokens inherit your permissions.',
+        'Call the Beaconix API as yourself from CI, scripts or local tools; tokens inherit your permissions.',
       gotoAccessTokens: 'Go to access tokens',
       validation: {
         currentRequired: 'Please enter your current password',
@@ -1178,7 +1337,7 @@ export default {
     pat: {
       title: 'Personal access tokens',
       subtitle:
-        'Call the Beacon API as yourself from CI, scripts or local tools; tokens inherit your permissions.',
+        'Call the Beaconix API as yourself from CI, scripts or local tools; tokens inherit your permissions.',
       create: 'Create token',
       createTitle: 'Create personal access token',
       name: 'Name',
@@ -1206,7 +1365,7 @@ export default {
       revoked: 'Token revoked',
       revokeFailed: 'Failed to revoke, please retry',
       empty: 'No personal access tokens yet',
-      emptyHint: 'Create a token to call the Beacon API as yourself from automation.',
+      emptyHint: 'Create a token to call the Beaconix API as yourself from automation.',
       state: {
         active: 'Active',
         expired: 'Expired',

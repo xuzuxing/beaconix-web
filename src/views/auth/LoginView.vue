@@ -520,9 +520,9 @@ async function onSubmit() {
 
           <p class="auth-card__agreement">
             {{ t('login.link.agreement') }}
-            <a href="#">{{ t('login.link.terms') }}</a>
+            <router-link to="/terms">{{ t('login.link.terms') }}</router-link>
             <span class="auth-card__sep">·</span>
-            <a href="#">{{ t('login.link.privacy') }}</a>
+            <router-link to="/privacy">{{ t('login.link.privacy') }}</router-link>
           </p>
         </div>
       </div>

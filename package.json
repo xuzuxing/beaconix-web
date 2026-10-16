@@ -1,7 +1,7 @@
 {
   "name": "beacon-web",
   "version": "0.0.0",
-  "description": "Beacon Web 前端项目：Vite + TypeScript + Vue Router + Pinia + TDesign",
+  "description": "Beaconix Web 前端项目：Vite + TypeScript + Vue Router + Pinia + TDesign",
   "private": true,
   "type": "module",
   "scripts": {

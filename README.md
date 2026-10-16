@@ -1,6 +1,6 @@
-# Beacon Web
+# Beaconix Web
 
-Beacon Web 前端项目模板：Vue 3 全家桶 + TDesign + Hugeicons，开箱即用（请求封装、国际化、状态持久化、多环境构建均已接好）。
+Beaconix Web 前端项目模板：Vue 3 全家桶 + TDesign + Hugeicons，开箱即用（请求封装、国际化、状态持久化、多环境构建均已接好）。
 
 ## 技术栈
 
