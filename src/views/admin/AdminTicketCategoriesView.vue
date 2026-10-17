@@ -7,12 +7,16 @@ import type { CreateTicketCategoryParams, TicketCategory } from '@/api/types/tic
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import { useAdminTicketCategories } from '@/composables/useAdminTicketCategories'
+import { usePageHeader } from '@/composables/usePageHeader'
 import { PlusSignIcon, RefreshIcon } from '@/icons'
 import { useUserStore } from '@/stores'
 import { formatDateTime } from '@/utils/billing'
 
 /**
  * 管理后台 · 工单分类（仅 SUPER_ADMIN）。
+ * 不进侧边栏：入口是工单管理页动作区的「分类管理」，作为二级页面打开，
+ * 标题栏左侧的返回按钮回到工单管理。
+ *
  * 分类的读接口只有用户侧 `GET /tickets/categories`（只返回启用项），
  * 因此停用后的分类不会再出现在这里，页面把这个限制写在副标题里。
  */
@@ -22,6 +26,8 @@ const { t } = useI18n()
 const userStore = useUserStore()
 const { categories, loading, error, creating, actingId, load, create, update, remove } =
   useAdminTicketCategories()
+
+usePageHeader({ title: t('adminPage.ticketCategory.title'), back: '/admin/tickets' })
 
 // ---------- 新建 / 编辑弹窗 ----------
 const formVisible = ref(false)

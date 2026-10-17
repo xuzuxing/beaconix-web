@@ -284,6 +284,7 @@ export default {
   },
   ticketCategory: {
     title: 'Ticket categories',
+    manage: 'Manage categories',
     subtitle: 'Data source for the category dropdown when submitting a ticket.',
     onlyActiveHint:
       'The read endpoint returns active categories only, so a disabled category disappears from this list while historical tickets keep it.',

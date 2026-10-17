@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import AppFooter from '@/components/AppFooter.vue'
+import AppMaintenanceBanner from '@/components/AppMaintenanceBanner.vue'
+
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -88,8 +91,11 @@ function handleThemeSelect(data: { value?: string | number }) {
     </header>
 
     <main class="plain-layout__body">
+      <AppMaintenanceBanner />
       <router-view />
     </main>
+
+    <AppFooter />
   </div>
 </template>
 

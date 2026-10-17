@@ -1,5 +1,6 @@
 import {
   inject,
+  onActivated,
   onDeactivated,
   onScopeDispose,
   provide,
@@ -41,20 +42,43 @@ export function providePageHeader(): PageHeaderState {
 
 /**
  * 页面调用：声明本页在标题栏上的标题与返回目标。
- * 组件卸载或被 keep-alive 停用时清空，避免残留到其它页面。
+ * 组件卸载或被 keep-alive 停用时清空，避免残留到其它页面；
+ * 重新激活时再写回来（见下方 onActivated 的注释）。
  */
 export function usePageHeader(options: PageHeaderOptions): void {
   const state = inject(pageHeaderKey, null)
   if (!state) return
 
+  /** 被缓存的页面停用期间不写共享标题栏，避免后台页改动当前页的标题 */
+  let active = true
+
+  /** 把本页声明的标题与返回目标写入布局 */
+  const apply = () => {
+    if (!active) return
+    state.title.value = toValue(options.title) ?? ''
+    state.back.value = toValue(options.back) ?? null
+  }
+
   const reset = () => {
     state.title.value = ''
     state.back.value = null
   }
-  watchEffect(() => {
-    state.title.value = toValue(options.title) ?? ''
-    state.back.value = toValue(options.back) ?? null
+
+  watchEffect(apply)
+
+  // 页面被 keep-alive 缓存后，停用会清空标题与返回目标；再次激活时
+  // watchEffect 的依赖（静态 title / back）并没有变化，不会自动重跑，
+  // 所以这里必须主动补写一次——否则「进入二级页面 → 返回 → 再进入」后，
+  // 标题栏左上角的返回按钮就再也不出现了。
+  onActivated(() => {
+    active = true
+    apply()
   })
-  onDeactivated(reset)
+
+  onDeactivated(() => {
+    active = false
+    reset()
+  })
+
   onScopeDispose(reset)
 }

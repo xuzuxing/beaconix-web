@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import AppFooter from '@/components/AppFooter.vue'
+import AppMaintenanceBanner from '@/components/AppMaintenanceBanner.vue'
+
 import { MessagePlugin } from 'tdesign-vue-next'
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -315,6 +318,8 @@ async function onSubmit() {
 
       <div class="auth-page__card-wrap">
         <div class="auth-page__card">
+          <AppMaintenanceBanner />
+
           <h1 class="auth-card__title">{{ title }}</h1>
           <p class="auth-card__subtitle">{{ subtitle }}</p>
 
@@ -523,6 +528,8 @@ async function onSubmit() {
             <span class="auth-card__sep">·</span>
             <router-link to="/privacy">{{ t('login.link.privacy') }}</router-link>
           </p>
+
+          <AppFooter />
         </div>
       </div>
     </div>

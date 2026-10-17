@@ -2,6 +2,7 @@
 import { MessagePlugin } from 'tdesign-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import { getAdminTicket } from '@/api'
 import type { Ticket, TicketDetail, UpdateTicketParams } from '@/api/types/ticket'
@@ -10,7 +11,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import { useAdminTickets } from '@/composables/useAdminTickets'
 import { useTicketCategories } from '@/composables/useTicketCategories'
-import { RefreshIcon } from '@/icons'
+import { RefreshIcon, Settings01Icon } from '@/icons'
 import { useUserStore } from '@/stores'
 import { formatDateTime } from '@/utils/billing'
 import {
@@ -36,6 +37,7 @@ import { shortId } from '@/utils/team-presenter'
 defineOptions({ name: 'AdminTicketsView' })
 
 const { t } = useI18n()
+const router = useRouter()
 const userStore = useUserStore()
 const {
   tickets,
@@ -187,6 +189,14 @@ onMounted(() => {
           <template #icon><AppIcon :icon="RefreshIcon" /></template>
         </t-button>
       </t-tooltip>
+      <t-button
+        variant="outline"
+        :disabled="!userStore.isSuperAdmin"
+        @click="router.push('/admin/ticket-categories')"
+      >
+        <template #icon><AppIcon :icon="Settings01Icon" /></template>
+        {{ t('adminPage.ticketCategory.manage') }}
+      </t-button>
     </HeaderActions>
 
     <t-alert

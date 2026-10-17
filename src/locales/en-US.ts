@@ -102,6 +102,8 @@ export default {
     reset: 'Reset',
     backHome: 'Back to home',
     loading: 'Loading…',
+    maintenanceBanner:
+      'Maintenance in progress: some features may be unavailable. Contact an administrator if you need help.',
   },
   home: {
     welcome: 'Welcome to Beaconix Web',

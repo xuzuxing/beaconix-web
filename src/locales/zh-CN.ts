@@ -102,6 +102,7 @@ export default {
     reset: '重置',
     backHome: '返回首页',
     loading: '加载中…',
+    maintenanceBanner: '系统维护中：部分功能可能不可用，如有疑问请联系管理员。',
   },
   home: {
     welcome: '欢迎使用 Beaconix Web',

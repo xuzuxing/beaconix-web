@@ -273,6 +273,7 @@ export default {
   },
   ticketCategory: {
     title: '工单分类',
+    manage: '分类管理',
     subtitle: '提交工单时的分类下拉数据源。',
     onlyActiveHint:
       '分类读接口只返回启用中的分类，停用后不会再出现在这里，但历史工单仍保留原分类。',

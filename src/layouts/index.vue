@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import AppFooter from '@/components/AppFooter.vue'
+import AppMaintenanceBanner from '@/components/AppMaintenanceBanner.vue'
+
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -59,6 +62,7 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
       <SecondaryNav />
 
       <main class="layout__content">
+        <AppMaintenanceBanner />
         <!--
           标题栏分左右两组：左侧是「返回按钮 + 标题 + 附加区」，右侧是「页面级动作区」。
           页面可通过 <Teleport to="#layout-header-title-addon">（标题右侧，如类型标签、页内 Tab）
@@ -94,6 +98,8 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
         >
           <AppContent />
         </div>
+
+        <AppFooter />
       </main>
     </div>
   </div>

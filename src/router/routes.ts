@@ -311,11 +311,16 @@ export const layoutChildren: RouteRecordRaw[] = [
     meta: { titleKey: 'submenu.admin.tickets', group: 'admin', roles: ADMIN_ROLES },
   },
   {
-    // 工单分类：提交工单时的下拉数据源，停用后只保留在历史工单上
+    // 工单分类：从工单管理页进入的二级页面，不进侧边栏（页面左上角返回工单管理）
     path: 'admin/ticket-categories',
     name: 'admin-ticket-categories',
     component: () => import('@/views/admin/AdminTicketCategoriesView.vue'),
-    meta: { titleKey: 'submenu.admin.ticketCategories', group: 'admin', roles: ADMIN_ROLES },
+    meta: {
+      titleKey: 'submenu.admin.ticketCategories',
+      hidden: true,
+      menuExcluded: true,
+      roles: ADMIN_ROLES,
+    },
   },
   {
     // 平台级运行时配置：顶部 tab 的分组清单与顺序由 develop.configGroup 决定
