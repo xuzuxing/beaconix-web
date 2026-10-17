@@ -1,6 +1,6 @@
 import type { AxiosRequestConfig } from 'axios'
 
-import type { Paginated } from '../types'
+import type { PageResult } from '../types'
 import type {
   NotificationReadAllResult,
   NotificationUnreadCount,
@@ -17,7 +17,7 @@ import { del, get, patch } from '@/utils/request'
 
 /** 当前用户的通知列表（分页，可按已读状态过滤） */
 export function listUserNotifications(params?: UserNotificationQuery, config?: AxiosRequestConfig) {
-  return get<Paginated<UserNotification>>(
+  return get<PageResult<UserNotification>>(
     '/notifications',
     params as Record<string, unknown> | undefined,
     config,

@@ -79,11 +79,11 @@ async function load() {
       ...(isRead === undefined ? {} : { isRead }),
     })
     if (token !== generation) return
-    const data = result?.data ?? []
+    const data = result?.items ?? []
     items.value = store.reconcileNotifications(data, filter.value)
     total.value = Math.max(
       0,
-      (result?.meta?.total ?? data.length) - (data.length - items.value.length),
+      (result?.total ?? data.length) - (data.length - items.value.length),
     )
   } catch (cause) {
     if (token !== generation) return

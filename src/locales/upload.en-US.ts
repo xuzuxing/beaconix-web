@@ -1,0 +1,18 @@
+export default {
+  imageSection: 'Images',
+  fileSection: 'Logs / PDF',
+  selectImage: 'Add image',
+  selectFile: 'Add file',
+  dropHint: 'Drop files here, or click to choose',
+  imageHint: 'PNG / JPG / WebP / GIF, up to {size} each, {count} files max',
+  fileHint: '.log / .txt / .pdf, up to {size} each, {count} files max',
+  uploading: 'Uploading…',
+  remove: 'Remove',
+  preview: 'Preview',
+  download: 'Download',
+  sizeExceeded: '{name} exceeds the {size} limit',
+  typeNotAllowed: '{name} is not a supported file type',
+  countExceeded: 'You can upload at most {count} attachments',
+  uploadFailed: 'Failed to upload {name}, please retry',
+  limitReached: 'Upload limit reached',
+}

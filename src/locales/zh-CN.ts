@@ -7,6 +7,7 @@ import ruleGroup from './rule.zh-CN'
 import statusPage from './status-page.zh-CN'
 import probePage from './probe.zh-CN'
 import ticketPage from './ticket.zh-CN'
+import upload from './upload.zh-CN'
 
 export default {
   access,
@@ -18,6 +19,7 @@ export default {
   probePage,
   notificationCenter,
   ticketPage,
+  upload,
   app: {
     title: 'Beaconix Web',
     language: '语言',

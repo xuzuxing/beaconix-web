@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import AppFooter from '@/components/AppFooter.vue'
 import AppMaintenanceBanner from '@/components/AppMaintenanceBanner.vue'
 
 import { MessagePlugin } from 'tdesign-vue-next'
@@ -311,6 +310,8 @@ async function onSubmit() {
         <img class="auth-page__bg-image" :src="loginBackground" alt="" />
       </div>
 
+      <AppMaintenanceBanner />
+
       <header class="auth-page__brand">
         <img class="auth-page__brand-logo" :src="logoSrc" :alt="siteName" />
         <LanguageSwitcher />
@@ -318,7 +319,6 @@ async function onSubmit() {
 
       <div class="auth-page__card-wrap">
         <div class="auth-page__card">
-          <AppMaintenanceBanner />
 
           <h1 class="auth-card__title">{{ title }}</h1>
           <p class="auth-card__subtitle">{{ subtitle }}</p>
@@ -331,15 +331,9 @@ async function onSubmit() {
           <form class="auth-form" novalidate @submit.prevent="onSubmit">
             <div v-if="showName" class="auth-field">
               <label class="auth-field__label" for="name">{{ t('login.field.name') }}</label>
-              <t-input
-                id="name"
-                v-model="form.name"
-                size="large"
-                autocomplete="name"
-                :status="errors.name ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.name')"
-                @input="errors.name = ''"
-              >
+              <t-input id="name" v-model="form.name" size="large" autocomplete="name"
+                :status="errors.name ? 'error' : 'default'" :placeholder="t('login.placeholder.name')"
+                @input="errors.name = ''">
                 <template #prefix-icon>
                   <AppIcon :icon="UserIcon" />
                 </template>
@@ -349,16 +343,9 @@ async function onSubmit() {
 
             <div v-if="showEmail" class="auth-field">
               <label class="auth-field__label" for="email">{{ t('login.field.email') }}</label>
-              <t-input
-                id="email"
-                v-model="form.email"
-                size="large"
-                inputmode="email"
-                autocomplete="email"
-                :status="errors.email ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.email')"
-                @input="errors.email = ''"
-              >
+              <t-input id="email" v-model="form.email" size="large" inputmode="email" autocomplete="email"
+                :status="errors.email ? 'error' : 'default'" :placeholder="t('login.placeholder.email')"
+                @input="errors.email = ''">
                 <template #prefix-icon>
                   <AppIcon :icon="Mail01Icon" />
                 </template>
@@ -369,17 +356,11 @@ async function onSubmit() {
             <div v-if="showPassword" class="auth-field">
               <label class="auth-field__label" for="password">{{
                 t('login.field.password')
-              }}</label>
-              <t-input
-                id="password"
-                v-model="form.password"
-                size="large"
-                type="password"
+                }}</label>
+              <t-input id="password" v-model="form.password" size="large" type="password"
                 :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
-                :status="errors.password ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.password')"
-                @input="errors.password = ''"
-              >
+                :status="errors.password ? 'error' : 'default'" :placeholder="t('login.placeholder.password')"
+                @input="errors.password = ''">
                 <template #prefix-icon>
                   <AppIcon :icon="LockPasswordIcon" />
                 </template>
@@ -391,16 +372,9 @@ async function onSubmit() {
               <label class="auth-field__label" for="confirm-password">
                 {{ t('login.field.confirmPassword') }}
               </label>
-              <t-input
-                id="confirm-password"
-                v-model="form.confirmPassword"
-                size="large"
-                type="password"
-                autocomplete="new-password"
-                :status="errors.confirmPassword ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.confirmPassword')"
-                @input="errors.confirmPassword = ''"
-              >
+              <t-input id="confirm-password" v-model="form.confirmPassword" size="large" type="password"
+                autocomplete="new-password" :status="errors.confirmPassword ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.confirmPassword')" @input="errors.confirmPassword = ''">
                 <template #prefix-icon>
                   <AppIcon :icon="LockPasswordIcon" />
                 </template>
@@ -412,16 +386,9 @@ async function onSubmit() {
 
             <div v-if="showCode" class="auth-field">
               <label class="auth-field__label" for="code">{{ t('login.field.code') }}</label>
-              <t-input
-                id="code"
-                v-model="form.code"
-                size="large"
-                inputmode="numeric"
-                maxlength="6"
-                :status="errors.code ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.code')"
-                @input="errors.code = ''"
-              />
+              <t-input id="code" v-model="form.code" size="large" inputmode="numeric" maxlength="6"
+                :status="errors.code ? 'error' : 'default'" :placeholder="t('login.placeholder.code')"
+                @input="errors.code = ''" />
               <p v-if="errors.code" class="auth-field__error">{{ errors.code }}</p>
             </div>
 
@@ -430,17 +397,9 @@ async function onSubmit() {
               <label class="auth-field__label" for="two-factor-code">
                 {{ t('login.field.twoFactorCode') }}
               </label>
-              <t-input
-                id="two-factor-code"
-                v-model="form.twoFactorCode"
-                size="large"
-                inputmode="numeric"
-                autocomplete="one-time-code"
-                maxlength="32"
-                :status="errors.twoFactorCode ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.twoFactorCode')"
-                @input="errors.twoFactorCode = ''"
-              >
+              <t-input id="two-factor-code" v-model="form.twoFactorCode" size="large" inputmode="numeric"
+                autocomplete="one-time-code" maxlength="32" :status="errors.twoFactorCode ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.twoFactorCode')" @input="errors.twoFactorCode = ''">
                 <template #prefix-icon>
                   <AppIcon :icon="SecurityCheckIcon" />
                 </template>
@@ -454,16 +413,9 @@ async function onSubmit() {
               <label class="auth-field__label" for="new-password">
                 {{ t('login.field.newPassword') }}
               </label>
-              <t-input
-                id="new-password"
-                v-model="form.newPassword"
-                size="large"
-                type="password"
-                autocomplete="new-password"
-                :status="errors.newPassword ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.newPassword')"
-                @input="errors.newPassword = ''"
-              >
+              <t-input id="new-password" v-model="form.newPassword" size="large" type="password"
+                autocomplete="new-password" :status="errors.newPassword ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.newPassword')" @input="errors.newPassword = ''">
                 <template #prefix-icon>
                   <AppIcon :icon="LockPasswordIcon" />
                 </template>
@@ -471,26 +423,13 @@ async function onSubmit() {
               <p v-if="errors.newPassword" class="auth-field__error">{{ errors.newPassword }}</p>
             </div>
 
-            <t-button
-              class="auth-submit"
-              block
-              size="large"
-              theme="primary"
-              type="submit"
-              :loading="submitting"
-            >
+            <t-button class="auth-submit" block size="large" theme="primary" type="submit" :loading="submitting">
               {{ submitText }}
             </t-button>
 
             <!-- 第二步 / 两步验证：重发验证码（2FA 无重发）与返回登录 -->
             <div v-if="codeStage || twoFactorStage" class="auth-card__footer">
-              <button
-                v-if="codeStage"
-                type="button"
-                class="auth-link"
-                :disabled="submitting"
-                @click="onResend"
-              >
+              <button v-if="codeStage" type="button" class="auth-link" :disabled="submitting" @click="onResend">
                 {{ t('login.action.resend') }}
               </button>
               <button type="button" class="auth-link" @click="resetFlow('login')">
@@ -528,8 +467,6 @@ async function onSubmit() {
             <span class="auth-card__sep">·</span>
             <router-link to="/privacy">{{ t('login.link.privacy') }}</router-link>
           </p>
-
-          <AppFooter />
         </div>
       </div>
     </div>
@@ -555,6 +492,10 @@ async function onSubmit() {
     flex-direction: column;
     min-width: 0;
     min-height: 100%;
+
+    .maintenance-banner {
+      position: relative;
+    }
   }
 
   // 参考页的浅蓝背景位图（从保存页面里提取的内嵌图）

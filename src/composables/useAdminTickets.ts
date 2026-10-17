@@ -7,8 +7,10 @@ import {
   replyAsAdmin,
   updateAdminTicket,
 } from '@/api'
+import type { AttachmentRef } from '@/api/types/attachment'
 import type {
   AdminTicketQuery,
+  AdminTicketReplyParams,
   Ticket,
   TicketPriority,
   TicketStats,
@@ -123,12 +125,21 @@ export function useAdminTickets() {
   }
 
   /** 回复工单（isInternalNote 为真时记为内部备注） */
-  async function reply(ticketId: string, body: string, isInternalNote = false): Promise<boolean> {
+  async function reply(
+    ticketId: string,
+    body: string,
+    isInternalNote = false,
+    attachments: AttachmentRef[] = [],
+  ): Promise<boolean> {
     const trimmed = body.trim()
     if (!trimmed) return false
+
+    const payload: AdminTicketReplyParams = { body: trimmed, isInternalNote }
+    if (attachments.length) payload.attachments = attachments
+
     actingId.value = ticketId
     try {
-      await replyAsAdmin(ticketId, { body: trimmed, isInternalNote })
+      await replyAsAdmin(ticketId, payload)
       await load()
       void loadStats()
       return true

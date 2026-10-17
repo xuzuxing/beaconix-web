@@ -25,6 +25,20 @@ export interface Paginated<T> {
   meta: PageMeta
 }
 
+/**
+ * 扁平分页响应。
+ * 后端已把部分列表（当前用户通知、工单等）统一成 items 与计数器同级的结构，
+ * 请求层解包最外层 `{ data, meta: { timestamp } }` 后拿到的就是这份。
+ * 与 `Paginated<T>` 的差别仅在于列表字段叫 items、分页字段不再嵌一层 meta。
+ */
+export interface PageResult<T> {
+  items: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 /** 仅返回提示文案的响应 */
 export interface MessageResponse {
   message: string

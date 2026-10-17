@@ -4,8 +4,11 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
+import type { AttachmentRef } from '@/api/types/attachment'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
+import TicketAttachmentList from '@/components/support/TicketAttachmentList.vue'
+import TicketAttachmentsField from '@/components/support/TicketAttachmentsField.vue'
 import TicketTimeline from '@/components/support/TicketTimeline.vue'
 import { usePageHeader } from '@/composables/usePageHeader'
 import { useTicketCategories } from '@/composables/useTicketCategories'
@@ -53,6 +56,7 @@ usePageHeader({
 })
 
 const replyBody = ref('')
+const replyAttachments = ref<AttachmentRef[]>([])
 const closeVisible = ref(false)
 
 /** 分类文案：优先用内嵌分类，缺失时按分类 ID 从分类列表里补名字 */
@@ -68,9 +72,10 @@ const organizationText = computed(() =>
 
 async function sendReply() {
   if (!replyBody.value.trim() || replying.value) return
-  const done = await reply(replyBody.value)
+  const done = await reply(replyBody.value, replyAttachments.value)
   if (!done) return
   replyBody.value = ''
+  replyAttachments.value = []
   MessagePlugin.success(t('ticketPage.replyDone'))
 }
 
@@ -149,6 +154,11 @@ async function confirmClose() {
             <p class="ticket-detail__content">{{ ticket.content }}</p>
           </div>
 
+          <div v-if="ticket.attachments?.length" class="ticket-detail__section">
+            <h4 class="ticket-detail__section-title">{{ t('ticketPage.attachments') }}</h4>
+            <TicketAttachmentList :attachments="ticket.attachments" />
+          </div>
+
           <div class="ticket-detail__section">
             <h4 class="ticket-detail__section-title">{{ t('ticketPage.timelineTitle') }}</h4>
             <TicketTimeline :entries="timeline" />
@@ -168,6 +178,7 @@ async function confirmClose() {
               :placeholder="t('ticketPage.replyPlaceholder')"
               :autosize="{ minRows: 4, maxRows: 10 }"
             />
+            <TicketAttachmentsField v-model="replyAttachments" :disabled="replying" />
             <div class="ticket-detail__actions">
               <t-button
                 theme="primary"

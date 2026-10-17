@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import type { AttachmentRef } from '@/api/types/attachment'
 import type {
   TicketCategory,
   TicketDetail,
@@ -9,6 +10,8 @@ import type {
   TicketStatus,
   UpdateTicketParams,
 } from '@/api/types/ticket'
+import TicketAttachmentList from '@/components/support/TicketAttachmentList.vue'
+import TicketAttachmentsField from '@/components/support/TicketAttachmentsField.vue'
 import TicketTimeline from '@/components/support/TicketTimeline.vue'
 import { formatDateTime } from '@/utils/billing'
 import {
@@ -46,7 +49,7 @@ const props = withDefaults(
 )
 const emit = defineEmits<{
   update: [patch: UpdateTicketParams]
-  reply: [payload: { body: string; isInternalNote: boolean }]
+  reply: [payload: { body: string; isInternalNote: boolean; attachments: AttachmentRef[] }]
   remove: []
 }>()
 const { t } = useI18n()
@@ -59,6 +62,7 @@ const form = reactive<{
 }>({ status: 'OPEN', priority: 'MEDIUM', categoryId: '', assigneeDraft: '' })
 
 const replyBody = ref('')
+const replyAttachments = ref<AttachmentRef[]>([])
 const internalNote = ref(false)
 
 function syncForm() {
@@ -75,6 +79,7 @@ watch(
   () => props.detail?.id,
   () => {
     replyBody.value = ''
+    replyAttachments.value = []
     internalNote.value = false
     syncForm()
   },
@@ -88,6 +93,7 @@ watch(
   (value) => {
     if (!value) return
     replyBody.value = ''
+    replyAttachments.value = []
     internalNote.value = false
   },
 )
@@ -145,7 +151,11 @@ function save() {
 function sendReply() {
   const body = replyBody.value.trim()
   if (!body || props.busy) return
-  emit('reply', { body, isInternalNote: internalNote.value })
+  emit('reply', {
+    body,
+    isInternalNote: internalNote.value,
+    attachments: replyAttachments.value,
+  })
 }
 </script>
 
@@ -216,6 +226,11 @@ function sendReply() {
         <p class="ticket-drawer__content">{{ detail.content }}</p>
       </section>
 
+      <section v-if="detail.attachments?.length" class="ticket-drawer__section">
+        <h4 class="ticket-drawer__section-title">{{ t('ticketPage.attachments') }}</h4>
+        <TicketAttachmentList :attachments="detail.attachments" />
+      </section>
+
       <section class="ticket-drawer__section">
         <h4 class="ticket-drawer__section-title">{{ t('adminPage.ticket.updateTitle') }}</h4>
         <div class="ticket-drawer__form">
@@ -260,6 +275,7 @@ function sendReply() {
           :placeholder="t('adminPage.ticket.replyPlaceholder')"
           :autosize="{ minRows: 3, maxRows: 8 }"
         />
+        <TicketAttachmentsField v-model="replyAttachments" :disabled="busy" />
         <div class="ticket-drawer__row">
           <t-checkbox v-model="internalNote">{{ t('ticketPage.internalNote') }}</t-checkbox>
           <span class="ticket-drawer__hint">{{ t('adminPage.ticket.internalHint') }}</span>

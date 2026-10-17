@@ -40,29 +40,27 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
 </script>
 
 <template>
-  <div
-    class="layout"
-    :class="{
-      'layout--dashboard':
-        route.name === 'dashboard' ||
-        route.name === 'monitor' ||
-        route.name === 'monitor-detail' ||
-        route.path.startsWith('/probes') ||
-        route.path.startsWith('/teams'),
-      'layout--monitor': route.name === 'monitor' || route.name === 'monitor-detail',
-      'layout--probes': route.path.startsWith('/probes'),
-      'layout--notifications':
-        route.name === 'notifications' || route.name === 'notification-detail',
-    }"
-  >
+  <div class="layout" :class="{
+    'layout--dashboard':
+      route.name === 'dashboard' ||
+      route.name === 'monitor' ||
+      route.name === 'monitor-detail' ||
+      route.path.startsWith('/probes') ||
+      route.path.startsWith('/teams'),
+    'layout--monitor': route.name === 'monitor' || route.name === 'monitor-detail',
+    'layout--probes': route.path.startsWith('/probes'),
+    'layout--notifications':
+      route.name === 'notifications' || route.name === 'notification-detail',
+  }">
     <AppHeader />
+
+    <AppMaintenanceBanner />
 
     <div class="layout__main">
       <SideNav />
       <SecondaryNav />
 
       <main class="layout__content">
-        <AppMaintenanceBanner />
         <!--
           标题栏分左右两组：左侧是「返回按钮 + 标题 + 附加区」，右侧是「页面级动作区」。
           页面可通过 <Teleport to="#layout-header-title-addon">（标题右侧，如类型标签、页内 Tab）
@@ -73,14 +71,8 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
         -->
         <div v-show="showPageHeader" class="layout__content-header">
           <div class="layout__content-header-left">
-            <t-button
-              v-if="back"
-              class="layout__header-back"
-              variant="text"
-              shape="square"
-              :aria-label="t('layout.back')"
-              @click="goBack"
-            >
+            <t-button v-if="back" class="layout__header-back" variant="text" shape="square"
+              :aria-label="t('layout.back')" @click="goBack">
               <AppIcon :icon="ArrowLeft01Icon" :size="20" />
             </t-button>
             <h2 class="layout__page-title">{{ pageTitle }}</h2>
@@ -92,10 +84,7 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
           </div>
         </div>
 
-        <div
-          class="layout__content-body"
-          :class="{ 'layout__content-body--large': !showPageHeader }"
-        >
+        <div class="layout__content-body" :class="{ 'layout__content-body--large': !showPageHeader }">
           <AppContent />
         </div>
 
@@ -121,44 +110,53 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
       :deep(.app-header__search) {
         width: 180px;
       }
+
       :deep(.app-header__guide) {
         display: none;
       }
     }
 
     @media (max-width: 900px) {
+
       :deep(.app-header__search),
       :deep(.app-header__pending),
       :deep(.app-header__icon-btn) {
         display: none;
       }
+
       :deep(.app-header__main) {
         flex: 1;
         min-width: 0;
         gap: 4px;
         padding-left: 8px;
       }
+
       :deep(.app-header__team),
       :deep(.app-header__project) {
         min-width: 0;
       }
+
       :deep(.app-header__team-name),
       :deep(.app-header__project-name) {
         max-width: 90px;
       }
+
       :deep(.app-header__extra) {
         margin-left: 0;
         padding-right: 4px;
       }
+
       :deep(.app-header__user) {
         margin-right: 0;
         padding: 0 8px;
       }
+
       .layout__content-body {
         padding: 16px;
       }
     }
   }
+
   &--notifications {
     @media (max-width: 900px) {
       :deep(.app-header__pending) {
@@ -169,24 +167,29 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
         font-size: 0;
       }
     }
+
     @media (max-width: 600px) {
       :deep(.app-header__project) {
         display: none;
       }
+
       .layout__content-body {
         padding: 12px;
       }
     }
   }
+
   &--monitor,
   &--probes {
     .layout__content-body {
       padding: 24px;
     }
+
     @media (max-width: 900px) {
       :deep(.secondary-nav) {
         display: none;
       }
+
       .layout__content-body {
         padding: 16px;
       }

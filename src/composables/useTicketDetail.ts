@@ -1,7 +1,8 @@
 import { computed, ref, watch, type Ref } from 'vue'
 
 import { closeMyTicket, getMyTicket, replyToMyTicket } from '@/api'
-import type { TicketDetail } from '@/api/types/ticket'
+import type { AttachmentRef } from '@/api/types/attachment'
+import type { CreateTicketReplyParams, TicketDetail } from '@/api/types/ticket'
 import { ticketTimelineOf } from '@/utils/ticket-presenter'
 
 /**
@@ -45,15 +46,18 @@ export function useTicketDetail(ticketId: Ref<string>) {
     }
   }
 
-  /** 发送回复；成功返回 true（请求层已统一提示错误） */
-  async function reply(body: string): Promise<boolean> {
+  /** 发送回复（可带附件）；成功返回 true（请求层已统一提示错误） */
+  async function reply(body: string, attachments: AttachmentRef[] = []): Promise<boolean> {
     const id = ticketId.value
     const trimmed = body.trim()
     if (!id || !trimmed || replying.value) return false
 
+    const payload: CreateTicketReplyParams = { body: trimmed }
+    if (attachments.length) payload.attachments = attachments
+
     replying.value = true
     try {
-      await replyToMyTicket(id, { body: trimmed })
+      await replyToMyTicket(id, payload)
       await load()
       return true
     } catch {

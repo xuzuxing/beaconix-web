@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 
 import type { TicketTimelineEntry } from '@/api/types/ticket'
+import TicketAttachmentList from '@/components/support/TicketAttachmentList.vue'
 import { formatDateTime } from '@/utils/billing'
 import {
   ticketStatusLabelKey,
@@ -40,6 +41,12 @@ const { t } = useI18n()
         </time>
       </div>
       <p v-if="entry.body" class="ticket-timeline__body">{{ entry.body }}</p>
+      <TicketAttachmentList
+        v-if="entry.attachments.length"
+        class="ticket-timeline__attachments"
+        :attachments="entry.attachments"
+        compact
+      />
     </li>
   </ol>
   <p v-else class="ticket-timeline__empty">{{ t('ticketPage.timelineEmpty') }}</p>

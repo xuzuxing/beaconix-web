@@ -7,6 +7,7 @@ import ruleGroup from './rule.en-US'
 import statusPage from './status-page.en-US'
 import probePage from './probe.en-US'
 import ticketPage from './ticket.en-US'
+import upload from './upload.en-US'
 
 export default {
   access,
@@ -18,6 +19,7 @@ export default {
   probePage,
   notificationCenter,
   ticketPage,
+  upload,
   app: {
     title: 'Beaconix Web',
     language: 'Language',

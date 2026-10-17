@@ -2,11 +2,13 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import type { AttachmentRef } from '@/api/types/attachment'
 import type { CreateTicketParams, TicketCategory, TicketPriority } from '@/api/types/ticket'
+import TicketAttachmentsField from '@/components/support/TicketAttachmentsField.vue'
 import { TICKET_PRIORITIES, ticketPriorityLabelKey } from '@/utils/ticket-presenter'
 
 /**
- * 提交工单：主题 + 分类（可选）+ 优先级 + 问题描述。
+ * 提交工单：主题 + 分类（可选）+ 优先级 + 问题描述 + 附件（图片 / 日志 / PDF）。
  * 提交由页面完成（composable 里的 submit），这里只做表单校验并把参数抛出去。
  */
 defineOptions({ name: 'TicketCreateDialog' })
@@ -29,10 +31,12 @@ const form = reactive({
   priority: 'MEDIUM' as TicketPriority,
   content: '',
 })
+const attachments = ref<AttachmentRef[]>([])
 const error = ref('')
 
 watch(visible, (value) => {
   error.value = ''
+  attachments.value = []
   if (!value) return
   Object.assign(form, {
     subject: '',
@@ -64,6 +68,7 @@ function submit() {
 
   const payload: CreateTicketParams = { subject, content, priority: form.priority }
   if (form.categoryId) payload.categoryId = form.categoryId
+  if (attachments.value.length) payload.attachments = attachments.value
   error.value = ''
   emit('submit', payload)
 }
@@ -107,6 +112,9 @@ function submit() {
           :placeholder="t('ticketPage.contentPlaceholder')"
           :autosize="{ minRows: 5, maxRows: 12 }"
         />
+      </t-form-item>
+      <t-form-item :label="t('ticketPage.attachments')" :help="t('ticketPage.attachmentHint')">
+        <TicketAttachmentsField v-model="attachments" :disabled="submitting" />
       </t-form-item>
     </t-form>
   </t-dialog>

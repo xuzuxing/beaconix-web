@@ -1,3 +1,4 @@
+import type { AttachmentRef } from '@/api/types/attachment'
 import type {
   Ticket,
   TicketDetail,
@@ -172,6 +173,30 @@ function readKind(source: Record<string, unknown>, hasBody: boolean): TicketTime
   return asStatus(source.toStatus ?? source.status) ? 'STATUS' : 'SYSTEM'
 }
 
+/** 条目附件：后端可能用 attachments 或 files 字段，条目内字段名也做了兜底 */
+function readAttachments(source: Record<string, unknown>): AttachmentRef[] {
+  const raw = source.attachments ?? source.files
+  if (!Array.isArray(raw)) return []
+
+  return raw.flatMap((item) => {
+    const record = asRecord(item)
+    if (!record) return []
+    const url = readString(record, ['url', 'downloadUrl', 'href'])
+    if (!url) return []
+    const filename =
+      readString(record, ['filename', 'name']) || (url.split('/').pop() ?? '') || 'file'
+    return [
+      {
+        filename,
+        mimeType: readString(record, ['mimeType', 'mime', 'type']),
+        size: typeof record.size === 'number' && Number.isFinite(record.size) ? record.size : 0,
+        url,
+        fileKey: readString(record, ['fileKey', 'key']),
+      },
+    ]
+  })
+}
+
 function normalizeTimelineEntry(raw: unknown, index: number): TicketTimelineEntry | null {
   const source = asRecord(raw)
   if (!source) {
@@ -184,6 +209,7 @@ function normalizeTimelineEntry(raw: unknown, index: number): TicketTimelineEntr
           internal: false,
           status: null,
           author: null,
+          attachments: [],
           createdAt: '',
         }
       : null
@@ -197,6 +223,7 @@ function normalizeTimelineEntry(raw: unknown, index: number): TicketTimelineEntr
     internal: isTruthy(source.isInternalNote) || isTruthy(source.internal),
     status: asStatus(source.toStatus ?? source.status),
     author: readAuthor(source),
+    attachments: readAttachments(source),
     createdAt: readString(source, TIMELINE_TIME_FIELDS),
   }
 }

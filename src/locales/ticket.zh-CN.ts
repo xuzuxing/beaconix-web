@@ -30,6 +30,8 @@ export default {
   backToList: '返回工单列表',
   content: '问题描述',
   contentPlaceholder: '描述复现步骤、期望结果与实际结果…',
+  attachments: '附件',
+  attachmentHint: '可附截图、日志或 PDF，方便我们定位问题。',
   required: '请填写主题与问题描述。',
   submit: '提交',
   submitted: '工单已提交，我们会尽快回复。',

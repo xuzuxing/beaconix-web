@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { getAdminTicket } from '@/api'
+import type { AttachmentRef } from '@/api/types/attachment'
 import type { Ticket, TicketDetail, UpdateTicketParams } from '@/api/types/ticket'
 import AdminTicketDetailDrawer from '@/components/admin/AdminTicketDetailDrawer.vue'
 import AppIcon from '@/components/AppIcon.vue'
@@ -125,10 +126,14 @@ async function handleUpdate(patch: UpdateTicketParams) {
   void loadDetail(updated.id)
 }
 
-async function handleReply(payload: { body: string; isInternalNote: boolean }) {
+async function handleReply(payload: {
+  body: string
+  isInternalNote: boolean
+  attachments: AttachmentRef[]
+}) {
   const current = detail.value
   if (!current) return
-  const done = await reply(current.id, payload.body, payload.isInternalNote)
+  const done = await reply(current.id, payload.body, payload.isInternalNote, payload.attachments)
   if (!done) return
   sentAt.value = Date.now()
   MessagePlugin.success(t('adminPage.ticket.replyDone'))

@@ -2,7 +2,10 @@
 // 工单域（用户侧 /tickets 与管理后台 /admin/tickets）
 // 对齐后端 TicketsController / AdminTicketsController / AdminTicketCategoriesController。
 // 工单是账号级资源：提交时只记录作者当时所属的组织快照，不随团队切换而变。
+// 附件走通用上传端点（POST /attachments/upload），提交工单 / 回复时只带元数据。
 // ============================================================
+
+import type { AttachmentRef } from './attachment'
 
 export type TicketStatus = 'OPEN' | 'PROCESSING' | 'RESOLVED' | 'CLOSED'
 
@@ -50,6 +53,8 @@ export interface Ticket {
   firstRespondedAt?: string | null
   resolvedAt?: string | null
   closedAt?: string | null
+  /** 工单附件：提交时上传的文件元数据 */
+  attachments?: AttachmentRef[] | null
   createdAt: string
   updatedAt: string
 }
@@ -67,6 +72,8 @@ export interface TicketTimelineEntry {
   /** 状态流转的目标状态 */
   status: TicketStatus | null
   author: TicketUserSummary | null
+  /** 该条回复 / 备注附带的文件（后端返回时才有） */
+  attachments: AttachmentRef[]
   createdAt: string
 }
 
@@ -110,16 +117,20 @@ export interface CreateTicketParams {
   content: string
   priority?: TicketPriority
   categoryId?: string
+  /** 已上传附件的元数据（POST /attachments/upload 的返回） */
+  attachments?: AttachmentRef[]
 }
 
 export interface CreateTicketReplyParams {
   body: string
+  attachments?: AttachmentRef[]
 }
 
 export interface AdminTicketReplyParams {
   body: string
   /** 内部备注：提交者永远看不到 */
   isInternalNote?: boolean
+  attachments?: AttachmentRef[]
 }
 
 /** 管理端更新：显式 null 表示清空分类 / 取消指派 */

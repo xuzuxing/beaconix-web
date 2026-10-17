@@ -168,11 +168,11 @@ export const useNotificationStore = defineStore('notification', () => {
         limit: RECENT_NOTIFICATION_LIMIT,
       })
       if (token !== generation) return
-      const data = result?.data ?? []
+      const data = result?.items ?? []
       recent.value = reconcileNotifications(data, filter.value)
       total.value = Math.max(
         0,
-        (result?.meta?.total ?? data.length) - (data.length - recent.value.length),
+        (result?.total ?? data.length) - (data.length - recent.value.length),
       )
       loaded.value = true
       filterTotals.value = { ...filterTotals.value, [filter.value]: total.value }

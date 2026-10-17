@@ -31,6 +31,8 @@ export default {
   backToList: 'Back to tickets',
   content: 'Description',
   contentPlaceholder: 'Steps to reproduce, expected result and actual result…',
+  attachments: 'Attachments',
+  attachmentHint: 'Screenshots, logs or PDFs help us diagnose the issue faster.',
   required: 'Subject and description are required.',
   submit: 'Submit',
   submitted: 'Ticket submitted; we will reply as soon as possible.',
