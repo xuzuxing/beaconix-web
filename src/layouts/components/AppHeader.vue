@@ -5,19 +5,18 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import defaultIcon from '@/assets/logo/icon.png'
-import defaultLogo from '@/assets/logo/default.png'
-import whiteLogo from '@/assets/logo/white-logo.png'
 import whiteIcon from '@/assets/logo/wihte-icon.png'
 import AppIcon from '@/components/AppIcon.vue'
 import GuideDialog from '@/components/guide/GuideDialog.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import NotificationDrawer from '@/components/notifications/NotificationDrawer.vue'
 import GlobalSearch from '@/components/search/GlobalSearch.vue'
+import TeamCreateDialog from '@/components/team/TeamCreateDialog.vue'
 import type { Organization, Project } from '@/api/types'
 import type { Plan } from '@/api/types/billing'
 import { useTeamPlans } from '@/composables/useTeamPlans'
 import { usePermissionsStore } from '@/stores/modules/permissions'
-import { APP_TITLE } from '@/config'
+import { useBrand } from '@/composables/useBrand'
 import { userMenuGroups } from '@/config/user'
 import {
   BookOpen01Icon,
@@ -52,10 +51,12 @@ const permissions = usePermissionsStore()
 
 const collapsed = computed(() => appStore.collapsed)
 
+const { siteName, logoSrc: brandLogoSrc } = useBrand()
+
 /** 品牌 logo：展开时用整标、折叠时用方形图标，并随明暗主题选深浅两版 */
 const logoSrc = computed(() => {
   if (collapsed.value) return appStore.isDark ? whiteIcon : defaultIcon
-  return appStore.isDark ? whiteLogo : defaultLogo
+  return brandLogoSrc.value
 })
 
 /** 「接入指引」弹窗开关 */
@@ -115,10 +116,8 @@ const teamInfoRows = computed<InfoRow[]>(() => {
   ]
 })
 
-async function selectOrg(org: Organization) {
-  await orgStore.switchOrganization(org.id)
-  teamMode.value = 'info'
-  teamVisible.value = false
+/** 切换团队后刷新当前页；监控详情依赖团队数据，回落到监控列表 */
+async function reloadAfterTeamSwitch() {
   if (router.currentRoute.value.name === 'monitor-detail') await router.replace('/monitor')
   else
     await router.replace({
@@ -127,10 +126,33 @@ async function selectOrg(org: Organization) {
     })
 }
 
+async function selectOrg(org: Organization) {
+  await orgStore.switchOrganization(org.id)
+  teamMode.value = 'info'
+  teamVisible.value = false
+  await reloadAfterTeamSwitch()
+}
+
 /** 团队管理不进侧边栏，入口只放在这个下拉里；跳转到控制台之外的「选择团队」整页 */
 function goTeams() {
   teamVisible.value = false
   void router.push('/team')
+}
+
+/** 「新建团队」：入口在这个下拉里，弹窗复用团队选择页的同一个组件 */
+const createVisible = ref(false)
+
+function goCreateTeam() {
+  teamVisible.value = false
+  createVisible.value = true
+}
+
+/** 创建成功：先刷新团队列表，再切到新团队并留在当前页 */
+async function handleTeamCreated(org: Organization) {
+  teamMode.value = 'info'
+  await orgStore.loadOrganizations()
+  await orgStore.switchOrganization(org.id)
+  await reloadAfterTeamSwitch()
 }
 
 /** 各团队的套餐：当前团队复用 store，其余按需加载（与选择团队页共用同一实现） */
@@ -239,7 +261,7 @@ onMounted(() => {
   <header class="app-header">
     <!-- 品牌区：宽度与一级侧栏对齐 -->
     <div class="app-header__brand" :class="{ 'app-header__brand--collapsed': collapsed }">
-      <img class="app-header__logo" :src="logoSrc" :alt="APP_TITLE" />
+      <img class="app-header__logo" :src="logoSrc" :alt="siteName" />
     </div>
 
     <!-- 左侧功能组 -->
@@ -368,7 +390,7 @@ onMounted(() => {
                 <AppIcon :icon="Settings01Icon" />
                 {{ t('menu.team') }}
               </button>
-              <button type="button" class="team-list__action">
+              <button type="button" class="team-list__action" @click="goCreateTeam">
                 <AppIcon :icon="PlusSignIcon" />
                 {{ t('layout.teamCreate') }}
               </button>
@@ -521,6 +543,7 @@ onMounted(() => {
     </div>
 
     <GuideDialog v-model="guideVisible" />
+    <TeamCreateDialog v-model:visible="createVisible" @created="handleTeamCreated" />
     <NotificationDrawer />
   </header>
 </template>

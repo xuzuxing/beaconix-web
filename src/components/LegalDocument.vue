@@ -3,13 +3,10 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import defaultLogo from '@/assets/logo/default.png'
-import whiteLogo from '@/assets/logo/white-logo.png'
 import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import { APP_TITLE } from '@/config'
+import { useBrand } from '@/composables/useBrand'
 import { ArrowLeft01Icon } from '@/icons'
-import { useAppStore } from '@/stores'
 
 defineOptions({ name: 'LegalDocument' })
 
@@ -22,14 +19,13 @@ const props = defineProps<{ kind: 'terms' | 'privacy' }>()
 
 const { t, tm } = useI18n()
 const router = useRouter()
-const appStore = useAppStore()
 
-const logoSrc = computed(() => (appStore.isDark ? whiteLogo : defaultLogo))
+const { siteName, logoSrc, footerCopyright, icpLicense } = useBrand()
 const title = computed(() => t(`legal.${props.kind}.title`))
 const sections = computed<LegalSection[]>(
   () => (tm(`legal.${props.kind}.sections`) as unknown as LegalSection[]) ?? [],
 )
-const footer = computed(() => t('legal.footer', { year: new Date().getFullYear() }))
+const footer = computed(() => t('legal.footer', { year: new Date().getFullYear(), copyright: footerCopyright.value }))
 
 function goBack() {
   if (window.history.length > 1) {
@@ -44,13 +40,16 @@ function goBack() {
   <div class="legal">
     <header class="legal__bar">
       <div class="legal__brand">
-        <img class="legal__logo" :src="logoSrc" :alt="APP_TITLE" />
-        <span class="legal__brand-name">{{ APP_TITLE }}</span>
+        <img class="legal__logo" :src="logoSrc" :alt="siteName" />
+        <span class="legal__name">{{ props.kind === 'terms' ? t('legal.terms.title') : t('legal.privacy.title')
+          }}</span>
       </div>
 
       <div class="legal__actions">
         <t-button variant="text" @click="goBack">
-          <template #icon><AppIcon :icon="ArrowLeft01Icon" /></template>
+          <template #icon>
+            <AppIcon :icon="ArrowLeft01Icon" />
+          </template>
           {{ t('legal.back') }}
         </t-button>
         <LanguageSwitcher />
@@ -69,7 +68,7 @@ function goBack() {
       </section>
     </article>
 
-    <footer class="legal__footer">{{ footer }}</footer>
+    <footer class="legal__footer">{{ footer }} {{ icpLicense }}</footer>
   </div>
 </template>
 
@@ -101,7 +100,7 @@ function goBack() {
     object-fit: contain;
   }
 
-  &__brand-name {
+  &__name {
     font-size: @beacon-font-size-menu;
     font-weight: @beacon-font-weight-medium;
     color: @beacon-text-primary;

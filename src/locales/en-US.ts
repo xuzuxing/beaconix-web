@@ -125,7 +125,7 @@ export default {
   legal: {
     updatedAt: 'Last updated: June 1, 2025',
     back: 'Back to sign in',
-    footer: '© {year} Beaconix Web · All rights reserved',
+    footer: '© {year} {copyright} · All rights reserved',
     terms: {
       title: 'Terms of Service',
       sections: [
@@ -499,17 +499,14 @@ export default {
       dayUnit: 'days',
       validUntil: 'Plan valid until',
       noExpiry: 'The free plan has no expiry date',
-      billing: 'Pricing',
+      orders: 'Orders',
       compare: 'Compare plans',
       upgrade: 'Upgrade plan',
       currentTitle: 'Current plan capabilities',
       nextTitle: 'Unlock more after upgrading',
       topPlan: 'You are on the highest plan',
       quotaLabel: 'Monitor quota:',
-      quotaTip: 'View usage',
       noAutoRenew: 'The free plan does not support auto-renewal',
-      more: 'Learn more',
-      changePlan: 'Change plan',
       minInterval: 'Minimum check interval',
       seconds: 'every {value}s',
       allowed: 'Yes',

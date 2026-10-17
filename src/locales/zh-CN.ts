@@ -125,7 +125,7 @@ export default {
   legal: {
     updatedAt: '更新日期：2025 年 6 月 1 日',
     back: '返回登录',
-    footer: '© {year} Beaconix Web · 保留所有权利',
+    footer: '© {year} {copyright} · 保留所有权利',
     terms: {
       title: '服务条款',
       sections: [
@@ -495,17 +495,14 @@ export default {
       dayUnit: '天',
       validUntil: '套餐有效期至',
       noExpiry: '免费版无到期时间',
-      billing: '计费标准',
+      orders: '订单管理',
       compare: '套餐对比',
       upgrade: '升级套餐',
       currentTitle: '当前套餐能力',
       nextTitle: '升级解锁更多能力',
       topPlan: '已是最高套餐',
       quotaLabel: '套餐监控项：',
-      quotaTip: '查看用量',
       noAutoRenew: '免费版不支持自动续费',
-      more: '了解更多能力',
-      changePlan: '套餐变配',
       minInterval: '最小检测间隔',
       seconds: '每 {value} 秒',
       allowed: '支持',

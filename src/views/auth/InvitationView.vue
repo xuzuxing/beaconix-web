@@ -6,9 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { getInvitationByToken } from '@/api'
 import type { PublicInvitationPreview } from '@/api/types/invitation'
-import defaultLogo from '@/assets/logo/default.png'
-import whiteLogo from '@/assets/logo/white-logo.png'
-import { APP_TITLE } from '@/config'
+import { useBrand } from '@/composables/useBrand'
 import { useAppStore, useUserStore } from '@/stores'
 
 /**
@@ -29,8 +27,8 @@ const loading = ref(true)
 
 const token = computed(() => String(route.params.token ?? ''))
 
-/** 品牌整标随明暗主题切换（暗色用白色版） */
-const logoSrc = computed(() => (appStore.isDark ? whiteLogo : defaultLogo))
+/** 品牌整标与站点名来自平台配置（暗色下回退到内置白色版） */
+const { siteName, logoSrc } = useBrand()
 
 /** 状态投影：后端仍返回 PENDING 但已过有效期时按 EXPIRED 展示 */
 const status = computed(() => {
@@ -95,7 +93,7 @@ onMounted(async () => {
 <template>
   <main class="invitation-page" :class="{ 'invitation-page--dark': appStore.isDark }">
     <section class="invitation-card">
-      <img class="invitation-card__brand" :src="logoSrc" :alt="APP_TITLE" />
+      <img class="invitation-card__brand" :src="logoSrc" :alt="siteName" />
 
       <template v-if="preview">
         <div class="invitation-card__avatar">

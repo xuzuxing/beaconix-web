@@ -125,10 +125,10 @@ const privileges = computed(() => {
       <div class="package__head">
         <span class="package__name beacon-plan-badge" :class="`beacon-plan--${planTier(plan)}`">{{ name }}</span>
         <span v-if="isFree" class="package__badge beacon-plan-badge beacon-plan--free">{{ t('usage.package.freeBadge') }}</span>
-        <a class="package__billing" href="#">
-          {{ t('usage.package.billing') }}
+        <router-link class="package__billing" :to="{ name: 'billing-orders' }">
+          {{ t('usage.package.orders') }}
           <AppIcon :icon="ArrowRight01Icon" :size="14" />
-        </a>
+        </router-link>
       </div>
 
       <div class="package__time">
@@ -142,7 +142,6 @@ const privileges = computed(() => {
           <strong class="package__quota-label">{{ t('usage.package.quotaLabel') }}</strong>
           <span class="package__quota-value">{{ monitorQuota.used }}</span>
           <span class="package__quota-total">/ {{ monitorQuota.limit }}</span>
-          <a class="package__quota-tip" href="#">{{ t('usage.package.quotaTip') }}</a>
         </div>
 
         <t-progress
@@ -160,7 +159,9 @@ const privileges = computed(() => {
           <template #icon><AppIcon :icon="FlashIcon" :size="14" /></template>
           {{ t('usage.package.upgrade') }}
         </t-button>
-        <t-button variant="outline" size="small">{{ t('usage.package.compare') }}</t-button>
+        <t-button variant="outline" size="small" @click="emit('upgrade')">
+          {{ t('usage.package.compare') }}
+        </t-button>
       </div>
     </div>
 
@@ -174,7 +175,6 @@ const privileges = computed(() => {
             <span>{{ item }}</span>
           </li>
         </ul>
-        <a class="package__more" href="#">{{ t('usage.package.more') }}</a>
       </section>
 
       <section class="package__block">
@@ -192,21 +192,13 @@ const privileges = computed(() => {
         </ul>
 
         <p v-else class="package__empty">{{ t('usage.package.topPlan') }}</p>
-
-        <a class="package__more" href="#">{{ t('usage.package.more') }}</a>
       </section>
     </div>
-
-    <!-- 右上角：套餐变配 -->
-    <button v-if="upgradePlan" type="button" class="package__change" @click="emit('upgrade')">
-      {{ t('usage.package.changePlan') }}
-    </button>
   </div>
 </template>
 
 <style scoped lang="less">
 .package {
-  position: relative;
   display: flex;
   gap: 32px;
   padding: 20px;
@@ -304,16 +296,6 @@ const privileges = computed(() => {
     color: @beacon-text-tertiary;
   }
 
-  &__quota-tip {
-    margin-left: auto;
-    font-size: @beacon-font-size-base;
-    color: @beacon-brand;
-
-    &:hover {
-      color: @beacon-brand-hover;
-    }
-  }
-
   &__progress {
     margin: 0;
   }
@@ -339,8 +321,6 @@ const privileges = computed(() => {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 32px;
     min-width: 0;
-    // 给右上角的「套餐变配」让位
-    padding-right: 72px;
   }
 
   &__block {
@@ -394,37 +374,10 @@ const privileges = computed(() => {
     }
   }
 
-  &__more {
-    font-size: @beacon-font-size-base;
-    color: @beacon-brand;
-
-    &:hover {
-      color: @beacon-brand-hover;
-    }
-  }
-
   &__empty {
     margin: 0;
     font-size: @beacon-font-size-base;
     color: @beacon-text-tertiary;
-  }
-
-  // 右上角：套餐变配
-  &__change {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    padding: 0;
-    font-family: inherit;
-    font-size: @beacon-font-size-base;
-    color: @beacon-brand;
-    cursor: pointer;
-    background: none;
-    border: 0;
-
-    &:hover {
-      color: @beacon-brand-hover;
-    }
   }
 }
 </style>

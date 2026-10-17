@@ -2,11 +2,9 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import defaultLogo from '@/assets/logo/default.png'
-import whiteLogo from '@/assets/logo/white-logo.png'
 import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import { APP_TITLE } from '@/config'
+import { useBrand } from '@/composables/useBrand'
 import {
   BookOpen01Icon,
   ComputerIcon,
@@ -27,8 +25,8 @@ defineOptions({ name: 'PlainLayout' })
 const { t } = useI18n()
 const appStore = useAppStore()
 
-/** 品牌 logo 随明暗主题切换 */
-const logoSrc = computed(() => (appStore.isDark ? whiteLogo : defaultLogo))
+/** 品牌 logo 与站点名来自平台配置，没配则用内置双色 logo */
+const { siteName, logoSrc } = useBrand()
 
 const themeOptions = computed(() => [
   { content: t('layout.themeLight'), value: 'light' },
@@ -50,7 +48,7 @@ function handleThemeSelect(data: { value?: string | number }) {
 <template>
   <div class="plain-layout">
     <header class="plain-layout__header">
-      <img class="plain-layout__logo" :src="logoSrc" :alt="APP_TITLE" />
+      <img class="plain-layout__logo" :src="logoSrc" :alt="siteName" />
 
       <div class="plain-layout__extra">
         <t-tooltip :content="t('layout.docs')" placement="bottom">

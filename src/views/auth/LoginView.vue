@@ -14,11 +14,10 @@ import {
   verifyTwoFactorLogin as verifyTwoFactorLoginApi,
 } from '@/api'
 import loginBackground from '@/assets/login-background.jpg'
-import defaultLogo from '@/assets/logo/default.png'
-import whiteLogo from '@/assets/logo/white-logo.png'
 import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import { APP_TITLE, HOME_PATH } from '@/config'
+import { HOME_PATH } from '@/config'
+import { useBrand } from '@/composables/useBrand'
 import { LockPasswordIcon, Mail01Icon, SecurityCheckIcon, UserIcon } from '@/icons'
 import { useAppStore, useUserStore } from '@/stores'
 
@@ -42,8 +41,8 @@ const router = useRouter()
 const userStore = useUserStore()
 const appStore = useAppStore()
 
-/** 品牌整标随明暗主题切换（暗色用白色版） */
-const logoSrc = computed(() => (appStore.isDark ? whiteLogo : defaultLogo))
+/** 品牌整标与站点名来自平台配置（暗色下回退到内置白色版） */
+const { siteName, logoSrc } = useBrand()
 
 const mode = ref<LoginMode>('login')
 /** register / forgot 的第二步（输入邮箱验证码） */
@@ -310,7 +309,7 @@ async function onSubmit() {
       </div>
 
       <header class="auth-page__brand">
-        <img class="auth-page__brand-logo" :src="logoSrc" :alt="APP_TITLE" />
+        <img class="auth-page__brand-logo" :src="logoSrc" :alt="siteName" />
         <LanguageSwitcher />
       </header>
 
