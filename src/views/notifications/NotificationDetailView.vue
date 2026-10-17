@@ -10,7 +10,7 @@ import InvitationActions from '@/components/notifications/InvitationActions.vue'
 import { notificationIcon } from '@/components/notifications/notification-icons'
 import { usePageHeader } from '@/composables/usePageHeader'
 import { LinkSquare02Icon } from '@/icons'
-import { useNotificationStore } from '@/stores'
+import { useNotificationStore, useUserStore } from '@/stores'
 import {
   formatNotificationTime,
   notificationBodyText,
@@ -27,6 +27,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useNotificationStore()
+const userStore = useUserStore()
 
 const notification = ref<UserNotification | null>(null)
 const loading = ref(false)
@@ -54,7 +55,9 @@ const text = computed(() =>
   notification.value ? notificationBodyText(notification.value.body) : '',
 )
 const target = computed(() =>
-  notification.value ? resolveNotificationTarget(notification.value) : null,
+  notification.value
+    ? resolveNotificationTarget(notification.value, { isSuperAdmin: userStore.isSuperAdmin })
+    : null,
 )
 const icon = computed(() => notificationIcon(notification.value?.type ?? ''))
 

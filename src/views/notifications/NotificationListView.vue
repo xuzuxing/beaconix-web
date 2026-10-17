@@ -11,7 +11,7 @@ import HeaderActions from '@/components/HeaderActions.vue'
 import NotificationItem from '@/components/notifications/NotificationItem.vue'
 import PendingInvitations from '@/components/notifications/PendingInvitations.vue'
 import { RefreshIcon } from '@/icons'
-import { useNotificationStore } from '@/stores'
+import { useNotificationStore, useUserStore } from '@/stores'
 import { notificationReadParam, resolveNotificationTarget } from '@/utils/notification-presenter'
 
 /**
@@ -24,6 +24,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const store = useNotificationStore()
+const userStore = useUserStore()
 
 const FILTERS: NotificationReadFilter[] = ['all', 'unread', 'read']
 const PAGE_SIZES = [10, 20, 50]
@@ -131,7 +132,9 @@ function onIgnore(id: string) {
 }
 
 async function onHandle(notification: UserNotification) {
-  const target = resolveNotificationTarget(notification)
+  const target = resolveNotificationTarget(notification, {
+    isSuperAdmin: userStore.isSuperAdmin,
+  })
   if (!target) return
   await run(notification.id, async () => {
     try {

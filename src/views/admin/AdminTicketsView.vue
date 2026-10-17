@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { MessagePlugin } from 'tdesign-vue-next'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { getAdminTicket } from '@/api'
 import type { AttachmentRef } from '@/api/types/attachment'
@@ -39,6 +39,7 @@ defineOptions({ name: 'AdminTicketsView' })
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const {
   tickets,
@@ -172,6 +173,23 @@ onMounted(() => {
   void loadStats()
   void loadCategories()
 })
+
+/**
+ * 从工单通知点「立即处理」进来时带 ?ticketId=：直接打开该工单的详情抽屉。
+ * 打开后清掉 query，避免关闭抽屉后再次进入时重复打开。
+ */
+watch(
+  () => route.query.ticketId,
+  (value) => {
+    if (!userStore.isSuperAdmin) return
+    if (typeof value !== 'string' || !value) return
+    detailVisible.value = true
+    detail.value = null
+    void loadDetail(value)
+    void router.replace({ path: route.path, query: {} })
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

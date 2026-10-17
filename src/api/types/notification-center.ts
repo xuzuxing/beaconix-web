@@ -68,6 +68,10 @@ export type UserNotificationType =
   | 'PROBE_ENROLLED'
   | 'PROBE_SECRET_ROTATED'
   | 'PROBE_CREDENTIAL_REVOKED'
+  | 'TICKET_CREATED'
+  | 'TICKET_REPLIED'
+  | 'TICKET_STATUS_CHANGED'
+  | 'TICKET_ASSIGNED'
 
 /** Projected notification returned by both /notifications and /notifications/:id. */
 export interface UserNotification {

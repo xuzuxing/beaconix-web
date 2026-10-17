@@ -8,7 +8,7 @@ import type { NotificationReadFilter, UserNotification } from '@/api/types/notif
 import AppIcon from '@/components/AppIcon.vue'
 import NotificationItem from '@/components/notifications/NotificationItem.vue'
 import { RefreshIcon } from '@/icons'
-import { useNotificationStore } from '@/stores'
+import { useNotificationStore, useUserStore } from '@/stores'
 import { resolveNotificationTarget } from '@/utils/notification-presenter'
 
 /**
@@ -20,6 +20,7 @@ defineOptions({ name: 'NotificationDrawer' })
 const { t } = useI18n()
 const router = useRouter()
 const store = useNotificationStore()
+const userStore = useUserStore()
 
 /** 正在提交动作的条目，避免重复点击 */
 const pendingId = ref('')
@@ -78,7 +79,9 @@ async function onIgnore(id: string) {
 
 /** Open the authorized workspace destination and close the drawer. */
 async function onHandle(notification: UserNotification) {
-  const target = resolveNotificationTarget(notification)
+  const target = resolveNotificationTarget(notification, {
+    isSuperAdmin: userStore.isSuperAdmin,
+  })
   if (!target) return
   await run(notification.id, async () => {
     try {

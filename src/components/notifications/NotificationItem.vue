@@ -8,6 +8,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import InvitationActions from './InvitationActions.vue'
 import { notificationIcon } from './notification-icons'
 import { LinkSquare02Icon } from '@/icons'
+import { useUserStore } from '@/stores'
 import {
   formatNotificationTime,
   notificationBodyText,
@@ -41,6 +42,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const userStore = useUserStore()
 
 /** 展开状态：展开同时把未读标记已读 */
 const expanded = ref(false)
@@ -49,7 +51,9 @@ const theme = computed(() => notificationTheme(props.notification.type))
 const labelKey = computed(() => notificationLabelKey(props.notification.type))
 const text = computed(() => notificationBodyText(props.notification.body))
 const time = computed(() => formatNotificationTime(props.notification.createdAt, props.withTime))
-const target = computed(() => resolveNotificationTarget(props.notification))
+const target = computed(() =>
+  resolveNotificationTarget(props.notification, { isSuperAdmin: userStore.isSuperAdmin }),
+)
 const icon = computed(() => notificationIcon(props.notification.type))
 
 /** 展开区里的附加信息：meta 的键值对，值统一转成可读文本 */

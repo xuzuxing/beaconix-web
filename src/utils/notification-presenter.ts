@@ -75,6 +75,10 @@ const TYPE_META: Record<UserNotificationType, NotificationTypeMeta> = {
   PROBE_ENROLLED: { key: 'probe', theme: 'success' },
   PROBE_SECRET_ROTATED: { key: 'probe', theme: 'primary' },
   PROBE_CREDENTIAL_REVOKED: { key: 'probe', theme: 'warning' },
+  TICKET_CREATED: { key: 'ticket', theme: 'primary' },
+  TICKET_REPLIED: { key: 'ticket', theme: 'primary' },
+  TICKET_STATUS_CHANGED: { key: 'ticket', theme: 'success' },
+  TICKET_ASSIGNED: { key: 'ticket', theme: 'warning' },
 }
 
 const FALLBACK_META: NotificationTypeMeta = { key: 'other', theme: 'default' }
@@ -96,6 +100,7 @@ export function notificationIconName(type: UserNotificationType | string) {
     monitor: 'Analytics01Icon',
     credential: 'ApiIcon',
     probe: 'ServerIcon',
+    ticket: 'CustomerServiceIcon',
   }
   return icons[category] ?? 'Notification03Icon'
 }
@@ -141,6 +146,14 @@ export function formatNotificationTime(value: string | null | undefined, withTim
 /** Only supported internal routes are exposed as notification destinations. */
 export type NotificationTarget = { kind: 'route'; to: RouteLocationRaw }
 
+export interface NotificationTargetOptions {
+  /**
+   * 当前用户是平台超管：工单类通知跳管理后台列表并按 id 打开详情抽屉。
+   * 工单是账号级资源，`GET /tickets/:id` 只返回自己的工单，超管拿不到别人的。
+   */
+  isSuperAdmin?: boolean
+}
+
 /** 关联资源类型 → 现有页面；没有对应页面的资源（任务 / 迭代 / 项目）不出现入口 */
 const RESOURCE_ROUTES: Record<string, RouteLocationRaw> = {
   ORGANIZATION: '/teams',
@@ -171,6 +184,7 @@ export function notificationScope(notification: UserNotification) {
  */
 export function resolveNotificationTarget(
   notification: UserNotification,
+  options: NotificationTargetOptions = {},
 ): NotificationTarget | null {
   const resourceType = notification.resourceType?.toUpperCase()
   if (notification.type.startsWith('INVITATION_'))
@@ -185,6 +199,26 @@ export function resolveNotificationTarget(
     return { kind: 'route', to: resourceType === 'ORDER' ? '/billing/orders' : '/billing' }
   }
   if (!resourceType) return null
+
+  // 工单：提交者进自己的工单详情，平台运营进管理后台列表（页面按 ticketId 打开抽屉）
+  if (resourceType === 'TICKET' || resourceType === 'TICKETS') {
+    const ticketId = notification.resourceId
+    if (options.isSuperAdmin) {
+      return {
+        kind: 'route',
+        to: ticketId
+          ? { path: '/admin/tickets', query: { ticketId } }
+          : { path: '/admin/tickets' },
+      }
+    }
+    return {
+      kind: 'route',
+      to: ticketId
+        ? { path: `/tickets/${encodeURIComponent(ticketId)}` }
+        : { path: '/tickets' },
+    }
+  }
+
   const to = RESOURCE_ROUTES[resourceType]
   if (!to) return null
   if (resourceType === 'MONITOR' && notification.resourceId) {

@@ -21,6 +21,7 @@ export default {
     monitor: '监控',
     credential: '凭据',
     probe: '探针',
+    ticket: '工单',
     other: '通知',
   },
   invitation: {

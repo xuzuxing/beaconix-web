@@ -21,6 +21,7 @@ export default {
     monitor: 'Monitor',
     credential: 'Credential',
     probe: 'Probe',
+    ticket: 'Ticket',
     other: 'Notification',
   },
   invitation: {
