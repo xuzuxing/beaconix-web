@@ -70,7 +70,7 @@ PUT 的空 projects 是明确撤销全部，需要确认。归档/不可用授�
 | ----------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | 权限        | `src/api/{modules,types}/permissions.ts`、`src/stores/modules/permissions.ts`、`useProjectAccess.ts` | 非持久化、去重、ready 才放行、未知契约拒绝、失效清 sibling authority                 |
 | 身份/工作区 | `user.ts`、`organization.ts`、`useOrganizationRole.ts`                                               | 已验证当前平台身份；先能力再项目；订阅可选；无 grants 正常空状态                     |
-| 导航        | `permission.ts`、`navigation-access.ts`、menu/search/layout/header                                   | 路由、菜单、搜索、二级导航同口径；深链项目优先；故障恢复不循环                       |
+| 导航        | `permission.ts`、`navigation-access.ts`、menu/search/layout/header                                   | 路由、菜单、搜索、二级导航同口径；深链项目优先；门禁按 5 秒新鲜度窗口复用能力；故障恢复不循环 |
 | 邀请        | `MemberInviteDialog.vue`、`ProjectGrantSelector.vue`、`InvitationScope.vue`、`InvitationView.vue`    | 项目搜索与逐项角色、VIEWER 降级、ADMIN 确认、认证接受前展示 scope                    |
 | 成员授权    | `MemberProjectPermissionsDrawer.vue`、`TeamMembersView.vue`、`team-presenter.ts`                     | 完整替换、变更摘要、双前提、409/ABA、归档保留、明确撤销全部、特殊身份约束            |
 | 监控        | `useMonitorAccess.ts`、`useMonitorActions.ts`、监控 list/detail/editor                               | 明确项目能力、保存前重验、MEMBER 检查与 ADMIN 测试告警分离、凭据未改不重传           |
@@ -78,7 +78,7 @@ PUT 的空 projects 是明确撤销全部，需要确认。归档/不可用授�
 | 共享资源    | 渠道/状态页 editor 与 composables、团队 API Key/信息/危险操作、订阅                                  | 按组织能力读取/提交；未知订阅不误标 Free；失权关闭编辑器                             |
 | 通知        | `notification.ts`、邀请动作                                                                          | SSE 只触发授权 REST 重拉；失效清正文/count；接受邀请总是重拉工作区；深链校验真实归属 |
 | 请求/缓存   | `request.ts`、`access-context.ts`、`monitoring-request-state.ts`、`AppContent.vue`                   | ApiError；会话/工作区/权限代次；旧续期/失败不覆盖新账号；ETag 与 keep-alive 淘汰     |
-| 主动重验    | `main.ts`                                                                                            | 路由、focus/online/visibility、前台60秒；BroadcastChannel 只传失效/退出信号          |
+| 主动重验    | `access-revalidation.ts`、`utils/revalidate-schedule.ts`、`permission.ts`                             | 路由、focus/online/visibility、前台60秒；信号合并节流；BroadcastChannel 只传失效/退出信号 |
 | 文案        | access 中英文语言包、PAT/API Key 指引                                                                | scope 不扩大个人 grants，API Key 是独立机器身份                                      |
 
 权限失效销毁页面缓存与 Teleport，不只是隐藏按钮。同项目降权重载脱敏正文；子监控404清详情与标题，合法项目仍保留。A→B→A 不复用旧项目权限 Promise；旧 U1 续期失败不能注销 U2。收到组织降权会重新加载服务器过滤项目并清订阅。
