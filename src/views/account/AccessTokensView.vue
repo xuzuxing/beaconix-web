@@ -21,7 +21,7 @@ import {
 
 /**
  * 个人访问令牌：列表（掩码元信息）、创建（明文仅展示一次）与吊销。
- * 令牌继承当前用户的权限，用于 CI、脚本或本地工具以个人身份调用 Beacon 接口。
+ * 令牌继承当前用户的权限，用于 CI、脚本或本地工具以个人身份调用 Beaconix 接口。
  */
 defineOptions({ name: 'AccessTokensView' })
 

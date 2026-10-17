@@ -91,7 +91,7 @@ export interface PublicStatusPage {
   updatedAt: string
   /**
    * 品牌 logo 地址（状态页可配置项）。
-   * 后端暂未提供，为空或加载失败时前端回退到 Beacon 默认品牌 logo（随明暗主题切换）。
+   * 后端暂未提供，为空或加载失败时前端回退到 Beaconix 默认品牌 logo（随明暗主题切换）。
    */
   logoUrl?: string | null
   /**

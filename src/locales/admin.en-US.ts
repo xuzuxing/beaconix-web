@@ -108,7 +108,7 @@ export default {
     detailTitle: 'Tenant details',
     organizationId: 'Organization ID',
     deletedAt: 'Disabled at',
-    statusActiveHint: 'This tenant can access Beacon normally.',
+    statusActiveHint: 'This tenant can access Beaconix normally.',
     statusDeletedHint: 'This tenant is soft-deleted; its members cannot sign in.',
   },
   probe: {

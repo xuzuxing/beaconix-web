@@ -327,7 +327,7 @@ beacon.init({ env: 'beacon-prod' })`,
                   {
                     key: 'prompt',
                     label: '提示词',
-                    code: '帮我在 Beacon 里创建一个用户表，并提供查询接口',
+                    code: '帮我在 Beaconix 里创建一个用户表，并提供查询接口',
                     language: 'text',
                   },
                 ],

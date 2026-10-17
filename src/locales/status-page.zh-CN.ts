@@ -77,8 +77,8 @@ export default {
   },
   public: {
     brandTagline: '服务状态',
-    brandAlt: 'Beacon',
-    footer: '© {year} Beacon，保留所有权利。',
+    brandAlt: 'Beaconix',
+    footer: '© {year} Beaconix，保留所有权利。',
     overall: '整体状态',
     monitorsTitle: '监控项',
     updatedAt: '更新于',

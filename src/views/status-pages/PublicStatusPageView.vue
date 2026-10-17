@@ -21,7 +21,7 @@ import { withSimulatedAvailability } from '@/utils/status-page-simulated'
  * 内容区宽 1280px：作为对外分享的门面，比控制台内的页面更宽松。
  *
  * 头部 logo 与页脚版权是**状态页可配置项**（`page.logoUrl` / `page.footerText`）：
- * 后端尚未提供，为空或加载失败时回退到 Beacon 默认 logo（随明暗主题）与默认版权文案。
+ * 后端尚未提供，为空或加载失败时回退到 Beaconix 默认 logo（随明暗主题）与默认版权文案。
  */
 defineOptions({ name: 'PublicStatusPageView' })
 const { t } = useI18n()

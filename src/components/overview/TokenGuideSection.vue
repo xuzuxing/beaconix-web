@@ -11,7 +11,7 @@ defineOptions({ name: 'TokenGuideSection' })
 const { t } = useI18n()
 
 const baseUrl = 'https://beacon-gateway.example.com/v1/ai/beacon'
-const apiKeyName = 'Beacon'
+const apiKeyName = 'Beaconix'
 
 const docLinks = computed(() => [
   'Codebuddy',
