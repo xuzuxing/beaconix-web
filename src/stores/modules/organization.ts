@@ -8,8 +8,13 @@ import {
   workspaceEpoch,
 } from '@/utils/access-context'
 
-import { getSubscriptionStack, listOrganizations, listProjects } from '@/api'
-import type { Organization, Project } from '@/api/types'
+import {
+  createProject as createProjectRequest,
+  getSubscriptionStack,
+  listOrganizations,
+  listProjects,
+} from '@/api'
+import type { CreateProjectParams, Organization, Project } from '@/api/types'
 import type { Plan, SubscriptionStack } from '@/api/types/billing'
 
 /**
@@ -143,6 +148,20 @@ export const useOrganizationStore = defineStore(
       await permissions.ensureProject(id, true)
     }
 
+    /**
+     * 在当前团队新建项目：成功后并入本地列表并切到该项目。
+     * 团队在创建过程中被切走时不再污染新团队的工作区。
+     */
+    async function createProject(payload: CreateProjectParams) {
+      const orgId = currentOrganizationId.value
+      if (!orgId) throw new Error('No organization selected')
+      const project = await createProjectRequest(orgId, payload)
+      if (orgId !== currentOrganizationId.value) return project
+      projects.value = [...projects.value, project]
+      await switchProject(project.id)
+      return project
+    }
+
     /** Commit an authorized deep-link lookup without reviving older workspace requests. */
     function applyWorkspace(
       orgId: string,
@@ -240,6 +259,7 @@ export const useOrganizationStore = defineStore(
       loadSubscription,
       switchOrganization,
       switchProject,
+      createProject,
       applyWorkspace,
       reset,
     }

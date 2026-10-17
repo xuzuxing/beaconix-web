@@ -12,6 +12,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import GuideDialog from '@/components/guide/GuideDialog.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import NotificationDrawer from '@/components/notifications/NotificationDrawer.vue'
+import ProjectCreateDialog from '@/components/project/ProjectCreateDialog.vue'
 import GlobalSearch from '@/components/search/GlobalSearch.vue'
 import type { Organization, Project } from '@/api/types'
 import type { Plan } from '@/api/types/billing'
@@ -171,6 +172,24 @@ const filteredProjects = computed(() => {
 async function selectProject(project: Project) {
   await orgStore.switchProject(project.id)
   projectVisible.value = false
+  if (router.currentRoute.value.name === 'monitor-detail') await router.replace('/monitor')
+}
+
+/** 新建项目弹窗：只有组织管理员能创建（接口要求 ADMIN+） */
+const projectCreateVisible = ref(false)
+
+const canCreateProject = computed(
+  () =>
+    !!orgStore.currentOrganizationId && permissions.canOrganization(orgStore.currentOrganizationId),
+)
+
+function openProjectCreate() {
+  projectVisible.value = false
+  projectCreateVisible.value = true
+}
+
+/** store 已在创建成功后切到新项目，这里只补路由收尾（与 selectProject 一致） */
+async function onProjectCreated() {
   if (router.currentRoute.value.name === 'monitor-detail') await router.replace('/monitor')
 }
 
@@ -417,6 +436,13 @@ onMounted(() => {
             <p v-if="!filteredProjects.length" class="project-list__empty">
               {{ t('layout.projectEmpty') }}
             </p>
+
+            <div v-if="canCreateProject" class="project-list__actions">
+              <button type="button" class="project-list__action" @click="openProjectCreate">
+                <AppIcon :icon="PlusSignIcon" />
+                {{ t('layout.projectCreate') }}
+              </button>
+            </div>
           </div>
         </template>
       </t-popup>
@@ -521,6 +547,7 @@ onMounted(() => {
     </div>
 
     <GuideDialog v-model="guideVisible" />
+    <ProjectCreateDialog v-model:visible="projectCreateVisible" @created="onProjectCreated" />
     <NotificationDrawer />
   </header>
 </template>
@@ -938,6 +965,30 @@ onMounted(() => {
     font-size: @beacon-font-size-base;
     color: @beacon-text-tertiary;
     text-align: center;
+  }
+
+  // 底部操作区：新建项目
+  .project-list__actions {
+    padding: 4px 0;
+    border-top: 1px solid @beacon-border;
+  }
+
+  .project-list__action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: @beacon-font-size-menu;
+    color: @beacon-text-primary;
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+
+    &:hover {
+      background-color: @beacon-bg-hover;
+    }
   }
 }
 </style>
