@@ -231,7 +231,24 @@ export async function mockWorkspace(
         state.permissionFailure ? { message: 'Fixture offline' } : permissions(path.split('/')[2]!),
         state.permissionFailure ? 503 : 200,
       )
-    if (/^\/organizations\/o[12]\/projects$/.test(path))
+    if (/^\/organizations\/o[12]\/projects$/.test(path)) {
+      if (method === 'POST') {
+        const payload = body as { name: string; key: string; description?: string }
+        const id = `new-${state.projectIds.length + 1}`
+        state.projectIds.push(id)
+        state.projectNames[id] = payload.name
+        return reply(
+          route,
+          {
+            ...project(id),
+            name: payload.name,
+            key: payload.key,
+            description: payload.description ?? null,
+            organizationId: path.split('/')[2],
+          },
+          201,
+        )
+      }
       return reply(
         route,
         state.projectIds.map((id) => ({
@@ -240,6 +257,7 @@ export async function mockWorkspace(
           organizationId: path.split('/')[2],
         })),
       )
+    }
     if (/^\/organizations\/o[12]\/subscription$/.test(path))
       return reply(route, { effectivePlan: null, stack: [] })
     if (/^\/projects\/[^/]+\/my-permissions$/.test(path)) {
