@@ -6,6 +6,7 @@ import notificationCenter from './notification.zh-CN'
 import ruleGroup from './rule.zh-CN'
 import statusPage from './status-page.zh-CN'
 import probePage from './probe.zh-CN'
+import ticketPage from './ticket.zh-CN'
 
 export default {
   access,
@@ -16,6 +17,7 @@ export default {
   statusPage,
   probePage,
   notificationCenter,
+  ticketPage,
   app: {
     title: 'Beaconix Web',
     language: '语言',
@@ -293,6 +295,7 @@ export default {
     security: '安全与 2FA',
     accessTokens: '访问令牌',
     notifications: '消息通知',
+    tickets: '我的工单',
     admin: '管理后台',
     // 参考实现（云开发控制台）保留的菜单文案，暂未挂路由
     overview: '概览',
@@ -345,6 +348,8 @@ export default {
       probes: '系统探针',
       auditLogs: '审计日志',
       orders: '订单管理',
+      tickets: '工单管理',
+      ticketCategories: '工单分类',
       settings: '平台配置',
     },
     storage: {

@@ -5,6 +5,7 @@ import { HOME_PATH } from '@/config'
 import {
   Analytics01Icon,
   ApiIcon,
+  CustomerServiceIcon,
   DashboardSquare01Icon,
   GlobalIcon,
   InformationCircleIcon,
@@ -245,6 +246,25 @@ export const layoutChildren: RouteRecordRaw[] = [
     },
   },
 
+  // ---------- 工单（隐藏：顶栏头像下拉的「我的工单」入口）----------
+  {
+    path: 'tickets',
+    name: 'tickets',
+    component: () => import('@/views/support/MyTicketsView.vue'),
+    meta: { titleKey: 'menu.tickets', icon: CustomerServiceIcon, group: 'main', hidden: true },
+  },
+  {
+    path: 'tickets/:id',
+    name: 'ticket-detail',
+    component: () => import('@/views/support/TicketDetailView.vue'),
+    meta: {
+      titleKey: 'ticketPage.detailTitle',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/tickets',
+    },
+  },
+
   // ---------- 管理后台（仅 SUPER_ADMIN，独立分组）----------
   {
     path: 'admin',
@@ -282,6 +302,20 @@ export const layoutChildren: RouteRecordRaw[] = [
     name: 'admin-orders',
     component: () => import('@/views/admin/AdminOrdersView.vue'),
     meta: { titleKey: 'submenu.admin.orders', group: 'admin', roles: ADMIN_ROLES },
+  },
+  {
+    // 跨账号工单：用户侧入口在顶栏「我的工单」，这里做全平台处理
+    path: 'admin/tickets',
+    name: 'admin-tickets',
+    component: () => import('@/views/admin/AdminTicketsView.vue'),
+    meta: { titleKey: 'submenu.admin.tickets', group: 'admin', roles: ADMIN_ROLES },
+  },
+  {
+    // 工单分类：提交工单时的下拉数据源，停用后只保留在历史工单上
+    path: 'admin/ticket-categories',
+    name: 'admin-ticket-categories',
+    component: () => import('@/views/admin/AdminTicketCategoriesView.vue'),
+    meta: { titleKey: 'submenu.admin.ticketCategories', group: 'admin', roles: ADMIN_ROLES },
   },
   {
     // 平台级运行时配置：顶部 tab 的分组清单与顺序由 develop.configGroup 决定

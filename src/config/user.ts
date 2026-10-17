@@ -40,7 +40,8 @@ export const userMenuGroups: UserMenuItem[][] = [
   ],
   [
     { key: 'docs', labelKey: 'layout.userDocs', icon: BookOpen01Icon },
-    { key: 'support', labelKey: 'layout.userSupport', icon: CustomerServiceIcon },
+    // 原「获取支持」入口：接到真实的工单系统（提交 / 查看回复 / 关闭）
+    { key: 'tickets', labelKey: 'menu.tickets', icon: CustomerServiceIcon, path: '/tickets' },
   ],
   [
     { key: 'switch', labelKey: 'layout.userSwitchAccount', icon: Exchange01Icon },

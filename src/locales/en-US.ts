@@ -6,6 +6,7 @@ import notificationCenter from './notification.en-US'
 import ruleGroup from './rule.en-US'
 import statusPage from './status-page.en-US'
 import probePage from './probe.en-US'
+import ticketPage from './ticket.en-US'
 
 export default {
   access,
@@ -16,6 +17,7 @@ export default {
   statusPage,
   probePage,
   notificationCenter,
+  ticketPage,
   app: {
     title: 'Beaconix Web',
     language: 'Language',
@@ -293,6 +295,7 @@ export default {
     security: 'Password & 2FA',
     accessTokens: 'Access tokens',
     notifications: 'Notifications',
+    tickets: 'My tickets',
     admin: 'Admin console',
     // Reference-implementation menu labels (CloudBase console) kept for later use
     overview: 'Overview',
@@ -345,6 +348,8 @@ export default {
       probes: 'System probes',
       auditLogs: 'Audit logs',
       orders: 'Orders',
+      tickets: 'Tickets',
+      ticketCategories: 'Ticket categories',
       settings: 'Platform settings',
     },
     storage: {
