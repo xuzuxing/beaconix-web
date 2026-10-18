@@ -2,6 +2,7 @@ export default {
   imageSection: 'Images',
   fileSection: 'Logs / PDF',
   selectImage: 'Add image',
+  replaceImage: 'Replace image',
   selectFile: 'Add file',
   dropHint: 'Drop files here, or click to choose',
   imageHint: 'PNG / JPG / WebP / GIF, up to {size} each, {count} files max',

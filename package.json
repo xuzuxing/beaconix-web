@@ -24,6 +24,7 @@
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.3.5",
     "@hugeicons/vue": "^1.0.8",
+    "@ignaciocabeza/bitface": "^1.1.1",
     "@vueuse/core": "^15.0.0",
     "axios": "^1.20.0",
     "dayjs": "^1.11.23",

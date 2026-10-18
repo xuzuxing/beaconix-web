@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { MessagePlugin } from 'tdesign-vue-next'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -13,12 +12,12 @@ import NotificationDrawer from '@/components/notifications/NotificationDrawer.vu
 import ProjectCreateDialog from '@/components/project/ProjectCreateDialog.vue'
 import GlobalSearch from '@/components/search/GlobalSearch.vue'
 import TeamCreateDialog from '@/components/team/TeamCreateDialog.vue'
+import UserMenu from '@/components/UserMenu.vue'
 import type { Organization, Project } from '@/api/types'
 import type { Plan } from '@/api/types/billing'
 import { useTeamPlans } from '@/composables/useTeamPlans'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useBrand } from '@/composables/useBrand'
-import { userMenuGroups } from '@/config/user'
 import {
   BookOpen01Icon,
   ComputerIcon,
@@ -36,7 +35,7 @@ import {
   UserIcon,
   VerticalScrollPointIcon,
 } from '@/icons'
-import { useAppStore, useNotificationStore, useOrganizationStore, useUserStore } from '@/stores'
+import { useAppStore, useNotificationStore, useOrganizationStore } from '@/stores'
 import type { ThemeMode } from '@/types'
 import { planTagTheme, planTier } from '@/utils/billing'
 
@@ -45,7 +44,6 @@ defineOptions({ name: 'AppHeader' })
 const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
-const userStore = useUserStore()
 const orgStore = useOrganizationStore()
 const notificationStore = useNotificationStore()
 const permissions = usePermissionsStore()
@@ -215,43 +213,7 @@ async function onProjectCreated() {
   if (router.currentRoute.value.name === 'monitor-detail') await router.replace('/monitor')
 }
 
-// ---------- 个人信息 ----------
-/** 头像 hover 展开的个人信息面板 */
-const userVisible = ref(false)
-const userGroups = userMenuGroups
-const appVersion = __APP_VERSION__
-
-const displayName = computed(() => userStore.user?.name ?? '')
-
-/** 头像用姓名首字母 */
-const avatarText = computed(() => displayName.value.trim().slice(0, 1).toUpperCase())
-
-const accountRows = computed<InfoRow[]>(() => {
-  const user = userStore.user
-  if (!user) return []
-  return [
-    { labelKey: 'layout.userName', value: user.name },
-    { labelKey: 'layout.userEmail', value: user.email },
-  ]
-})
-
-async function handleUserMenu(key: string) {
-  if (key === 'logout') {
-    await userStore.logout()
-    orgStore.reset()
-    MessagePlugin.success(t('layout.userLogoutDone'))
-    await router.replace('/login')
-    return
-  }
-
-  // 其余入口按 config/user.ts 里配置的路由跳转（没有 path 的表示暂未接入）
-  const target = userGroups.flat().find((item) => item.key === key)
-  if (target?.path) {
-    userVisible.value = false
-    await router.push(target.path)
-  }
-}
-
+/** 复制团队信息卡里的字段 */
 async function copyText(text: string) {
   try {
     await navigator.clipboard.writeText(text)
@@ -286,15 +248,29 @@ onMounted(() => {
     <!-- 左侧功能组 -->
     <div class="app-header__main">
       <!-- 团队：hover 看信息，点击切到团队列表 -->
-      <t-popup v-model:visible="teamVisible" trigger="hover" placement="bottom-left" :show-arrow="false"
-        overlay-class-name="app-team-popup">
-        <button type="button" class="app-header__team" @mouseenter="teamMode = 'info'"
-          @click="teamMode = teamMode === 'list' ? 'info' : 'list'">
+      <t-popup
+        v-model:visible="teamVisible"
+        trigger="hover"
+        placement="bottom-left"
+        :show-arrow="false"
+        overlay-class-name="app-team-popup"
+      >
+        <button
+          type="button"
+          class="app-header__team"
+          @mouseenter="teamMode = 'info'"
+          @click="teamMode = teamMode === 'list' ? 'info' : 'list'"
+        >
           <AppIcon class="app-header__team-icon" :icon="ResourcesAddIcon" />
           <span class="app-header__team-name">{{ currentOrg?.name ?? t('layout.teamEmpty') }}</span>
-          <t-tag v-if="orgStore.subscription" class="app-header__team-tag beacon-plan-badge"
-            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`" :theme="planTagTheme(orgStore.currentPlan)"
-            variant="light" size="small">
+          <t-tag
+            v-if="orgStore.subscription"
+            class="app-header__team-tag beacon-plan-badge"
+            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+            :theme="planTagTheme(orgStore.currentPlan)"
+            variant="light"
+            size="small"
+          >
             {{ planLabel }}
           </t-tag>
           <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
@@ -307,8 +283,13 @@ onMounted(() => {
               <span class="team-card__label">{{ t(row.labelKey) }}</span>
               <span class="team-card__value">
                 {{ row.value }}
-                <button v-if="row.copyable" type="button" class="team-card__copy" :aria-label="t('guide.copy')"
-                  @click="copyText(row.value)">
+                <button
+                  v-if="row.copyable"
+                  type="button"
+                  class="team-card__copy"
+                  :aria-label="t('guide.copy')"
+                  @click="copyText(row.value)"
+                >
                   <AppIcon :icon="Copy01Icon" :size="14" />
                 </button>
               </span>
@@ -318,8 +299,13 @@ onMounted(() => {
             <div v-if="orgStore.subscription" class="team-card__row">
               <span class="team-card__label">{{ t('layout.teamPlan') }}</span>
               <span class="team-card__value">
-                <t-tag class="beacon-plan-badge" :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
-                  :theme="planTagTheme(orgStore.currentPlan)" variant="light" size="small">
+                <t-tag
+                  class="beacon-plan-badge"
+                  :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+                  :theme="planTagTheme(orgStore.currentPlan)"
+                  variant="light"
+                  size="small"
+                >
                   {{ planLabel }}
                 </t-tag>
               </span>
@@ -335,24 +321,42 @@ onMounted(() => {
 
             <ul class="team-list__items">
               <li v-for="org in filteredOrgs" :key="org.id">
-                <div class="team-list__item" :class="{ 'is-active': org.id === orgStore.currentOrganizationId }">
+                <div
+                  class="team-list__item"
+                  :class="{ 'is-active': org.id === orgStore.currentOrganizationId }"
+                >
                   <button type="button" class="team-list__main" @click="selectOrg(org)">
                     <span class="team-list__name">{{ org.name }}</span>
-                    <t-tag v-if="planOf(org)" class="team-list__plan beacon-plan-badge"
-                      :class="`beacon-plan--${planTier(planOf(org))}`" :theme="planTagTheme(planOf(org))"
-                      variant="light" size="small">
+                    <t-tag
+                      v-if="planOf(org)"
+                      class="team-list__plan beacon-plan-badge"
+                      :class="`beacon-plan--${planTier(planOf(org))}`"
+                      :theme="planTagTheme(planOf(org))"
+                      variant="light"
+                      size="small"
+                    >
                       {{ planLabelOf(planOf(org)) }}
                     </t-tag>
                   </button>
 
                   <!-- 两个入口：该团队的成员页 / 团队管理页（都会先切到该团队） -->
                   <div v-if="permissions.canOrganization(org.id)" class="team-list__entries">
-                    <button type="button" class="team-list__entry" :title="t('submenu.team.members')"
-                      :aria-label="t('submenu.team.members')" @click="openTeamPage(org, '/teams/members')">
+                    <button
+                      type="button"
+                      class="team-list__entry"
+                      :title="t('submenu.team.members')"
+                      :aria-label="t('submenu.team.members')"
+                      @click="openTeamPage(org, '/teams/members')"
+                    >
                       <AppIcon :icon="UserIcon" :size="14" />
                     </button>
-                    <button type="button" class="team-list__entry" :title="t('menu.team')" :aria-label="t('menu.team')"
-                      @click="openTeamPage(org, '/teams')">
+                    <button
+                      type="button"
+                      class="team-list__entry"
+                      :title="t('menu.team')"
+                      :aria-label="t('menu.team')"
+                      @click="openTeamPage(org, '/teams')"
+                    >
                       <AppIcon :icon="Settings01Icon" :size="14" />
                     </button>
                   </div>
@@ -377,8 +381,13 @@ onMounted(() => {
       </t-popup>
 
       <!-- 项目：点击切换当前项目 -->
-      <t-popup v-model:visible="projectVisible" trigger="click" placement="bottom-left" :show-arrow="false"
-        overlay-class-name="app-project-popup">
+      <t-popup
+        v-model:visible="projectVisible"
+        trigger="click"
+        placement="bottom-left"
+        :show-arrow="false"
+        overlay-class-name="app-project-popup"
+      >
         <button type="button" class="app-header__project">
           <AppIcon class="app-header__project-icon" :icon="Folder01Icon" />
           <span class="app-header__project-name">
@@ -396,8 +405,12 @@ onMounted(() => {
 
             <ul class="project-list__items">
               <li v-for="project in filteredProjects" :key="project.id">
-                <button type="button" class="project-list__item"
-                  :class="{ 'is-active': project.id === orgStore.currentProjectId }" @click="selectProject(project)">
+                <button
+                  type="button"
+                  class="project-list__item"
+                  :class="{ 'is-active': project.id === orgStore.currentProjectId }"
+                  @click="selectProject(project)"
+                >
                   <span class="project-list__name">{{ project.name }}</span>
                   <span class="project-list__key">{{ project.key }}</span>
                 </button>
@@ -460,46 +473,8 @@ onMounted(() => {
 
       <LanguageSwitcher />
 
-      <!-- 个人信息：hover 展开 -->
-      <t-popup v-model:visible="userVisible" trigger="hover" placement="bottom-right" :show-arrow="false"
-        overlay-class-name="app-user-popup">
-        <button type="button" class="app-header__user" :aria-label="t('layout.profile')">
-          <t-avatar size="32px">{{ avatarText }}</t-avatar>
-        </button>
-
-        <template #content>
-          <div class="user-panel">
-            <div class="user-panel__profile">
-              <t-avatar size="40px">{{ avatarText }}</t-avatar>
-              <div class="user-panel__identity">
-                <span class="user-panel__name">{{ displayName }}</span>
-                <span class="user-panel__email">{{ userStore.user?.email }}</span>
-              </div>
-            </div>
-
-            <div class="user-panel__ids">
-              <div v-for="row in accountRows" :key="row.labelKey" class="user-panel__row">
-                <span class="user-panel__label">{{ t(row.labelKey) }}</span>
-                <span class="user-panel__value">{{ row.value }}</span>
-                <button type="button" class="user-panel__copy" :aria-label="t('guide.copy')"
-                  @click="copyText(row.value)">
-                  <AppIcon :icon="Copy01Icon" :size="14" />
-                </button>
-              </div>
-            </div>
-
-            <div v-for="(group, index) in userGroups" :key="index" class="user-panel__group">
-              <button v-for="item in group" :key="item.key" type="button" class="user-panel__item"
-                :class="{ 'user-panel__item--danger': item.danger }" @click="handleUserMenu(item.key)">
-                <AppIcon :icon="item.icon" :size="16" />
-                {{ t(item.labelKey) }}
-              </button>
-            </div>
-
-            <div class="user-panel__version">{{ t('layout.userVersion') }}：{{ appVersion }}</div>
-          </div>
-        </template>
-      </t-popup>
+      <!-- 个人信息：hover 展开（组件见 components/UserMenu.vue，与整页布局共用） -->
+      <UserMenu class="app-header__user" />
     </div>
 
     <GuideDialog v-model="guideVisible" />
@@ -510,117 +485,6 @@ onMounted(() => {
 </template>
 
 <style lang="less">
-/* 个人信息弹层（头像 hover），同样 teleport 到 body 故用非 scoped 样式 */
-.app-user-popup {
-  padding: 0;
-
-  .user-panel {
-    width: 260px;
-    background-color: @beacon-bg-container;
-  }
-
-  .user-panel__profile {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    border-bottom: 1px solid @beacon-border;
-  }
-
-  .user-panel__identity {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-
-  .user-panel__name {
-    overflow: hidden;
-    font-size: @beacon-font-size-menu;
-    color: @beacon-text-primary;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .user-panel__email {
-    overflow: hidden;
-    font-size: @beacon-font-size-base;
-    color: @beacon-text-tertiary;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .user-panel__ids {
-    padding: 8px 0;
-  }
-
-  .user-panel__row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 28px;
-    padding: 0 16px;
-    font-size: @beacon-font-size-base;
-    line-height: 20px;
-  }
-
-  .user-panel__label {
-    flex: none;
-    color: @beacon-text-tertiary;
-  }
-
-  .user-panel__value {
-    color: @beacon-text-primary;
-  }
-
-  .user-panel__copy {
-    flex: none;
-    padding: 0;
-    color: @beacon-text-tertiary;
-    cursor: pointer;
-    background-color: transparent;
-    border: 0;
-
-    &:hover {
-      color: @beacon-brand;
-    }
-  }
-
-  .user-panel__group {
-    display: flex;
-    flex-direction: column;
-    padding: 4px 0;
-    border-top: 1px solid @beacon-border;
-  }
-
-  .user-panel__item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px;
-    font-family: inherit;
-    font-size: @beacon-font-size-menu;
-    color: @beacon-text-primary;
-    cursor: pointer;
-    background-color: transparent;
-    border: 0;
-
-    &:hover {
-      background-color: @beacon-bg-hover;
-    }
-
-    &--danger {
-      color: @beacon-error;
-    }
-  }
-
-  .user-panel__version {
-    padding: 8px 16px;
-    font-size: @beacon-font-size-base;
-    color: @beacon-text-disabled;
-    border-top: 1px solid @beacon-border;
-  }
-}
-
 /* 团队弹层 teleport 到 body，样式需非 scoped，用 overlayClassName 限定作用域 */
 .app-team-popup {
   padding: 0;

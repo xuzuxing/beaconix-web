@@ -33,6 +33,8 @@ const props = withDefaults(
     accept?: string
     /** 单图模式：只保留最新一张 */
     single?: boolean
+    /** 缩略图网格的最大宽度：数字按 px 处理，也可传 '100%' 等 CSS 值；默认 480 */
+    maxWidth?: number | string
   }>(),
   {
     maxCount: DEFAULT_ATTACHMENT_MAX_COUNT,
@@ -41,6 +43,7 @@ const props = withDefaults(
     disabled: false,
     accept: IMAGE_ACCEPT,
     single: false,
+    maxWidth: 480,
   },
 )
 
@@ -59,9 +62,17 @@ const { uploading, remaining, canAdd, addFiles } = useAttachmentUpload({
   maxSize: () => props.maxSize,
   directory: () => props.directory,
   disabled: () => props.disabled,
+  // 单图模式允许直接换图：额度按空列表算，上传成功后只保留最新一张
+  replace: () => props.single,
 })
 
 const images = computed(() => model.value.map((item) => item.url))
+
+/** 网格宽度由 maxWidth 驱动：数字补 px，字符串（如 '100%'）原样输出 */
+const gridStyle = computed(() => {
+  const value = props.maxWidth
+  return { maxWidth: typeof value === 'number' ? `${value}px` : value }
+})
 
 const hint = computed(() =>
   t('upload.imageHint', {
@@ -69,6 +80,12 @@ const hint = computed(() =>
     count: effectiveMaxCount.value,
   }),
 )
+
+/** 单图模式已有图时按钮表示「更换」而不是「添加」 */
+const addLabel = computed(() => {
+  if (uploading.value) return t('upload.uploading')
+  return props.single && model.value.length ? t('upload.replaceImage') : t('upload.selectImage')
+})
 
 function openPicker() {
   if (!canAdd.value) return
@@ -95,6 +112,9 @@ function onDrop(event: DragEvent) {
   dragActive.value = false
   void addFiles(event.dataTransfer?.files ?? null)
 }
+
+/** 供外层（头像选择弹窗）判断是否正在上传，避免带着半成品提交 */
+defineExpose({ uploading })
 </script>
 
 <template>
@@ -106,7 +126,7 @@ function onDrop(event: DragEvent) {
     @dragleave.prevent="dragActive = false"
     @drop.prevent="onDrop"
   >
-    <div class="image-uploader__grid">
+    <div class="image-uploader__grid" :style="gridStyle">
       <figure
         v-for="(item, index) in model"
         :key="item.fileKey || item.url"
@@ -141,7 +161,7 @@ function onDrop(event: DragEvent) {
       >
         <t-loading v-if="uploading" size="16px" />
         <AppIcon v-else :icon="PlusSignIcon" :size="18" />
-        <span>{{ uploading ? t('upload.uploading') : t('upload.selectImage') }}</span>
+        <span>{{ addLabel }}</span>
       </button>
     </div>
 
@@ -170,7 +190,6 @@ function onDrop(event: DragEvent) {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
     gap: 8px;
-    max-width: 480px;
   }
 
   &__item {

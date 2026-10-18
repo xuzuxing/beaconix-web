@@ -2,6 +2,7 @@ export default {
   imageSection: '图片',
   fileSection: '日志 / PDF',
   selectImage: '添加图片',
+  replaceImage: '更换图片',
   selectFile: '添加文件',
   dropHint: '拖拽文件到此处，或点击选择',
   imageHint: '支持 PNG / JPG / WebP / GIF，单个不超过 {size}，最多 {count} 个',

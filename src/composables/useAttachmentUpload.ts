@@ -22,6 +22,11 @@ export interface AttachmentUploadOptions {
   /** 上传目录，留空由后端按 users/<currentUserId> 落盘 */
   directory?: () => string | undefined
   disabled?: () => boolean
+  /**
+   * 替换语义（单图模式）：额度按「空列表」计算，上传成功后只保留最新一张，
+   * 因此「已经有一张图」时仍可以选新文件替换。
+   */
+  replace?: () => boolean
 }
 
 /**
@@ -35,7 +40,10 @@ export function useAttachmentUpload(options: AttachmentUploadOptions) {
   const uploading = ref(false)
 
   const remaining = computed(() =>
-    remainingAttachmentSlots(options.maxCount(), options.model.value.length),
+    remainingAttachmentSlots(
+      options.maxCount(),
+      options.replace?.() ? 0 : options.model.value.length,
+    ),
   )
 
   const canAdd = computed(
@@ -65,11 +73,16 @@ export function useAttachmentUpload(options: AttachmentUploadOptions) {
     const list = Array.from(files ?? [])
     if (!list.length || options.disabled?.() || uploading.value) return
 
-    const { accepted, rejected } = evaluateAttachments(list, options.model.value.length, {
-      kind: options.kind,
-      maxSize: options.maxSize(),
-      maxCount: options.maxCount(),
-    })
+    const replacing = options.replace?.() ?? false
+    const { accepted, rejected } = evaluateAttachments(
+      list,
+      replacing ? 0 : options.model.value.length,
+      {
+        kind: options.kind,
+        maxSize: options.maxSize(),
+        maxCount: options.maxCount(),
+      },
+    )
     notifyRejected(rejected)
     if (!accepted.length) return
 
@@ -78,7 +91,7 @@ export function useAttachmentUpload(options: AttachmentUploadOptions) {
       for (const file of accepted) {
         try {
           const uploaded = await uploadAttachment(file, options.directory?.())
-          options.model.value = [...options.model.value, uploaded]
+          options.model.value = replacing ? [uploaded] : [...options.model.value, uploaded]
         } catch {
           // 请求层已统一提示；继续上传剩余文件
         }

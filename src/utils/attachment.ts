@@ -140,6 +140,22 @@ export function toAttachmentRefs(objects: readonly UploadedObject[]): Attachment
   return objects.map(toAttachmentRef)
 }
 
+/**
+ * 由已有地址反构上传组件的展示项：后端只保存 url 时（团队 logo / 用户头像）用它回显。
+ * 除 url 外的元数据是占位值，重新上传后会被真实的 `UploadedObject` 覆盖。
+ */
+export function uploadedFromUrl(url: string, directory = ''): UploadedObject {
+  return {
+    url,
+    fileKey: url,
+    filename: url.split('/').pop() || 'image',
+    mimeType: '',
+    size: 0,
+    storageProvider: 'LOCAL',
+    directory,
+  }
+}
+
 /** 附件是否为图片：MIME 优先，缺失时按扩展名反推 */
 export function isImageAttachment(
   attachment: Pick<AttachmentRef, 'filename' | 'mimeType'>,

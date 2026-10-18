@@ -7,15 +7,9 @@ import { useI18n } from 'vue-i18n'
 
 import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
+import UserMenu from '@/components/UserMenu.vue'
 import { useBrand } from '@/composables/useBrand'
-import {
-  BookOpen01Icon,
-  ComputerIcon,
-  HelpCircleIcon,
-  Moon01Icon,
-  Sun01Icon,
-  UserIcon,
-} from '@/icons'
+import { BookOpen01Icon, ComputerIcon, HelpCircleIcon, Moon01Icon, Sun01Icon } from '@/icons'
 import { useAppStore } from '@/stores'
 import type { ThemeMode } from '@/types'
 
@@ -55,21 +49,13 @@ function handleThemeSelect(data: { value?: string | number }) {
 
       <div class="plain-layout__extra">
         <t-tooltip :content="t('layout.docs')" placement="bottom">
-          <button
-            type="button"
-            class="plain-layout__icon-btn plain-layout__support"
-            :aria-label="t('layout.docs')"
-          >
+          <button type="button" class="plain-layout__icon-btn plain-layout__support" :aria-label="t('layout.docs')">
             <AppIcon :icon="BookOpen01Icon" />
           </button>
         </t-tooltip>
 
         <t-tooltip :content="t('layout.help')" placement="bottom">
-          <button
-            type="button"
-            class="plain-layout__icon-btn plain-layout__support"
-            :aria-label="t('layout.help')"
-          >
+          <button type="button" class="plain-layout__icon-btn plain-layout__support" :aria-label="t('layout.help')">
             <AppIcon :icon="HelpCircleIcon" />
           </button>
         </t-tooltip>
@@ -82,16 +68,12 @@ function handleThemeSelect(data: { value?: string | number }) {
 
         <LanguageSwitcher />
 
-        <button type="button" class="plain-layout__user" :aria-label="t('layout.profile')">
-          <t-avatar size="32px">
-            <AppIcon :icon="UserIcon" />
-          </t-avatar>
-        </button>
+        <UserMenu class="plain-layout__user" />
       </div>
     </header>
+    <AppMaintenanceBanner />
 
     <main class="plain-layout__body">
-      <AppMaintenanceBanner />
       <router-view />
     </main>
 
@@ -167,13 +149,16 @@ function handleThemeSelect(data: { value?: string | number }) {
     overflow-y: auto;
     background-color: @beacon-bg-page;
   }
+
   @media (max-width: 600px) {
     &__header {
       padding: 0 12px;
     }
+
     &__support {
       display: none;
     }
+
     &__icon-btn {
       padding: 0 8px;
     }

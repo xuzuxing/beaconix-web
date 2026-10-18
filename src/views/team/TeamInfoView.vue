@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 import { listMembers, updateOrganization } from '@/api'
 import type { Membership, UpdateOrganizationParams } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
+import AvatarPickerField from '@/components/avatar/AvatarPickerField.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import TeamDangerSection from '@/components/team/TeamDangerSection.vue'
 import TeamOwnerTransferDialog from '@/components/team/TeamOwnerTransferDialog.vue'
@@ -252,11 +253,11 @@ onMounted(() => {
               :disabled="!canManage || submitting"
             />
           </t-form-item>
-          <t-form-item :label="t('workspace.team.logoUrl')">
-            <t-input
+          <t-form-item :label="t('workspace.team.logo')" :help="t('workspace.team.logoHint')">
+            <!-- 单入口：点预览框打开弹窗，在里面随机选择或自己上传 -->
+            <AvatarPickerField
               v-model="form.logoUrl"
-              :maxlength="500"
-              :placeholder="t('workspace.team.logoUrlPlaceholder')"
+              directory="teams"
               :disabled="!canManage || submitting"
             />
           </t-form-item>
