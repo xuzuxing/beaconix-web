@@ -73,7 +73,7 @@ function groupHint(key: string) {
 /** tab 内的二级分组 key → 文案 key；未收录的 section 直接显示 key 本身 */
 const SECTION_LABEL_KEYS: Record<string, string> = {
   pay: 'adminPage.setting.section.pay',
-  miniProgram: 'adminPage.setting.section.miniProgram',
+  miniprogram: 'adminPage.setting.section.miniprogram',
   website: 'adminPage.setting.section.website',
   scanLogin: 'adminPage.setting.section.scanLogin',
   officialAccount: 'adminPage.setting.section.officialAccount',

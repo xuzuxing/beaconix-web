@@ -379,7 +379,7 @@ export default {
     },
     section: {
       pay: 'WeChat Pay',
-      miniProgram: 'Mini program',
+      miniprogram: 'Mini program',
       website: 'Website app',
       scanLogin: 'Scan login',
       officialAccount: 'Official account',
@@ -388,7 +388,7 @@ export default {
     },
     sectionHint: {
       pay: 'Merchant id, certificates and the callback URL; nothing is charged while mock pay is on.',
-      miniProgram: 'Credentials shared by mini program login, scan login and subscribe messages.',
+      miniprogram: 'Credentials shared by mini program login, scan login and subscribe messages.',
       website: 'Open Platform website app used for desktop QR login.',
       scanLogin: 'QR landing page, mini program version and ticket lifetime.',
       officialAccount: 'Official account OAuth, template messages and safe-mode callbacks.',

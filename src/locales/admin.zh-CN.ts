@@ -366,7 +366,7 @@ export default {
     },
     section: {
       pay: '微信支付',
-      miniProgram: '小程序',
+      miniprogram: '小程序',
       website: '网站应用',
       scanLogin: '扫码登录',
       officialAccount: '公众号',
@@ -375,7 +375,7 @@ export default {
     },
     sectionHint: {
       pay: '商户号、证书与回调地址；模拟支付开启时不会调用真实支付。',
-      miniProgram: '小程序登录、扫码登录与订阅消息共用的凭证。',
+      miniprogram: '小程序登录、扫码登录与订阅消息共用的凭证。',
       website: '开放平台网站应用，用于网页扫码登录。',
       scanLogin: '二维码落地页、小程序版本与票据有效期。',
       officialAccount: '公众号网页授权、模板消息与安全模式回调。',
