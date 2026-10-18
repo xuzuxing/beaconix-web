@@ -101,6 +101,7 @@ export default {
     confirm: 'Confirm',
     cancel: 'Cancel',
     close: 'Close',
+    delete: 'Delete',
     reset: 'Reset',
     backHome: 'Back to home',
     loading: 'Loading…',

@@ -248,29 +248,15 @@ onMounted(() => {
     <!-- 左侧功能组 -->
     <div class="app-header__main">
       <!-- 团队：hover 看信息，点击切到团队列表 -->
-      <t-popup
-        v-model:visible="teamVisible"
-        trigger="hover"
-        placement="bottom-left"
-        :show-arrow="false"
-        overlay-class-name="app-team-popup"
-      >
-        <button
-          type="button"
-          class="app-header__team"
-          @mouseenter="teamMode = 'info'"
-          @click="teamMode = teamMode === 'list' ? 'info' : 'list'"
-        >
+      <t-popup v-model:visible="teamVisible" trigger="hover" placement="bottom-left" :show-arrow="false"
+        overlay-class-name="app-team-popup">
+        <button type="button" class="app-header__team" @mouseenter="teamMode = 'info'"
+          @click="teamMode = teamMode === 'list' ? 'info' : 'list'">
           <AppIcon class="app-header__team-icon" :icon="ResourcesAddIcon" />
           <span class="app-header__team-name">{{ currentOrg?.name ?? t('layout.teamEmpty') }}</span>
-          <t-tag
-            v-if="orgStore.subscription"
-            class="app-header__team-tag beacon-plan-badge"
-            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
-            :theme="planTagTheme(orgStore.currentPlan)"
-            variant="light"
-            size="small"
-          >
+          <t-tag v-if="orgStore.subscription" class="app-header__team-tag beacon-plan-badge"
+            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`" :theme="planTagTheme(orgStore.currentPlan)"
+            variant="light" size="small">
             {{ planLabel }}
           </t-tag>
           <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
@@ -283,13 +269,8 @@ onMounted(() => {
               <span class="team-card__label">{{ t(row.labelKey) }}</span>
               <span class="team-card__value">
                 {{ row.value }}
-                <button
-                  v-if="row.copyable"
-                  type="button"
-                  class="team-card__copy"
-                  :aria-label="t('guide.copy')"
-                  @click="copyText(row.value)"
-                >
+                <button v-if="row.copyable" type="button" class="team-card__copy" :aria-label="t('guide.copy')"
+                  @click="copyText(row.value)">
                   <AppIcon :icon="Copy01Icon" :size="14" />
                 </button>
               </span>
@@ -299,13 +280,8 @@ onMounted(() => {
             <div v-if="orgStore.subscription" class="team-card__row">
               <span class="team-card__label">{{ t('layout.teamPlan') }}</span>
               <span class="team-card__value">
-                <t-tag
-                  class="beacon-plan-badge"
-                  :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
-                  :theme="planTagTheme(orgStore.currentPlan)"
-                  variant="light"
-                  size="small"
-                >
+                <t-tag class="beacon-plan-badge" :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+                  :theme="planTagTheme(orgStore.currentPlan)" variant="light" size="small">
                   {{ planLabel }}
                 </t-tag>
               </span>
@@ -321,42 +297,24 @@ onMounted(() => {
 
             <ul class="team-list__items">
               <li v-for="org in filteredOrgs" :key="org.id">
-                <div
-                  class="team-list__item"
-                  :class="{ 'is-active': org.id === orgStore.currentOrganizationId }"
-                >
+                <div class="team-list__item" :class="{ 'is-active': org.id === orgStore.currentOrganizationId }">
                   <button type="button" class="team-list__main" @click="selectOrg(org)">
                     <span class="team-list__name">{{ org.name }}</span>
-                    <t-tag
-                      v-if="planOf(org)"
-                      class="team-list__plan beacon-plan-badge"
-                      :class="`beacon-plan--${planTier(planOf(org))}`"
-                      :theme="planTagTheme(planOf(org))"
-                      variant="light"
-                      size="small"
-                    >
+                    <t-tag v-if="planOf(org)" class="team-list__plan beacon-plan-badge"
+                      :class="`beacon-plan--${planTier(planOf(org))}`" :theme="planTagTheme(planOf(org))"
+                      variant="light" size="small">
                       {{ planLabelOf(planOf(org)) }}
                     </t-tag>
                   </button>
 
                   <!-- 两个入口：该团队的成员页 / 团队管理页（都会先切到该团队） -->
                   <div v-if="permissions.canOrganization(org.id)" class="team-list__entries">
-                    <button
-                      type="button"
-                      class="team-list__entry"
-                      :title="t('submenu.team.members')"
-                      :aria-label="t('submenu.team.members')"
-                      @click="openTeamPage(org, '/teams/members')"
-                    >
+                    <button type="button" class="team-list__entry" :title="t('submenu.team.members')"
+                      :aria-label="t('submenu.team.members')" @click="openTeamPage(org, '/teams/members')">
                       <AppIcon :icon="UserIcon" :size="14" />
                     </button>
-                    <button
-                      type="button"
-                      class="team-list__entry"
-                      :title="t('menu.team')"
-                      :aria-label="t('menu.team')"
-                      @click="openTeamPage(org, '/teams')"
-                    >
+                    <button type="button" class="team-list__entry" :title="t('menu.team')" :aria-label="t('menu.team')"
+                      @click="openTeamPage(org, '/teams')">
                       <AppIcon :icon="Settings01Icon" :size="14" />
                     </button>
                   </div>
@@ -381,13 +339,8 @@ onMounted(() => {
       </t-popup>
 
       <!-- 项目：点击切换当前项目 -->
-      <t-popup
-        v-model:visible="projectVisible"
-        trigger="click"
-        placement="bottom-left"
-        :show-arrow="false"
-        overlay-class-name="app-project-popup"
-      >
+      <t-popup v-model:visible="projectVisible" trigger="click" placement="bottom-left" :show-arrow="false"
+        overlay-class-name="app-project-popup">
         <button type="button" class="app-header__project">
           <AppIcon class="app-header__project-icon" :icon="Folder01Icon" />
           <span class="app-header__project-name">
@@ -405,12 +358,8 @@ onMounted(() => {
 
             <ul class="project-list__items">
               <li v-for="project in filteredProjects" :key="project.id">
-                <button
-                  type="button"
-                  class="project-list__item"
-                  :class="{ 'is-active': project.id === orgStore.currentProjectId }"
-                  @click="selectProject(project)"
-                >
+                <button type="button" class="project-list__item"
+                  :class="{ 'is-active': project.id === orgStore.currentProjectId }" @click="selectProject(project)">
                   <span class="project-list__name">{{ project.name }}</span>
                   <span class="project-list__key">{{ project.key }}</span>
                 </button>
@@ -431,11 +380,12 @@ onMounted(() => {
         </template>
       </t-popup>
 
+      <!-- 导航：点击打开引导弹窗
       <button type="button" class="app-header__guide" @click="guideVisible = true">
         <AppIcon class="app-header__guide-icon" :icon="FlashIcon" :size="14" />
         {{ t('layout.guide') }}
         <span class="app-header__dot" />
-      </button>
+      </button> -->
     </div>
 
     <!-- 右侧功能组 -->

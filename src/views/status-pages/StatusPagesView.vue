@@ -11,6 +11,7 @@ import StatusPageEditorDialog from '@/components/status-pages/StatusPageEditorDi
 import StatusPageFieldTags from '@/components/status-pages/StatusPageFieldTags.vue'
 import StatusPageStatusTag from '@/components/status-pages/StatusPageStatusTag.vue'
 import { useOrganizationRole } from '@/composables/useOrganizationRole'
+import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { useStatusPageActions } from '@/composables/useStatusPageActions'
 import { useStatusPageList } from '@/composables/useStatusPageList'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
@@ -40,6 +41,8 @@ const { pages, loading, error, load } = useStatusPageList(orgId)
 const { pending, actionError, act } = useStatusPageActions(orgId, async () => {
   await load()
 })
+// keep-alive 页面：从别的页面返回时重新拉取状态页列表
+useRefreshOnActivate(load)
 
 const editor = ref(false)
 const editing = ref<StatusPage>()
@@ -245,6 +248,7 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
       :org-id="orgId"
       :page="editing"
       :template="editorTemplate"
+      @saved="load"
     />
   </section>
 </template>

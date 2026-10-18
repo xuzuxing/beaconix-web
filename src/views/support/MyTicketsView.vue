@@ -9,6 +9,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import TicketCreateDialog from '@/components/support/TicketCreateDialog.vue'
 import { useMyTickets } from '@/composables/useMyTickets'
+import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { useTicketCategories } from '@/composables/useTicketCategories'
 import { PlusSignIcon, RefreshIcon } from '@/icons'
 import { formatDateTime } from '@/utils/billing'
@@ -45,6 +46,8 @@ const {
   reset,
   changePage,
 } = useMyTickets()
+// keep-alive 页面：从别的页面返回时重新拉取工单列表
+useRefreshOnActivate(load)
 const {
   categories,
   options: categoryOptions,

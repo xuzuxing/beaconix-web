@@ -14,6 +14,7 @@ import ChannelTypeTag from '@/components/channels/ChannelTypeTag.vue'
 import { useChannelActions } from '@/composables/useChannelActions'
 import { useChannelList } from '@/composables/useChannelList'
 import { useOrganizationRole } from '@/composables/useOrganizationRole'
+import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
 import {
@@ -40,6 +41,8 @@ const { channels, loading, error, load } = useChannelList(orgId)
 const { pending, actionError, act } = useChannelActions(orgId, async () => {
   await load()
 })
+// keep-alive 页面：从别的页面返回时重新拉取渠道列表
+useRefreshOnActivate(load)
 
 const editor = ref(false)
 const editing = ref<NotificationChannel>()
@@ -242,7 +245,12 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
       </div>
     </t-card>
 
-    <ChannelEditorDialog v-model:visible="editor" :org-id="orgId" :channel="editing" />
+    <ChannelEditorDialog
+      v-model:visible="editor"
+      :org-id="orgId"
+      :channel="editing"
+      @saved="load"
+    />
     <ChannelLogsDrawer v-model:visible="logsDrawer" :org-id="orgId" :channel="logsChannel" />
   </section>
 </template>

@@ -114,7 +114,8 @@ export function useAdminTickets() {
     actingId.value = ticketId
     try {
       const updated = await updateAdminTicket(ticketId, patch)
-      replaceRow(updated)
+      // 整表重载：状态 / 优先级 / 分类变更后该行可能不再属于当前筛选，就地替换会留下过期行
+      await load()
       void loadStats()
       return updated
     } catch {
@@ -164,11 +165,6 @@ export function useAdminTickets() {
     } finally {
       actingId.value = ''
     }
-  }
-
-  function replaceRow(updated: Ticket) {
-    const index = tickets.value.findIndex((ticket) => ticket.id === updated.id)
-    if (index >= 0) tickets.value.splice(index, 1, updated)
   }
 
   /** 筛选条件变化：回到第一页再查询 */

@@ -7,6 +7,7 @@ export default {
     close: '关闭',
     confirm: '确认',
     cancel: '取消',
+    delete: '删除',
     actions: '操作',
     name: '名称',
     status: '状态',

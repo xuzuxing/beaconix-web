@@ -10,6 +10,7 @@ import HeaderActions from '@/components/HeaderActions.vue'
 import ApiKeyCreateDialog from '@/components/team/ApiKeyCreateDialog.vue'
 import ApiKeySecretDialog from '@/components/team/ApiKeySecretDialog.vue'
 import { useOrganizationRole } from '@/composables/useOrganizationRole'
+import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { useTeamApiKeys } from '@/composables/useTeamApiKeys'
 import { PlusSignIcon, RefreshIcon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
@@ -34,6 +35,8 @@ const { canManage } = useOrganizationRole()
 
 const orgId = computed(() => orgStore.currentOrganizationId)
 const { keys, loading, error, pendingKey, load, act } = useTeamApiKeys(orgId)
+// keep-alive 页面：从别的页面返回时重新拉取密钥列表
+useRefreshOnActivate(load)
 
 const createVisible = ref(false)
 const secretVisible = ref(false)

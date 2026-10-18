@@ -37,13 +37,12 @@ export function useAdminTenants() {
     }
   }
 
-  /** 就地替换被切换的那一行，避免整表重载导致筛选与滚动位置丢失 */
+  /** 停用 / 恢复后重载列表：状态筛选下该行可能不再属于当前结果 */
   async function toggle(tenant: AdminTenant): Promise<AdminTenant | null> {
     togglingId.value = tenant.id
     try {
       const updated = await toggleAdminTenant(tenant.id)
-      const index = tenants.value.findIndex((item) => item.id === tenant.id)
-      if (index >= 0) tenants.value.splice(index, 1, updated)
+      await load()
       return updated
     } finally {
       togglingId.value = ''

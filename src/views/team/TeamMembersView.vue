@@ -11,6 +11,7 @@ import MemberInviteDialog from '@/components/team/MemberInviteDialog.vue'
 import MemberProjectPermissionsDrawer from '@/components/team/MemberProjectPermissionsDrawer.vue'
 import InvitationScope from '@/components/team/InvitationScope.vue'
 import { useOrganizationRole } from '@/composables/useOrganizationRole'
+import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { useTeamMembers } from '@/composables/useTeamMembers'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
 import { useOrganizationStore, useUserStore } from '@/stores'
@@ -43,6 +44,8 @@ const { canManage, canGrantAdmin } = useOrganizationRole()
 const orgId = computed(() => orgStore.currentOrganizationId)
 const { members, invitations, loading, error, invitationsDenied, pendingKey, load, act } =
   useTeamMembers(orgId, canManage)
+// keep-alive 页面：从别的页面返回时重新拉取成员与邀请列表
+useRefreshOnActivate(load)
 
 const keyword = ref('')
 const roleFilter = ref<MembershipRole | 'all'>('all')

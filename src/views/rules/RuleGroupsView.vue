@@ -12,6 +12,7 @@ import { fieldLabelKey } from '@/config/rules'
 import { useMonitorAccess } from '@/composables/useMonitorAccess'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useRuleMeta } from '@/composables/useRuleMeta'
+import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
 import { formatMonitorTime } from '@/utils/monitor-presenter'
@@ -108,6 +109,8 @@ watch(
   },
   { immediate: true, flush: 'sync' },
 )
+// keep-alive 页面：从别的页面返回时重新拉取规则组列表
+useRefreshOnActivate(load)
 onScopeDispose(() => {
   generation++
   controller?.abort()

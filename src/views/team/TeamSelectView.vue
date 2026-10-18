@@ -7,6 +7,7 @@ import type { Organization } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import TeamCard from '@/components/team/TeamCard.vue'
 import TeamCreateDialog from '@/components/team/TeamCreateDialog.vue'
+import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { useTeamPlans } from '@/composables/useTeamPlans'
 import { HOME_PATH } from '@/config'
 import { GridViewIcon, ListViewIcon, PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
@@ -99,6 +100,8 @@ async function load() {
 onMounted(() => {
   void load()
 })
+// keep-alive 页面：从别的页面返回时重新拉取团队列表
+useRefreshOnActivate(load)
 
 /** 清空搜索与归属筛选 */
 function clearFilters() {

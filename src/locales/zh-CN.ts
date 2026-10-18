@@ -101,6 +101,7 @@ export default {
     confirm: '确定',
     cancel: '取消',
     close: '关闭',
+    delete: '删除',
     reset: '重置',
     backHome: '返回首页',
     loading: '加载中…',

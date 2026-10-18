@@ -96,8 +96,7 @@ export function useAdminProbes() {
     busyId.value = probe.id
     try {
       const updated = await toggleSystemProbe(probe.id, enabled)
-      const index = probes.value.findIndex((item) => item.id === probe.id)
-      if (index >= 0) probes.value.splice(index, 1, updated)
+      await load()
       return updated
     } finally {
       busyId.value = ''

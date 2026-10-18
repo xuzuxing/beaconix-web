@@ -4,6 +4,7 @@ export default {
     search: 'Search',
     reset: 'Clear filters',
     detail: 'Details',
+    delete: 'Delete',
     close: 'Close',
     confirm: 'Confirm',
     cancel: 'Cancel',
