@@ -104,6 +104,11 @@ export default {
     'Flag a failure when availability inside the recent checks window drops below the threshold',
   rulesBound: '{count} rule groups bound',
   rulesNone: 'No rule group bound',
+  channelsHint:
+    'Leave empty to use the organization defaults; only selected channels receive alerts for this monitor',
+  channelsPlaceholder: 'Select notification channels',
+  channelsEmpty: 'This team has no notification channel yet. Create one in Channel management.',
+  channelsLoadFailed: 'Unable to load notification channels',
   inspectConfig: 'Protocol configuration',
   credentials: 'Credentials configured',
   executionBlocked: 'Execution blocked for this configuration',

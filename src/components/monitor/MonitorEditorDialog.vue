@@ -6,11 +6,13 @@ import {
   bindRuleGroup,
   createMonitor,
   listMonitorRuleBindings,
+  listNotificationChannels,
   listRuleGroups,
   unbindRuleGroup,
   updateMonitor,
 } from '@/api'
 import type { Monitor, MonitorConfig, MonitorType, UpdateMonitorParams } from '@/api/types'
+import type { NotificationChannel } from '@/api/types/notification'
 import type { BoundRuleGroup, RuleGroup } from '@/api/types/rule'
 import MonitorConfigForm from '@/components/monitor/MonitorConfigForm.vue'
 import RuleGroupEditorDialog from '@/components/rules/RuleGroupEditorDialog.vue'
@@ -56,6 +58,8 @@ const form = reactive({
   /** 可用率条件：最近检查窗口内可用率低于阈值即判为异常，并发送告警通知（保存时自动启用 availabilityEnabled） */
   availabilityThreshold: 90,
   availabilityWindow: 10,
+  /** 绑定的组织通知渠道；空数组表示不指定、走组织级默认渠道 */
+  notificationChannelIds: [] as string[],
   /** 当前协议的 config（字段级校验与清洗见 MonitorConfigForm / utils/monitor-config） */
   config: {} as Record<string, unknown>,
 })
@@ -146,6 +150,40 @@ async function loadRules() {
   }
 }
 
+// ---------- 告警通知渠道 ----------
+const channels = ref<NotificationChannel[]>([])
+const channelsLoading = ref(false)
+const channelsError = ref('')
+
+/** 可选的渠道：组织下的全部通知渠道，停用的渠道标注出来但仍可保留绑定 */
+const channelOptions = computed(() =>
+  channels.value.map((channel) => ({
+    label: channel.enabled
+      ? `${channel.name} · ${t(`channelPage.type.${channel.type}`)}`
+      : `${channel.name} · ${t('channelPage.disabled')}`,
+    value: channel.id,
+  })),
+)
+
+async function loadChannels() {
+  const token = generation
+  const organizationId = orgId.value
+  channels.value = []
+  channelsError.value = ''
+  if (!organizationId || !canManage.value) return
+  channelsLoading.value = true
+  try {
+    const list = await listNotificationChannels(organizationId)
+    if (token === generation) channels.value = list
+  } catch (cause) {
+    if (token === generation)
+      channelsError.value =
+        cause instanceof Error ? cause.message : t('monitorPage.channelsLoadFailed')
+  } finally {
+    if (token === generation) channelsLoading.value = false
+  }
+}
+
 function bindRule(value: unknown) {
   const id = value === null || value === undefined ? '' : String(value)
   if (!id || selectedIds.value.includes(id)) return
@@ -186,11 +224,14 @@ watch(
       sslExpiryThreshold: m?.sslExpiryThreshold ?? 30,
       availabilityThreshold: m?.availabilityThreshold ?? 90,
       availabilityWindow: m?.availabilityWindow ?? 10,
+      // 未指定渠道时后端返回空/缺省，两种情况都按「走组织兜底」回显为空选择
+      notificationChannelIds: [...(m?.notificationChannelIds ?? [])],
       // 编辑时用后端返回的 config 覆盖默认值（凭据字段不回传，需重新填写）
       config: monitorConfigDraft(type, m?.config),
     })
     // 检测异常条件（规则组绑定）随监控项一并展示：打开弹窗即加载
     void loadRules()
+    void loadChannels()
   },
   { flush: 'sync' },
 )
@@ -289,9 +330,24 @@ async function save() {
     // 后端对 config 是整体替换：新建必传；编辑只在用户改过时提交，
     // 否则整段省略以保留密码 / token 等不回传的凭据。
     if (!editing || configForm.value?.isDirty()) changes.config = config
+    // 通知渠道是数组，按内容比对（引用比较会让每次保存都提交一遍）；
+    // 新建或勾选集合有变化才提交，空数组即「不指定、走组织级兜底」。
+    const channelIds = [...(form.notificationChannelIds ?? [])]
+    const boundChannelIds = props.monitor?.notificationChannelIds ?? []
+    const channelsChanged =
+      !editing ||
+      channelIds.length !== boundChannelIds.length ||
+      channelIds.some((id) => !boundChannelIds.includes(id))
+    if (channelsChanged) changes.notificationChannelIds = channelIds
     const result = editing
       ? await updateMonitor(project, editing, changes)
-      : await createMonitor(project, { ...basic, type: form.type, enabled: form.enabled, config })
+      : await createMonitor(project, {
+          ...basic,
+          ...(channelsChanged ? { notificationChannelIds: channelIds } : {}),
+          type: form.type,
+          enabled: form.enabled,
+          config,
+        })
     if (token !== generation) return
     // 检测异常条件（规则组绑定）随监控项一起保存：按差异提交绑定变更
     await commitBindings(project, result.id, token)
@@ -409,7 +465,10 @@ async function save() {
                 t('ruleGroup.monitor.unbind')
               }}</t-button>
             </div>
-            <RuleTreeView v-if="group.tree" :tree="group.tree" compact />
+            <!-- 按结构回显规则树：逻辑组层级 + 每一条规则，而非一行摘要 -->
+            <div v-if="group.tree" class="editor-rule__tree">
+              <RuleTreeView :tree="group.tree" />
+            </div>
           </article>
         </div>
         <p v-else class="editor-rules__empty">{{ t('ruleGroup.monitor.empty') }}</p>
@@ -432,6 +491,29 @@ async function save() {
             ><t-input-number v-model="form.availabilityWindow" :min="1" :max="1000"
           /></t-form-item>
         </div>
+      </section>
+      <!-- 告警通知渠道：组织级渠道多选，留空表示走组织级默认渠道 -->
+      <section class="editor-channels">
+        <div class="editor-config__head">
+          <span class="editor-config__title">{{ t('monitorPage.boundChannels') }}</span>
+          <small>{{ t('monitorPage.channelsHint') }}</small>
+        </div>
+        <t-alert v-if="channelsError" theme="error" :message="channelsError" />
+        <t-select
+          v-model="form.notificationChannelIds"
+          multiple
+          clearable
+          :options="channelOptions"
+          :loading="channelsLoading"
+          :min-collapsed-num="3"
+          :placeholder="t('monitorPage.channelsPlaceholder')"
+        />
+        <p
+          v-if="!channelsLoading && !channelsError && !channels.length"
+          class="editor-channels__empty"
+        >
+          {{ t('monitorPage.channelsEmpty') }}
+        </p>
       </section>
     </t-form>
     <RuleGroupEditorDialog
@@ -476,6 +558,21 @@ async function save() {
   margin-top: 8px;
   padding-top: 16px;
   border-top: 1px solid @beacon-border;
+}
+
+.editor-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid @beacon-border;
+
+  &__empty {
+    margin: 0;
+    color: @beacon-text-tertiary;
+    font-size: 12px;
+  }
 }
 
 .editor-grid {
@@ -562,6 +659,15 @@ async function save() {
     font-weight: @beacon-font-weight-medium;
     color: @beacon-text-primary;
     overflow-wrap: anywhere;
+  }
+
+  /** 规则树按结构完整展示；组多/层级深时在卡片内滚动，避免弹窗被撑长 */
+  &__tree {
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 8px 10px;
+    background: @beacon-bg-container;
+    border-radius: @beacon-radius-m;
   }
 }
 
