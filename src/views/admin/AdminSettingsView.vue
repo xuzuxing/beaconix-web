@@ -8,6 +8,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import AdminSettingField from '@/components/admin/AdminSettingField.vue'
 import { useAdminSettings } from '@/composables/useAdminSettings'
+import type { SettingTab } from '@/utils/settings-presenter'
 import { RefreshIcon } from '@/icons'
 import { useUserStore } from '@/stores'
 
@@ -56,6 +57,7 @@ const GROUP_LABEL_KEYS: Record<string, string> = {
   storage: 'adminPage.setting.group.storage',
   attachments: 'adminPage.setting.group.attachments',
   smtp: 'adminPage.setting.group.smtp',
+  wechat: 'adminPage.setting.group.wechat',
 }
 
 function groupLabel(key: string) {
@@ -66,6 +68,32 @@ function groupLabel(key: string) {
 function groupHint(key: string) {
   const path = `adminPage.setting.groupHint.${key}`
   return te(path) ? t(path) : ''
+}
+
+/** tab 内的二级分组 key → 文案 key；未收录的 section 直接显示 key 本身 */
+const SECTION_LABEL_KEYS: Record<string, string> = {
+  pay: 'adminPage.setting.section.pay',
+  miniProgram: 'adminPage.setting.section.miniProgram',
+  website: 'adminPage.setting.section.website',
+  scanLogin: 'adminPage.setting.section.scanLogin',
+  officialAccount: 'adminPage.setting.section.officialAccount',
+  work: 'adminPage.setting.section.work',
+  http: 'adminPage.setting.section.http',
+}
+
+function sectionLabel(key: string) {
+  const path = SECTION_LABEL_KEYS[key]
+  return path && te(path) ? t(path) : key
+}
+
+function sectionHint(key: string) {
+  const path = `adminPage.setting.sectionHint.${key}`
+  return te(path) ? t(path) : ''
+}
+
+/** 该 tab 是否按 section 分块展示：只有确实声明了 section 才显示小标题 */
+function tabHasSections(tab: SettingTab) {
+  return tab.sections.some((section) => Boolean(section.key))
 }
 
 /** 保存后分组清单可能变化（比如改了 develop.configGroup），保证当前 tab 仍然存在 */
@@ -176,16 +204,25 @@ onMounted(() => {
               :label-width="labelWidth"
               :colon="false"
             >
-              <AdminSettingField
-                v-for="item in tab.items"
-                :key="item.key"
-                :item="item"
-                :draft="draftOf(item)"
-                :dirty="isDirty(item)"
-                :disabled="savingGroup === tab.key"
-                @update:draft="(value) => setDraft(item.key, value)"
-              />
+              <template v-for="section in tab.sections" :key="section.key || '__default'">
+                <div v-if="tabHasSections(tab) && section.key" class="admin-settings__section">
+                  <h3 class="admin-settings__section-title">{{ sectionLabel(section.key) }}</h3>
+                  <p v-if="sectionHint(section.key)" class="admin-settings__section-hint">
+                    {{ sectionHint(section.key) }}
+                  </p>
+                </div>
+                <AdminSettingField
+                  v-for="item in section.items"
+                  :key="item.key"
+                  :item="item"
+                  :draft="draftOf(item)"
+                  :dirty="isDirty(item)"
+                  :disabled="savingGroup === tab.key"
+                  @update:draft="(value) => setDraft(item.key, value)"
+                />
+              </template>
             </t-form>
+
 
             <div class="admin-settings__actions">
               <t-button
@@ -242,6 +279,26 @@ onMounted(() => {
 
   &__group-hint {
     margin: 4px 0 12px;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-secondary;
+  }
+
+  &__section {
+    margin-top: 20px;
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  &__section-title {
+    margin: 0 0 4px;
+    font-size: @beacon-font-size-base;
+    font-weight: 600;
+  }
+
+  &__section-hint {
+    margin: 0 0 12px;
     font-size: @beacon-font-size-base;
     color: @beacon-text-secondary;
   }

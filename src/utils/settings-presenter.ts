@@ -26,12 +26,18 @@ export type SettingDraftParse =
   | { ok: true; value: SettingValue }
   | { ok: false; reason: SettingDraftError }
 
-/** 一个 tab：分组 key 与该分组下的配置项（保持接口返回顺序） */
-export interface SettingTab {
+/** 一个 tab 内的二级分组：`key` 为空串表示未声明 section 的项（直接挂在 tab 顶层） */
+export interface SettingSection {
   key: string
   items: AdminSetting[]
 }
 
+/** 一个 tab：分组 key、该分组下的配置项（保持接口返回顺序），以及按 section 切出的二级分组 */
+export interface SettingTab {
+  key: string
+  items: AdminSetting[]
+  sections: SettingSection[]
+}
 /** 非法 JSON 的签名，保证它不会与任何合法值相等 */
 const INVALID_JSON_SIGNATURE = '\u0000invalid-json'
 
@@ -133,6 +139,18 @@ export function resolveSettingGroups(settings: AdminSetting[]): string[] {
   return groups
 }
 
+/** 按 section 切分：保持接口返回顺序，未声明 section 的项归到空串那一段 */
+function buildSections(items: AdminSetting[]): SettingSection[] {
+  const bySection = new Map<string, AdminSetting[]>()
+  items.forEach((item) => {
+    const key = item.section?.trim() ?? ''
+    const list = bySection.get(key)
+    if (list) list.push(item)
+    else bySection.set(key, [item])
+  })
+  return Array.from(bySection, ([key, sectionItems]) => ({ key, items: sectionItems }))
+}
+
 /** 拆成 tab：空分组也保留，便于提示该分组还没建配置项 */
 export function buildSettingTabs(settings: AdminSetting[]): SettingTab[] {
   const byGroup = new Map<string, AdminSetting[]>()
@@ -141,5 +159,8 @@ export function buildSettingTabs(settings: AdminSetting[]): SettingTab[] {
     if (list) list.push(item)
     else byGroup.set(item.group, [item])
   })
-  return resolveSettingGroups(settings).map((key) => ({ key, items: byGroup.get(key) ?? [] }))
+  return resolveSettingGroups(settings).map((key) => {
+    const items = byGroup.get(key) ?? []
+    return { key, items, sections: buildSections(items) }
+  })
 }

@@ -270,12 +270,16 @@ export type SettingValue =
  *
  * `group` 由后端显式返回，管理页据此把配置项放进对应 tab；
  * tab 的清单与顺序来自 `develop.configGroup` 这一项的值（字符串数组，可任意增删）。
+ * `section` 是 tab 内的二级分组（同样是稳定的英文标识），用于把项数多的 tab
+ * 切成若干块；未声明时该项直接挂在 tab 顶层。
  */
 export interface AdminSetting {
   key: string
   name: string
   /** 所属分组，例如 storage / monitor，与 tab 一一对应 */
   group: string
+  /** tab 内的二级分组标识，例如微信 tab 里的 pay / scanLogin；缺省表示不分组 */
+  section?: string
   value: SettingValue
   valueType: SettingValueType
   description: string | null

@@ -347,6 +347,7 @@ export default {
       storage: '存储',
       attachments: '附件',
       smtp: '邮件服务',
+      wechat: '微信',
     },
     groupHint: {
       system: '站点名称、Logo、页脚与系统邮件等对外展示的配置。',
@@ -360,6 +361,26 @@ export default {
       storage: '附件存储驱动与两个公网地址，切换 OSS 需先在环境变量里配好凭据。',
       attachments: '各类附件的上传体积上限。',
       smtp: '自建 SMTP 发信通道的连接参数；当前系统邮件仍走 Resend。',
+      wechat:
+        '微信支付、小程序、网站应用、公众号与企业微信的凭证；留空会回退到对应的环境变量。',
+    },
+    section: {
+      pay: '微信支付',
+      miniProgram: '小程序',
+      website: '网站应用',
+      scanLogin: '扫码登录',
+      officialAccount: '公众号',
+      work: '企业微信',
+      http: '接口客户端',
+    },
+    sectionHint: {
+      pay: '商户号、证书与回调地址；模拟支付开启时不会调用真实支付。',
+      miniProgram: '小程序登录、扫码登录与订阅消息共用的凭证。',
+      website: '开放平台网站应用，用于网页扫码登录。',
+      scanLogin: '二维码落地页、小程序版本与票据有效期。',
+      officialAccount: '公众号网页授权、模板消息与安全模式回调。',
+      work: '企业微信应用消息与通讯录；当前业务尚未接入，仅作预留。',
+      http: '调用微信接口的超时与重试，改动需重启生效。',
     },
   },
 }
