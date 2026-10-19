@@ -6,8 +6,10 @@ import { listOrganizations } from '@/api/modules/organization'
 import { approveProbeActivation, getProbeActivation } from '@/api/modules/probe'
 import type { Organization } from '@/api/types'
 import type {
+  ApproveProbeActivationParams,
   ProbeActivation,
   ProbeActivationApproval,
+  ProbeActivationScope,
   ProbeProvider,
 } from '@/api/types/probe'
 import AppIcon from '@/components/AppIcon.vue'
@@ -46,6 +48,7 @@ const teamsError = ref('')
 const submitting = ref(false)
 const opening = ref(false)
 const form = reactive({
+  scope: 'TENANT' as ProbeActivationScope,
   organizationId: '',
   name: '',
   region: '',
@@ -64,12 +67,22 @@ const locked = computed(
   () => submitting.value || teamsLoading.value || !!approval.value,
 )
 const host = computed(() => activation.value?.client.hostname ?? '')
+const canChooseSystem = computed(() => user.isSuperAdmin)
+const isSystem = computed(
+  () => form.scope === 'SYSTEM' && canChooseSystem.value,
+)
+const approvalScope = computed<ProbeActivationScope>(() => {
+  const value = approval.value
+  if (!value) return 'TENANT'
+  return value.scope ?? (value.organizationId ? 'TENANT' : 'SYSTEM')
+})
 let generation = 0
 let teamsGeneration = 0
 let controller: AbortController | undefined
 
 async function loadTeams() {
-  if (!user.isLogin || !pending.value || approval.value) return
+  if (!user.isLogin || !pending.value || approval.value || isSystem.value)
+    return
   const request = ++teamsGeneration
   const context = accessContext()
   teamsLoading.value = true
@@ -164,6 +177,7 @@ async function initialize() {
   formError.value = ''
   actionError.value = ''
   Object.assign(form, {
+    scope: 'TENANT' as ProbeActivationScope,
     organizationId: '',
     name: '',
     region: '',
@@ -178,6 +192,14 @@ async function retry() {
   }
 }
 watch(code, () => void initialize(), { immediate: true })
+watch(
+  () => form.scope,
+  (scope) => {
+    formError.value = ''
+    actionError.value = ''
+    if (scope === 'TENANT') void loadTeams()
+  },
+)
 watch(permissionEpoch, () => {
   formError.value = ''
   void loadTeams()
@@ -190,6 +212,7 @@ watch(sessionEpoch, () => {
   approval.value = null
   organizations.value = []
   Object.assign(form, {
+    scope: 'TENANT' as ProbeActivationScope,
     organizationId: '',
     name: '',
     region: '',
@@ -209,33 +232,52 @@ async function enterCode() {
 }
 async function confirm() {
   if (submitting.value || !pending.value || approval.value) return
+  const system = isSystem.value
   const problem = probeFormError({ ...form, callbackUrl: '' }, true)
-  formError.value = !form.organizationId
-    ? t('probePage.activation.teamRequired')
-    : problem
-      ? t(`probePage.${problem}`)
-      : ''
-  if (formError.value || !permissions.canOrganization(form.organizationId))
+  formError.value =
+    !system && !form.organizationId
+      ? t('probePage.activation.teamRequired')
+      : problem
+        ? t(`probePage.${problem}`)
+        : ''
+  if (
+    formError.value ||
+    (!system && !permissions.canOrganization(form.organizationId))
+  )
     return
-  const payload = {
+  const payload: ApproveProbeActivationParams = {
     userCode: code.value,
-    organizationId: form.organizationId,
+    scope: form.scope,
     name: form.name.trim(),
     region: form.region.trim(),
     provider: form.provider,
+    ...(system ? {} : { organizationId: form.organizationId }),
   }
   const context = accessContext()
   submitting.value = true
   try {
     if (!(await loadActivation()) || !isCurrentContext(context)) return
     const request = generation
-    const result = await run('approve', () =>
-      approveProbeActivation(payload, { headers: { 'X-Silent-Error': true } }),
-    )
+    // System probes have no organization to revalidate, so they bypass the
+    // organization-scoped useProbeActions guard and call the API directly.
+    const result = system
+      ? await approveProbeActivation(payload, {
+          headers: { 'X-Silent-Error': true },
+        })
+      : await run('approve', () =>
+          approveProbeActivation(payload, {
+            headers: { 'X-Silent-Error': true },
+          }),
+        )
     if (!result || request !== generation || !isCurrentContext(context)) return
+    const resultScope =
+      result.scope ?? (result.organizationId ? 'TENANT' : 'SYSTEM')
     if (
       result.status !== 'approved' ||
-      result.organizationId !== payload.organizationId ||
+      resultScope !== form.scope ||
+      (system
+        ? result.organizationId != null
+        : result.organizationId !== payload.organizationId) ||
       !result.probeId
     )
       throw new Error(t('probePage.activation.invalidResponse'))
@@ -254,6 +296,10 @@ async function viewNodes() {
   if (!approval.value || opening.value) return
   opening.value = true
   try {
+    if (approvalScope.value === 'SYSTEM' || !approval.value.organizationId) {
+      await router.push('/admin/system-probes')
+      return
+    }
     await workspace.switchOrganization(approval.value.organizationId)
     await router.push('/probes')
   } finally {
@@ -264,29 +310,55 @@ async function viewNodes() {
 
 <template>
   <div class="probe-activate">
-    <h2>
-      {{
-        t(
-          approval
-            ? 'probePage.activation.success'
-            : 'probePage.activation.title',
-        )
-      }}
-    </h2>
-    <template v-if="approval">
+    <header class="probe-activate__hero">
+      <span class="probe-activate__hero-icon">
+        <AppIcon :icon="SecurityCheckIcon" />
+      </span>
+      <div class="probe-activate__hero-text">
+        <h2>
+          {{
+            t(
+              approval
+                ? 'probePage.activation.success'
+                : 'probePage.activation.title',
+            )
+          }}
+        </h2>
+        <p v-if="!approval">{{ t('probePage.activation.subtitle') }}</p>
+      </div>
+    </header>
+
+    <section
+      v-if="approval"
+      class="probe-activate__card probe-activate__success"
+    >
       <t-alert
         theme="success"
-        :message="t('probePage.activation.successDescription')"
+        :message="
+          t(
+            approvalScope === 'SYSTEM'
+              ? 'probePage.activation.successSystemDescription'
+              : 'probePage.activation.successDescription',
+          )
+        "
       />
       <t-button
         :loading="opening"
         @click="viewNodes"
-        >{{ t('probePage.activation.viewNodes') }}</t-button
       >
-    </template>
+        {{
+          t(
+            approvalScope === 'SYSTEM'
+              ? 'probePage.activation.viewSystemProbes'
+              : 'probePage.activation.viewNodes',
+          )
+        }}
+      </t-button>
+    </section>
+
     <form
       v-else-if="!code"
-      class="probe-activate__form"
+      class="probe-activate__card probe-activate__form"
       @submit.prevent="enterCode"
     >
       <label>
@@ -308,9 +380,17 @@ async function viewNodes() {
         }}</t-button>
       </div>
     </form>
-    <p v-else-if="state === 'loading'">{{ t('common.loading') }}</p>
-    <template
+
+    <section
+      v-else-if="state === 'loading'"
+      class="probe-activate__card probe-activate__muted"
+    >
+      <p>{{ t('common.loading') }}</p>
+    </section>
+
+    <section
       v-else-if="state === 'expired' || activation?.status === 'denied'"
+      class="probe-activate__card"
     >
       <t-alert
         theme="error"
@@ -322,108 +402,163 @@ async function viewNodes() {
           )
         "
       />
-    </template>
-    <template v-else-if="state === 'error'">
+    </section>
+
+    <section
+      v-else-if="state === 'error'"
+      class="probe-activate__card"
+    >
       <t-alert
         theme="error"
         :message="loadError"
       />
-      <t-button
-        variant="outline"
-        @click="retry"
-      >
-        <template #icon><AppIcon :icon="RefreshIcon" /></template>
-        {{ t('probePage.retry') }}
-      </t-button>
-    </template>
-    <t-alert
+      <div class="probe-activate__actions">
+        <t-button
+          variant="outline"
+          @click="retry"
+        >
+          <template #icon><AppIcon :icon="RefreshIcon" /></template>
+          {{ t('probePage.retry') }}
+        </t-button>
+      </div>
+    </section>
+
+    <section
       v-else-if="activation?.status === 'approved'"
-      theme="info"
-      :message="t('probePage.activation.alreadyApproved')"
-    />
+      class="probe-activate__card"
+    >
+      <t-alert
+        theme="info"
+        :message="t('probePage.activation.alreadyApproved')"
+      />
+    </section>
+
     <form
       v-else-if="pending"
-      class="probe-activate__form"
+      class="probe-activate__card probe-activate__form"
       @submit.prevent="confirm"
     >
-      <dl class="probe-activate__device">
-        <dt>{{ t('probePage.activation.code') }}</dt>
-        <dd>{{ code }}</dd>
-        <template v-if="host"
-          ><dt>{{ t('probePage.activation.hostname') }}</dt>
-          <dd>{{ host }}</dd></template
+      <div class="probe-activate__section">
+        <p class="probe-activate__section-title">
+          {{ t('probePage.activation.deviceSection') }}
+        </p>
+        <dl class="probe-activate__device">
+          <dt>{{ t('probePage.activation.code') }}</dt>
+          <dd>{{ code }}</dd>
+          <template v-if="host"
+            ><dt>{{ t('probePage.activation.hostname') }}</dt>
+            <dd>{{ host }}</dd></template
+          >
+          <template v-if="activation?.client.platform"
+            ><dt>{{ t('probePage.activation.platform') }}</dt>
+            <dd>{{ activation.client.platform }}</dd></template
+          >
+          <dt>{{ t('probePage.activation.requestedAt') }}</dt>
+          <dd>{{ formatDateTime(activation!.requestedAt) }}</dd>
+        </dl>
+      </div>
+
+      <div class="probe-activate__section">
+        <p class="probe-activate__section-title">
+          {{ t('probePage.activation.probeSection') }}
+        </p>
+
+        <div
+          v-if="canChooseSystem"
+          class="probe-activate__scope"
         >
-        <template v-if="activation?.client.platform"
-          ><dt>{{ t('probePage.activation.platform') }}</dt>
-          <dd>{{ activation.client.platform }}</dd></template
+          <span class="probe-activate__scope-label">{{
+            t('probePage.activation.scope')
+          }}</span>
+          <t-radio-group
+            v-model="form.scope"
+            variant="default-filled"
+            :disabled="locked"
+          >
+            <t-radio-button value="TENANT">{{
+              t('probePage.activation.scopeTenant')
+            }}</t-radio-button>
+            <t-radio-button value="SYSTEM">{{
+              t('probePage.activation.scopeSystem')
+            }}</t-radio-button>
+          </t-radio-group>
+        </div>
+
+        <t-alert
+          v-if="isSystem"
+          theme="info"
+          :message="t('probePage.activation.scopeSystemHint')"
+        />
+
+        <t-alert
+          v-if="teamsError && !isSystem"
+          theme="error"
+          :message="teamsError"
         >
-        <dt>{{ t('probePage.activation.requestedAt') }}</dt>
-        <dd>{{ formatDateTime(activation!.requestedAt) }}</dd>
-      </dl>
-      <t-alert
-        v-if="teamsError"
-        theme="error"
-        :message="teamsError"
-      >
-        <template #operation
-          ><t-button
-            variant="text"
-            @click="loadTeams"
-            >{{ t('probePage.retry') }}</t-button
-          ></template
-        >
-      </t-alert>
-      <t-alert
-        v-else-if="!teamsLoading && !teams.length"
-        theme="warning"
-        :message="t('probePage.activation.noTeams')"
-      />
-      <label>
-        <span>{{ t('probePage.activation.team') }}</span>
-        <t-select
-          v-model="form.organizationId"
-          :disabled="locked"
-          :loading="teamsLoading"
-          :placeholder="t('probePage.activation.teamPlaceholder')"
-          :options="
-            teams.map((organization) => ({
-              label: organization.name,
-              value: organization.id,
-            }))
-          "
+          <template #operation
+            ><t-button
+              variant="text"
+              @click="loadTeams"
+              >{{ t('probePage.retry') }}</t-button
+            ></template
+          >
+        </t-alert>
+        <t-alert
+          v-else-if="!isSystem && !teamsLoading && !teams.length"
+          theme="warning"
+          :message="t('probePage.activation.noTeams')"
         />
-      </label>
-      <label>
-        <span>{{ t('probePage.name') }}</span>
-        <t-input
-          v-model="form.name"
-          :disabled="locked"
-          :maxlength="100"
-          :placeholder="t('probePage.namePlaceholder')"
-        />
-      </label>
-      <label>
-        <span>{{ t('probePage.region') }}</span>
-        <t-input
-          v-model="form.region"
-          :disabled="locked"
-          :maxlength="100"
-          :placeholder="t('probePage.regionPlaceholder')"
-        />
-      </label>
-      <label>
-        <span>{{ t('probePage.provider') }}</span>
-        <t-select
-          v-model="form.provider"
-          :disabled="locked"
-          :options="
-            PROBE_PROVIDERS.map((value) => ({
-              value,
-              label: t(probeProviderLabelKey(value)),
-            }))
-          "
-        />
-      </label>
+
+        <div class="probe-activate__fields">
+          <label v-if="!isSystem">
+            <span>{{ t('probePage.activation.team') }}</span>
+            <t-select
+              v-model="form.organizationId"
+              :disabled="locked"
+              :loading="teamsLoading"
+              :placeholder="t('probePage.activation.teamPlaceholder')"
+              :options="
+                teams.map((organization) => ({
+                  label: organization.name,
+                  value: organization.id,
+                }))
+              "
+            />
+          </label>
+          <label>
+            <span>{{ t('probePage.name') }}</span>
+            <t-input
+              v-model="form.name"
+              :disabled="locked"
+              :maxlength="100"
+              :placeholder="t('probePage.namePlaceholder')"
+            />
+          </label>
+          <label>
+            <span>{{ t('probePage.region') }}</span>
+            <t-input
+              v-model="form.region"
+              :disabled="locked"
+              :maxlength="100"
+              :placeholder="t('probePage.regionPlaceholder')"
+            />
+          </label>
+          <label>
+            <span>{{ t('probePage.provider') }}</span>
+            <t-select
+              v-model="form.provider"
+              :disabled="locked"
+              :options="
+                PROBE_PROVIDERS.map((value) => ({
+                  value,
+                  label: t(probeProviderLabelKey(value)),
+                }))
+              "
+            />
+          </label>
+        </div>
+      </div>
+
       <t-alert
         v-if="formError || actionError"
         theme="error"
@@ -440,7 +575,10 @@ async function viewNodes() {
           type="submit"
           :loading="submitting"
           :disabled="
-            teamsLoading || !permissions.canOrganization(form.organizationId)
+            (!isSystem &&
+              (teamsLoading ||
+                !permissions.canOrganization(form.organizationId))) ||
+            (isSystem && !user.isSuperAdmin)
           "
         >
           <template #icon><AppIcon :icon="SecurityCheckIcon" /></template>
@@ -455,35 +593,87 @@ async function viewNodes() {
 .probe-activate {
   display: grid;
   gap: 20px;
-  width: min(100%, 560px);
+  width: min(100%, 640px);
   padding: 40px 24px;
   margin: 0 auto;
-  h2 {
-    margin: 0;
-    font-size: 20px;
-    line-height: 1.4;
+
+  &__hero {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
   }
-  &__form {
+  &__hero-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+    color: var(--td-brand-color);
+    background: var(--td-brand-color-light);
+    border-radius: 12px;
+  }
+  &__hero-text {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    h2 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.35;
+    }
+    p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+      color: @beacon-text-secondary;
+    }
+  }
+  &__card {
     display: grid;
     gap: 20px;
+    padding: 24px;
+    background: var(--td-bg-color-container);
+    border: 1px solid @beacon-border;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  }
+  &__success {
+    justify-items: start;
+  }
+  &__muted {
+    font-size: 13px;
+    color: @beacon-text-secondary;
+    p {
+      margin: 0;
+    }
+  }
+  &__form {
     min-width: 0;
   }
-  &__form > label {
+  &__section {
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
+    gap: 12px;
     min-width: 0;
-    font-size: 13px;
+  }
+  &__section-title {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: @beacon-text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
   &__device {
     display: grid;
-    grid-template-columns: 100px minmax(0, 1fr);
+    grid-template-columns: 96px minmax(0, 1fr);
     gap: 8px 16px;
-    padding-bottom: 20px;
+    padding: 14px 16px;
     margin: 0;
-    border-bottom: 1px solid @beacon-border;
     font-size: 13px;
     line-height: 1.6;
+    background: var(--td-bg-color-container-hover);
+    border-radius: 12px;
     dt {
       color: @beacon-text-secondary;
     }
@@ -492,14 +682,54 @@ async function viewNodes() {
       overflow-wrap: anywhere;
     }
   }
+  &__scope {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    font-size: 13px;
+    border: 1px solid @beacon-border;
+    border-radius: 12px;
+  }
+  &__scope-label {
+    font-weight: 500;
+  }
+  &__fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    min-width: 0;
+  }
+  &__fields > label {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+    font-size: 13px;
+  }
   &__actions {
     display: flex;
-    justify-content: flex-end;
     flex-wrap: wrap;
     gap: 12px;
+    justify-content: flex-end;
+    padding-top: 4px;
   }
   @media (max-width: 600px) {
     padding: 24px 16px;
+    &__card {
+      padding: 20px 16px;
+    }
+    &__fields {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    &__device {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+      dt {
+        font-weight: 600;
+      }
+    }
   }
 }
 </style>

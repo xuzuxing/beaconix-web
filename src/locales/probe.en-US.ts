@@ -120,6 +120,15 @@ export default {
     hostname: 'Hostname',
     platform: 'Operating system',
     requestedAt: 'Requested at',
+    scope: 'Enroll into',
+    scopeTenant: 'Team',
+    scopeSystem: 'System',
+    scopeSystemHint:
+      "System probes are scheduled by the platform for every team's monitors; only super admins can create them.",
+    subtitle:
+      'The installation terminal is waiting for confirmation. Review the details and approve it.',
+    deviceSection: 'Device',
+    probeSection: 'Probe',
     team: 'Team',
     teamPlaceholder: 'Select the team for this probe',
     teamRequired: 'Select a team',
@@ -137,7 +146,10 @@ export default {
     success: 'Probe added',
     successDescription:
       'Probe information is saved. The installation terminal will collect its credentials and connect automatically.',
+    successSystemDescription:
+      'System probe created. Manage, validate and rebalance it on the System probes page.',
     viewNodes: 'View probe nodes',
+    viewSystemProbes: 'View system probes',
   },
   installGuide: {
     title: 'Installation guide',

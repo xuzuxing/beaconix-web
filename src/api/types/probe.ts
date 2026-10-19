@@ -47,13 +47,18 @@ export interface ProbeActivation {
     runtime?: string
   }
 }
+export type ProbeActivationScope = 'TENANT' | 'SYSTEM'
+
 export interface ApproveProbeActivationParams extends ProbeEnrollmentParams {
   userCode: string
-  organizationId: string
+  /** SYSTEM requires SUPER_ADMIN; TENANT (default) requires organizationId. */
+  scope?: ProbeActivationScope
+  organizationId?: string
 }
 export interface ProbeActivationApproval {
   probeId: string
-  organizationId: string
+  organizationId: string | null
+  scope: ProbeActivationScope
   status: 'approved'
 }
 export type ProbeExecutionTrigger = 'SCHEDULED' | 'MANUAL' | 'CALLBACK'
