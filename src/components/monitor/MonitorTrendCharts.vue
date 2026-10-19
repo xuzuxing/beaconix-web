@@ -31,12 +31,19 @@ const theme = useChartTheme()
 const timeAxis = computed(() => {
   const palette = theme.value
   const labels = props.timeline.labels
-  const multipleDates = new Set(labels.map(label => label.slice(0, 5))).size > 1
+  const multipleDates =
+    new Set(labels.map((label) => label.slice(0, 5))).size > 1
   const axis = categoryAxis(palette, labels)
-  return { ...axis, axisLabel: { ...axis.axisLabel,
-    showMinLabel: false, showMaxLabel: false,
-    formatter: (label: string) => multipleDates ? label.slice(0, 5) : label.slice(6, 11),
-  } }
+  return {
+    ...axis,
+    axisLabel: {
+      ...axis.axisLabel,
+      showMinLabel: false,
+      showMaxLabel: false,
+      formatter: (label: string) =>
+        multipleDates ? label.slice(0, 5) : label.slice(6, 11),
+    },
+  }
 })
 
 /** 检查次数与失败数：折线 + 柱状双轴 */
@@ -47,7 +54,10 @@ const checkOption = computed<ChartOption>(() => {
     tooltip: chartTooltip(palette),
     legend: chartLegend(palette),
     xAxis: timeAxis.value,
-    yAxis: [valueAxis(palette, { name: t('dashboard.trend.axisChecks') }), valueAxis(palette)],
+    yAxis: [
+      valueAxis(palette, { name: t('dashboard.trend.axisChecks') }),
+      valueAxis(palette),
+    ],
     series: [
       {
         name: t('dashboard.trend.checks'),
@@ -75,9 +85,24 @@ const checkOption = computed<ChartOption>(() => {
 const latencyOption = computed<ChartOption>(() => {
   const palette = theme.value
   const series = [
-    { key: 'p50', label: 'P50', data: props.timeline.latencyP50, color: palette.brand },
-    { key: 'p95', label: 'P95', data: props.timeline.latencyP95, color: palette.warning },
-    { key: 'p99', label: 'P99', data: props.timeline.latencyP99, color: palette.error },
+    {
+      key: 'p50',
+      label: 'P50',
+      data: props.timeline.latencyP50,
+      color: palette.brand,
+    },
+    {
+      key: 'p95',
+      label: 'P95',
+      data: props.timeline.latencyP95,
+      color: palette.warning,
+    },
+    {
+      key: 'p99',
+      label: 'P99',
+      data: props.timeline.latencyP99,
+      color: palette.error,
+    },
   ]
 
   return chartBase(palette, {
@@ -130,7 +155,10 @@ const availabilityOption = computed<ChartOption>(() => {
             fontSize: 10,
             position: 'insideEndTop' as const,
           },
-          lineStyle: { color: withAlpha(palette.error, 0.6), type: 'dashed' as const },
+          lineStyle: {
+            color: withAlpha(palette.error, 0.6),
+            type: 'dashed' as const,
+          },
           data: [{ yAxis: 99.9 }],
         },
       },
@@ -152,21 +180,42 @@ const peakChecks = computed(() => {
       :tip="t('dashboard.trend.checksTip')"
       :extra="t('dashboard.trend.peak', { value: peakChecks })"
     >
-      <EChart v-if="timeline.checks.some(v => v !== null)" :option="checkOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+      <EChart
+        v-if="timeline.checks.some((v) => v !== null)"
+        :option="checkOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
 
-    <ChartCard :title="t('dashboard.trend.latencyTitle')" :tip="t('dashboard.trend.latencyTip')">
-      <EChart v-if="timeline.latencyP50.some(v => v !== null)" :option="latencyOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+    <ChartCard
+      :title="t('dashboard.trend.latencyTitle')"
+      :tip="t('dashboard.trend.latencyTip')"
+    >
+      <EChart
+        v-if="timeline.latencyP50.some((v) => v !== null)"
+        :option="latencyOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
 
     <ChartCard
       :title="t('dashboard.trend.availabilityTitle')"
       :tip="t('dashboard.trend.availabilityTip')"
     >
-      <EChart v-if="timeline.availability.some(v => v !== null)" :option="availabilityOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+      <EChart
+        v-if="timeline.availability.some((v) => v !== null)"
+        :option="availabilityOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
   </div>
 </template>
@@ -176,6 +225,8 @@ const peakChecks = computed(() => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: @beacon-gap-l;
-  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 1000px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

@@ -12,18 +12,25 @@ import { shortId } from '@/utils/team-presenter'
 defineOptions({ name: 'SystemProbeRebalanceDialog' })
 
 const visible = defineModel<boolean>('visible', { required: true })
-const props = defineProps<{ assignments: SystemProbeAssignments; probes: SystemProbe[] }>()
+const props = defineProps<{
+  assignments: SystemProbeAssignments
+  probes: SystemProbe[]
+}>()
 const { t } = useI18n()
 
 const rows = computed(() =>
   Object.entries(props.assignments ?? {}).map(([probeId, tenantIds]) => ({
     probeId,
-    name: props.probes.find((probe) => probe.id === probeId)?.name ?? shortId(probeId),
+    name:
+      props.probes.find((probe) => probe.id === probeId)?.name ??
+      shortId(probeId),
     tenantIds: tenantIds ?? [],
   })),
 )
 
-const served = computed(() => rows.value.filter((row) => row.tenantIds.length > 0).length)
+const served = computed(
+  () => rows.value.filter((row) => row.tenantIds.length > 0).length,
+)
 </script>
 
 <template>
@@ -34,29 +41,63 @@ const served = computed(() => rows.value.filter((row) => row.tenantIds.length > 
     :footer="false"
   >
     <div class="probe-rebalance">
-      <p v-if="rows.length" class="probe-rebalance__summary">
+      <p
+        v-if="rows.length"
+        class="probe-rebalance__summary"
+      >
         {{ t('adminPage.probe.rebalanceDone', { count: served }) }}
       </p>
 
-      <div v-if="rows.length" class="probe-rebalance__list">
-        <article v-for="row in rows" :key="row.probeId" class="probe-rebalance__item">
+      <div
+        v-if="rows.length"
+        class="probe-rebalance__list"
+      >
+        <article
+          v-for="row in rows"
+          :key="row.probeId"
+          class="probe-rebalance__item"
+        >
           <header class="probe-rebalance__head">
             <span class="probe-rebalance__name">{{ row.name }}</span>
             <span class="probe-rebalance__count">
-              {{ t('adminPage.probe.rebalanceAssignment', { count: row.tenantIds.length }) }}
+              {{
+                t('adminPage.probe.rebalanceAssignment', {
+                  count: row.tenantIds.length,
+                })
+              }}
             </span>
           </header>
-          <p v-if="row.tenantIds.length" class="probe-rebalance__tenants">
+          <p
+            v-if="row.tenantIds.length"
+            class="probe-rebalance__tenants"
+          >
             {{ row.tenantIds.join('、') }}
           </p>
-          <p v-else class="probe-rebalance__tenants probe-rebalance__tenants--empty">
+          <p
+            v-else
+            class="probe-rebalance__tenants probe-rebalance__tenants--empty"
+          >
             {{ t('adminPage.common.empty') }}
           </p>
         </article>
       </div>
 
-      <p v-else class="probe-rebalance__empty">{{ t('adminPage.probe.rebalanceEmpty') }}</p>
+      <p
+        v-else
+        class="probe-rebalance__empty"
+      >
+        {{ t('adminPage.probe.rebalanceEmpty') }}
+      </p>
     </div>
+
+    <template #footer>
+      <t-button
+        theme="primary"
+        @click="visible = false"
+      >
+        {{ t('adminPage.common.close') }}
+      </t-button>
+    </template>
   </t-dialog>
 </template>
 

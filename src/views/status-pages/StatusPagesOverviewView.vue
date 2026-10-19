@@ -41,13 +41,16 @@ async function loadPublicStatus() {
     return
   }
   publicLoading.value = true
-  const results = await Promise.allSettled(targets.map((page) => getPublicStatusPage(page.slug)))
+  const results = await Promise.allSettled(
+    targets.map((page) => getPublicStatusPage(page.slug)),
+  )
   if (token !== publicGeneration) return
   const next: Record<string, MonitorStatus> = {}
   results.forEach((result, index) => {
     const target = targets[index]
     if (!target) return
-    next[target.id] = result.status === 'fulfilled' ? result.value.overallStatus : 'UNKNOWN'
+    next[target.id] =
+      result.status === 'fulfilled' ? result.value.overallStatus : 'UNKNOWN'
   })
   publicStatus.value = next
   publicLoading.value = false
@@ -58,7 +61,12 @@ watch(pages, () => void loadPublicStatus())
 
 const summary = computed(() => summarizeStatusPages(pages.value))
 const stats = computed(() => [
-  { key: 'total', label: t('statusPage.total'), value: summary.value.total, query: {} },
+  {
+    key: 'total',
+    label: t('statusPage.total'),
+    value: summary.value.total,
+    query: {},
+  },
   {
     key: 'enabled',
     label: t('statusPage.enabled'),
@@ -79,9 +87,14 @@ const stats = computed(() => [
   },
 ])
 const recent = computed(() =>
-  [...pages.value].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)).slice(0, 5),
+  [...pages.value]
+    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+    .slice(0, 5),
 )
-const target = (query: Record<string, string | undefined>) => ({ name: 'status-pages', query })
+const target = (query: Record<string, string | undefined>) => ({
+  name: 'status-pages',
+  query,
+})
 const openUrl = (page: StatusPage) => publicStatusPageUrl(page.slug)
 const statusOf = (page: StatusPage) => publicStatus.value[page.id] ?? 'UNKNOWN'
 </script>
@@ -91,20 +104,37 @@ const statusOf = (page: StatusPage) => publicStatus.value[page.id] ?? 'UNKNOWN'
     <t-card class="status-overview__card">
       <template #title>{{ t('statusPage.overviewTitle') }}</template>
       <template #actions>
-        <span class="status-overview__scope">{{ org.currentOrganization?.name ?? '-' }}</span>
+        <span class="status-overview__scope">{{
+          org.currentOrganization?.name ?? '-'
+        }}</span>
       </template>
 
-      <div v-if="error" class="status-overview__state">
-        <t-alert theme="error" :message="error" />
+      <div
+        v-if="error"
+        class="status-overview__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
         <t-button @click="load">{{ t('statusPage.retry') }}</t-button>
       </div>
-      <div v-else-if="loading" class="status-overview__state">
+      <div
+        v-else-if="loading"
+        class="status-overview__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
-      <div v-else-if="!orgId" class="status-overview__state">
+      <div
+        v-else-if="!orgId"
+        class="status-overview__state"
+      >
         {{ t('statusPage.noOrganization') }}
       </div>
-      <div v-else class="status-overview__grid">
+      <div
+        v-else
+        class="status-overview__grid"
+      >
         <RouterLink
           v-for="item in stats"
           :key="item.key"
@@ -112,7 +142,10 @@ const statusOf = (page: StatusPage) => publicStatus.value[page.id] ?? 'UNKNOWN'
           :to="target(item.query)"
         >
           <span class="status-overview__label">{{ item.label }}</span>
-          <strong class="status-overview__value" :class="`status-overview__value--${item.key}`">
+          <strong
+            class="status-overview__value"
+            :class="`status-overview__value--${item.key}`"
+          >
             {{ item.value }}
           </strong>
         </RouterLink>
@@ -122,24 +155,57 @@ const statusOf = (page: StatusPage) => publicStatus.value[page.id] ?? 'UNKNOWN'
     <t-card class="status-overview__card">
       <template #title>{{ t('statusPage.publicCardTitle') }}</template>
       <template #actions>
-        <span v-if="publicLoading" class="status-overview__scope">{{ t('common.loading') }}</span>
+        <span
+          v-if="publicLoading"
+          class="status-overview__scope"
+          >{{ t('common.loading') }}</span
+        >
       </template>
 
-      <div v-if="error || loading || !orgId" class="status-overview__state">
-        <t-loading v-if="loading" :text="t('common.loading')" />
+      <div
+        v-if="error || loading || !orgId"
+        class="status-overview__state"
+      >
+        <t-loading
+          v-if="loading"
+          :text="t('common.loading')"
+        />
         <span v-else>-</span>
       </div>
-      <p v-else-if="!pages.length" class="status-overview__empty">{{ t('statusPage.empty') }}</p>
-      <ul v-else class="status-overview__list">
-        <li v-for="item in pages" :key="item.id" class="status-overview__item">
+      <p
+        v-else-if="!pages.length"
+        class="status-overview__empty"
+      >
+        {{ t('statusPage.empty') }}
+      </p>
+      <ul
+        v-else
+        class="status-overview__list"
+      >
+        <li
+          v-for="item in pages"
+          :key="item.id"
+          class="status-overview__item"
+        >
           <div class="status-overview__item-main">
-            <RouterLink class="status-overview__item-title" :to="target({ q: item.slug })">
+            <RouterLink
+              class="status-overview__item-title"
+              :to="target({ q: item.slug })"
+            >
               {{ item.title }}
             </RouterLink>
-            <span class="status-overview__item-path">{{ publicStatusPagePath(item.slug) }}</span>
+            <span class="status-overview__item-path">{{
+              publicStatusPagePath(item.slug)
+            }}</span>
           </div>
-          <MonitorStatusTag v-if="item.enabled" :status="statusOf(item)" />
-          <StatusPageStatusTag v-else :enabled="false" />
+          <MonitorStatusTag
+            v-if="item.enabled"
+            :status="statusOf(item)"
+          />
+          <StatusPageStatusTag
+            v-else
+            :enabled="false"
+          />
           <a
             class="status-overview__open"
             :href="openUrl(item)"
@@ -153,17 +219,39 @@ const statusOf = (page: StatusPage) => publicStatus.value[page.id] ?? 'UNKNOWN'
 
     <t-card class="status-overview__card">
       <template #title>{{ t('statusPage.recentTitle') }}</template>
-      <div v-if="error || loading || !orgId" class="status-overview__state">
-        <t-loading v-if="loading" :text="t('common.loading')" />
+      <div
+        v-if="error || loading || !orgId"
+        class="status-overview__state"
+      >
+        <t-loading
+          v-if="loading"
+          :text="t('common.loading')"
+        />
         <span v-else>-</span>
       </div>
-      <p v-else-if="!recent.length" class="status-overview__empty">{{ t('statusPage.empty') }}</p>
-      <ul v-else class="status-overview__list">
-        <li v-for="item in recent" :key="item.id" class="status-overview__item">
+      <p
+        v-else-if="!recent.length"
+        class="status-overview__empty"
+      >
+        {{ t('statusPage.empty') }}
+      </p>
+      <ul
+        v-else
+        class="status-overview__list"
+      >
+        <li
+          v-for="item in recent"
+          :key="item.id"
+          class="status-overview__item"
+        >
           <div class="status-overview__item-main">
             <span class="status-overview__item-title">{{ item.title }}</span>
             <span class="status-overview__item-path">
-              {{ t('statusPage.updatedAt', { time: formatDateTime(item.updatedAt) }) }}
+              {{
+                t('statusPage.updatedAt', {
+                  time: formatDateTime(item.updatedAt),
+                })
+              }}
             </span>
           </div>
           <StatusPageStatusTag :enabled="item.enabled" />

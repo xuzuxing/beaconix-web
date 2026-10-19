@@ -74,7 +74,14 @@ export function monitorConfigDefaults(type: MonitorType): Record<string, unknown
     case 'REDIS':
       return { username: '', password: '', db: 0, tls: true, tlsCa: '' }
     case 'MONGODB':
-      return { username: '', password: '', database: '', authSource: 'admin', tls: true, tlsCa: '' }
+      return {
+        username: '',
+        password: '',
+        database: '',
+        authSource: 'admin',
+        tls: true,
+        tlsCa: '',
+      }
     case 'DOCKER':
       return { containerId: '', token: '', tlsCa: '', tlsCert: '', tlsKey: '' }
     case 'GRPC':
@@ -124,7 +131,10 @@ function normalize(value: unknown): unknown {
 }
 
 /** 按协议挑出后端接受的字段，剔除未填写的可选值 */
-export function monitorConfigPayload(type: MonitorType, raw: Record<string, unknown>): MonitorConfig {
+export function monitorConfigPayload(
+  type: MonitorType,
+  raw: Record<string, unknown>,
+): MonitorConfig {
   return buildPayload(type, raw) as MonitorConfig
 }
 
@@ -150,14 +160,19 @@ function buildPayload(type: MonitorType, raw: Record<string, unknown>): Record<s
         payload.jsonAssertions = assertions.map((assertion) =>
           assertion.operator === 'exists' || assertion.operator === 'notExists'
             ? { path: assertion.path, operator: assertion.operator }
-            : { path: assertion.path, operator: assertion.operator, value: assertion.value ?? null },
+            : {
+                path: assertion.path,
+                operator: assertion.operator,
+                value: assertion.value ?? null,
+              },
         )
       // 读取上限只在存在响应体断言时才有意义
       if (keyword || assertions.length) put('maxBodyBytes', raw.maxBodyBytes)
       return payload
     }
     case 'DNS': {
-      payload.recordType = raw.recordType === 'AAAA' || raw.recordType === 'CNAME' ? raw.recordType : 'A'
+      payload.recordType =
+        raw.recordType === 'AAAA' || raw.recordType === 'CNAME' ? raw.recordType : 'A'
       const values = Array.isArray(raw.expectedValues)
         ? raw.expectedValues
             .map((value) => (typeof value === 'string' ? value.trim() : ''))

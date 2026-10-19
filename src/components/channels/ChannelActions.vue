@@ -4,10 +4,25 @@ import { useI18n } from 'vue-i18n'
 import type { NotificationChannel } from '@/api/types/notification'
 import AppIcon from '@/components/AppIcon.vue'
 import type { ChannelAction } from '@/composables/useChannelActions'
-import { Delete02Icon, Edit02Icon, FlashIcon, ListViewIcon, PauseIcon, PlayIcon } from '@/icons'
+import {
+  Delete02Icon,
+  Edit02Icon,
+  FlashIcon,
+  ListViewIcon,
+  PauseIcon,
+  PlayIcon,
+} from '@/icons'
 
-defineProps<{ channel: NotificationChannel; pending?: boolean; canManage: boolean }>()
-const emit = defineEmits<{ action: [action: ChannelAction]; edit: []; logs: [] }>()
+defineProps<{
+  channel: NotificationChannel
+  pending?: boolean
+  canManage: boolean
+}>()
+const emit = defineEmits<{
+  action: [action: ChannelAction]
+  edit: []
+  logs: []
+}>()
 const { t } = useI18n()
 </script>
 
@@ -34,12 +49,18 @@ const { t } = useI18n()
           ><template #icon><AppIcon :icon="FlashIcon" /></template
         ></t-button>
       </t-tooltip>
-      <t-tooltip :content="t(channel.enabled ? 'channelPage.disable' : 'channelPage.enable')">
+      <t-tooltip
+        :content="
+          t(channel.enabled ? 'channelPage.disable' : 'channelPage.enable')
+        "
+      >
         <t-button
           variant="text"
           shape="square"
           :disabled="pending"
-          :aria-label="t(channel.enabled ? 'channelPage.disable' : 'channelPage.enable')"
+          :aria-label="
+            t(channel.enabled ? 'channelPage.disable' : 'channelPage.enable')
+          "
           @click="emit('action', 'toggle')"
           ><AppIcon :icon="channel.enabled ? PauseIcon : PlayIcon"
         /></t-button>
@@ -54,7 +75,10 @@ const { t } = useI18n()
           ><AppIcon :icon="Edit02Icon"
         /></t-button>
       </t-tooltip>
-      <t-popconfirm :content="t('channelPage.deleteConfirm')" @confirm="emit('action', 'delete')">
+      <t-popconfirm
+        :content="t('channelPage.deleteConfirm')"
+        @confirm="emit('action', 'delete')"
+      >
         <t-button
           variant="text"
           theme="danger"

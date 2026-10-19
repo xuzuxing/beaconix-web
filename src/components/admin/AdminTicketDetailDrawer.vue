@@ -49,7 +49,13 @@ const props = withDefaults(
 )
 const emit = defineEmits<{
   update: [patch: UpdateTicketParams]
-  reply: [payload: { body: string; isInternalNote: boolean; attachments: AttachmentRef[] }]
+  reply: [
+    payload: {
+      body: string
+      isInternalNote: boolean
+      attachments: AttachmentRef[]
+    },
+  ]
   remove: []
 }>()
 const { t } = useI18n()
@@ -98,10 +104,15 @@ watch(
   },
 )
 
-const timeline = computed(() => (props.detail ? ticketTimelineOf(props.detail) : []))
+const timeline = computed(() =>
+  props.detail ? ticketTimelineOf(props.detail) : [],
+)
 
 const statusOptions = computed(() =>
-  TICKET_STATUSES.map((status) => ({ label: t(ticketStatusLabelKey(status)), value: status })),
+  TICKET_STATUSES.map((status) => ({
+    label: t(ticketStatusLabelKey(status)),
+    value: status,
+  })),
 )
 
 const priorityOptions = computed(() =>
@@ -112,7 +123,10 @@ const priorityOptions = computed(() =>
 )
 
 const categoryOptions = computed(() =>
-  props.categories.map((category) => ({ label: category.name, value: category.id })),
+  props.categories.map((category) => ({
+    label: category.name,
+    value: category.id,
+  })),
 )
 
 const originalCategory = computed(
@@ -140,7 +154,8 @@ function save() {
   const patch: UpdateTicketParams = {}
   if (form.status !== detail.status) patch.status = form.status
   if (form.priority !== detail.priority) patch.priority = form.priority
-  if (form.categoryId !== originalCategory.value) patch.categoryId = form.categoryId || null
+  if (form.categoryId !== originalCategory.value)
+    patch.categoryId = form.categoryId || null
 
   const assignee = form.assigneeDraft.trim()
   if (assignee !== originalAssignee.value) patch.assigneeId = assignee || null
@@ -166,17 +181,33 @@ function sendReply() {
     :header="t('adminPage.ticket.detailTitle')"
     :footer="false"
   >
-    <div v-if="loading" class="ticket-drawer__state">
+    <div
+      v-if="loading"
+      class="ticket-drawer__state"
+    >
       <t-loading :text="t('common.loading')" />
     </div>
 
-    <div v-else-if="detail" class="ticket-drawer">
+    <div
+      v-else-if="detail"
+      class="ticket-drawer"
+    >
       <header class="ticket-drawer__head">
-        <span class="ticket-drawer__number">{{ ticketNumberLabel(detail.number) }}</span>
-        <t-tag size="small" variant="light" :theme="ticketStatusTheme(detail.status)">
+        <span class="ticket-drawer__number">{{
+          ticketNumberLabel(detail.number)
+        }}</span>
+        <t-tag
+          size="small"
+          variant="light"
+          :theme="ticketStatusTheme(detail.status)"
+        >
           {{ t(ticketStatusLabelKey(detail.status)) }}
         </t-tag>
-        <t-tag size="small" variant="light" :theme="ticketPriorityTheme(detail.priority)">
+        <t-tag
+          size="small"
+          variant="light"
+          :theme="ticketPriorityTheme(detail.priority)"
+        >
           {{ t(ticketPriorityLabelKey(detail.priority)) }}
         </t-tag>
         <span class="ticket-drawer__subject">{{ detail.subject }}</span>
@@ -213,7 +244,9 @@ function sendReply() {
         </div>
         <div>
           <dt>{{ t('ticketPage.assignee') }}</dt>
-          <dd>{{ ticketAssigneeLabel(detail) || t('ticketPage.unassigned') }}</dd>
+          <dd>
+            {{ ticketAssigneeLabel(detail) || t('ticketPage.unassigned') }}
+          </dd>
         </div>
         <div class="ticket-drawer__wide">
           <dt>{{ t('ticketPage.number') }}</dt>
@@ -222,25 +255,40 @@ function sendReply() {
       </dl>
 
       <section class="ticket-drawer__section">
-        <h4 class="ticket-drawer__section-title">{{ t('ticketPage.content') }}</h4>
+        <h4 class="ticket-drawer__section-title">
+          {{ t('ticketPage.content') }}
+        </h4>
         <p class="ticket-drawer__content">{{ detail.content }}</p>
       </section>
 
-      <section v-if="detail.attachments?.length" class="ticket-drawer__section">
-        <h4 class="ticket-drawer__section-title">{{ t('ticketPage.attachments') }}</h4>
+      <section
+        v-if="detail.attachments?.length"
+        class="ticket-drawer__section"
+      >
+        <h4 class="ticket-drawer__section-title">
+          {{ t('ticketPage.attachments') }}
+        </h4>
         <TicketAttachmentList :attachments="detail.attachments" />
       </section>
 
       <section class="ticket-drawer__section">
-        <h4 class="ticket-drawer__section-title">{{ t('adminPage.ticket.updateTitle') }}</h4>
+        <h4 class="ticket-drawer__section-title">
+          {{ t('adminPage.ticket.updateTitle') }}
+        </h4>
         <div class="ticket-drawer__form">
           <label>
             <span>{{ t('ticketPage.status') }}</span>
-            <t-select v-model="form.status" :options="statusOptions" />
+            <t-select
+              v-model="form.status"
+              :options="statusOptions"
+            />
           </label>
           <label>
             <span>{{ t('ticketPage.priority') }}</span>
-            <t-select v-model="form.priority" :options="priorityOptions" />
+            <t-select
+              v-model="form.priority"
+              :options="priorityOptions"
+            />
           </label>
           <label>
             <span>{{ t('ticketPage.category') }}</span>
@@ -260,25 +308,42 @@ function sendReply() {
           </label>
         </div>
         <div class="ticket-drawer__row">
-          <t-button theme="primary" size="small" :loading="busy" :disabled="!dirty" @click="save">
+          <t-button
+            theme="primary"
+            size="small"
+            :loading="busy"
+            :disabled="!dirty"
+            @click="save"
+          >
             {{ t('adminPage.ticket.save') }}
           </t-button>
-          <span class="ticket-drawer__hint">{{ t('adminPage.ticket.updateHint') }}</span>
+          <span class="ticket-drawer__hint">{{
+            t('adminPage.ticket.updateHint')
+          }}</span>
         </div>
       </section>
 
       <section class="ticket-drawer__section">
-        <h4 class="ticket-drawer__section-title">{{ t('adminPage.ticket.replyTitle') }}</h4>
+        <h4 class="ticket-drawer__section-title">
+          {{ t('adminPage.ticket.replyTitle') }}
+        </h4>
         <t-textarea
           v-model="replyBody"
           :maxlength="5000"
           :placeholder="t('adminPage.ticket.replyPlaceholder')"
           :autosize="{ minRows: 3, maxRows: 8 }"
         />
-        <TicketAttachmentsField v-model="replyAttachments" :disabled="busy" />
+        <TicketAttachmentsField
+          v-model="replyAttachments"
+          :disabled="busy"
+        />
         <div class="ticket-drawer__row">
-          <t-checkbox v-model="internalNote">{{ t('ticketPage.internalNote') }}</t-checkbox>
-          <span class="ticket-drawer__hint">{{ t('adminPage.ticket.internalHint') }}</span>
+          <t-checkbox v-model="internalNote">{{
+            t('ticketPage.internalNote')
+          }}</t-checkbox>
+          <span class="ticket-drawer__hint">{{
+            t('adminPage.ticket.internalHint')
+          }}</span>
         </div>
         <div class="ticket-drawer__row">
           <t-button
@@ -294,7 +359,9 @@ function sendReply() {
       </section>
 
       <section class="ticket-drawer__section">
-        <h4 class="ticket-drawer__section-title">{{ t('ticketPage.timelineTitle') }}</h4>
+        <h4 class="ticket-drawer__section-title">
+          {{ t('ticketPage.timelineTitle') }}
+        </h4>
         <TicketTimeline :entries="timeline" />
       </section>
 
@@ -308,11 +375,16 @@ function sendReply() {
         >
           {{ t('adminPage.ticket.delete') }}
         </t-button>
-        <span class="ticket-drawer__hint">{{ t('adminPage.ticket.deleteHint') }}</span>
+        <span class="ticket-drawer__hint">{{
+          t('adminPage.ticket.deleteHint')
+        }}</span>
       </section>
     </div>
 
-    <div v-else class="ticket-drawer__state">
+    <div
+      v-else
+      class="ticket-drawer__state"
+    >
       <p class="ticket-drawer__empty">{{ t('adminPage.ticket.notFound') }}</p>
     </div>
   </t-drawer>

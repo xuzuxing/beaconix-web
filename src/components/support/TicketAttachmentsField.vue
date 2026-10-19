@@ -43,8 +43,12 @@ const images = ref<UploadedObject[]>([])
 const files = ref<UploadedObject[]>([])
 
 /** 交叉额度：图片区还能传「总数 - 已传文件数」，反之亦然 */
-const imageMaxCount = computed(() => remainingAttachmentSlots(props.maxCount, files.value.length))
-const fileMaxCount = computed(() => remainingAttachmentSlots(props.maxCount, images.value.length))
+const imageMaxCount = computed(() =>
+  remainingAttachmentSlots(props.maxCount, files.value.length),
+)
+const fileMaxCount = computed(() =>
+  remainingAttachmentSlots(props.maxCount, images.value.length),
+)
 
 const total = computed(() => images.value.length + files.value.length)
 

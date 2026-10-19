@@ -8,18 +8,26 @@ const installScriptUrl = 'https://get.beaconix.app/install.sh'
 </script>
 
 <template>
-  <section class="probe-install" :aria-label="t('probePage.installGuide.title')">
-    <h3>
-      <AppIcon :icon="CodeIcon" />{{ t('probePage.installGuide.title') }}
-    </h3>
+  <section
+    class="probe-install"
+    :aria-label="t('probePage.installGuide.title')"
+  >
+    <h3><AppIcon :icon="CodeIcon" />{{ t('probePage.installGuide.title') }}</h3>
     <div class="probe-install__link">
       <span>{{ t('probePage.installGuide.scriptUrl') }}</span>
-      <a :href="installScriptUrl" target="_blank" rel="noopener noreferrer">
+      <a
+        :href="installScriptUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {{ installScriptUrl }}
       </a>
     </div>
     <ul>
-      <li v-for="note in ['requirements', 'enrollment', 'connect']" :key="note">
+      <li
+        v-for="note in ['requirements', 'enrollment', 'connect']"
+        :key="note"
+      >
         {{ t(`probePage.installGuide.${note}`) }}
       </li>
     </ul>

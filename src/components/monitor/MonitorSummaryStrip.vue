@@ -3,7 +3,12 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import AppIcon from '@/components/AppIcon.vue'
-import { Clock01Icon, Link01Icon, Notification03Icon, SecurityCheckIcon } from '@/icons'
+import {
+  Clock01Icon,
+  Link01Icon,
+  Notification03Icon,
+  SecurityCheckIcon,
+} from '@/icons'
 import type { Summary } from '@/api/types/monitoring'
 
 /**
@@ -13,15 +18,31 @@ defineOptions({ name: 'MonitorSummaryStrip' })
 
 const { t } = useI18n()
 const props = defineProps<{ summary: Summary }>()
-const monitorSummary = computed(() => ({ ...props.summary.monitors, probes: props.summary.probes,
-  alerting: props.summary.alertingCount, sslExpiring: props.summary.sslExpiringCount }))
+const monitorSummary = computed(() => ({
+  ...props.summary.monitors,
+  probes: props.summary.probes,
+  alerting: props.summary.alertingCount,
+  sslExpiring: props.summary.sslExpiringCount,
+}))
 
 const statuses = computed(() => [
   { key: 'up', count: monitorSummary.value.up, tone: 'success' as const },
   { key: 'down', count: monitorSummary.value.down, tone: 'error' as const },
-  { key: 'degraded', count: monitorSummary.value.degraded, tone: 'warning' as const },
-  { key: 'paused', count: monitorSummary.value.paused, tone: 'default' as const },
-  { key: 'unknown', count: monitorSummary.value.unknown, tone: 'default' as const },
+  {
+    key: 'degraded',
+    count: monitorSummary.value.degraded,
+    tone: 'warning' as const,
+  },
+  {
+    key: 'paused',
+    count: monitorSummary.value.paused,
+    tone: 'default' as const,
+  },
+  {
+    key: 'unknown',
+    count: monitorSummary.value.unknown,
+    tone: 'default' as const,
+  },
 ])
 
 const certificates = computed(() => props.summary.expiringCertificates)
@@ -33,8 +54,15 @@ const certificates = computed(() => props.summary.expiringCertificates)
       <span class="strip__label">{{ t('dashboard.summary.monitors') }}</span>
       <span class="strip__value">{{ monitorSummary.total }}</span>
       <span class="strip__statuses">
-        <span v-for="status in statuses" :key="status.key" class="strip__status">
-          <i class="strip__dot" :class="`strip__dot--${status.tone}`"></i>
+        <span
+          v-for="status in statuses"
+          :key="status.key"
+          class="strip__status"
+        >
+          <i
+            class="strip__dot"
+            :class="`strip__dot--${status.tone}`"
+          ></i>
           {{ t(`dashboard.summary.status.${status.key}`) }}
           <b>{{ status.count }}</b>
         </span>
@@ -43,37 +71,58 @@ const certificates = computed(() => props.summary.expiringCertificates)
 
     <div class="strip__block strip__block--narrow">
       <span class="strip__label">
-        <AppIcon :icon="Link01Icon" :size="14" />
+        <AppIcon
+          :icon="Link01Icon"
+          :size="14"
+        />
         {{ t('dashboard.summary.probes') }}
       </span>
       <span class="strip__value">
-        {{ monitorSummary.probes.online }}<i>/{{ monitorSummary.probes.total }}</i>
+        {{ monitorSummary.probes.online
+        }}<i>/{{ monitorSummary.probes.total }}</i>
       </span>
     </div>
 
     <div class="strip__block strip__block--narrow">
       <span class="strip__label">
-        <AppIcon :icon="Notification03Icon" :size="14" />
+        <AppIcon
+          :icon="Notification03Icon"
+          :size="14"
+        />
         {{ t('dashboard.summary.alerting') }}
       </span>
-      <span class="strip__value strip__value--error">{{ monitorSummary.alerting }}</span>
+      <span class="strip__value strip__value--error">{{
+        monitorSummary.alerting
+      }}</span>
     </div>
 
     <div class="strip__block strip__block--narrow">
       <span class="strip__label">
-        <AppIcon :icon="Clock01Icon" :size="14" />
+        <AppIcon
+          :icon="Clock01Icon"
+          :size="14"
+        />
         {{ t('dashboard.summary.sslExpiring') }}
       </span>
-      <span class="strip__value strip__value--warning">{{ monitorSummary.sslExpiring }}</span>
+      <span class="strip__value strip__value--warning">{{
+        monitorSummary.sslExpiring
+      }}</span>
     </div>
 
     <div class="strip__block strip__block--wide">
       <span class="strip__label">
-        <AppIcon :icon="SecurityCheckIcon" :size="14" />
+        <AppIcon
+          :icon="SecurityCheckIcon"
+          :size="14"
+        />
         {{ t('dashboard.summary.certificates') }}
       </span>
       <span class="strip__certs">
-        <span v-for="item in certificates" :key="item.monitorId" class="strip__cert">
+        <span
+          v-for="item in certificates"
+          :key="item.monitorId"
+          class="strip__cert"
+        >
           <span class="strip__cert-host">{{ item.host }}</span>
           <span class="strip__cert-days">
             {{ t('dashboard.summary.daysLeft', { days: item.daysLeft }) }}
@@ -224,9 +273,21 @@ const certificates = computed(() => props.summary.expiringCertificates)
       flex-wrap: wrap;
       border-bottom: 1px solid @beacon-border;
     }
-    &__statuses { flex: 1 0 100%; }
-    &__block--narrow { flex: 1 0 50%; min-width: 0; padding: 12px; gap: 8px; }
-    &__block--wide { flex: 1 0 100%; min-width: 0; flex-wrap: wrap; border-top: 1px solid @beacon-border; }
+    &__statuses {
+      flex: 1 0 100%;
+    }
+    &__block--narrow {
+      flex: 1 0 50%;
+      min-width: 0;
+      padding: 12px;
+      gap: 8px;
+    }
+    &__block--wide {
+      flex: 1 0 100%;
+      min-width: 0;
+      flex-wrap: wrap;
+      border-top: 1px solid @beacon-border;
+    }
   }
 }
 </style>

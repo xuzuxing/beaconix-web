@@ -6,7 +6,11 @@ import { useI18n } from 'vue-i18n'
 import { deleteOrganization } from '@/api'
 import type { Organization } from '@/api/types'
 import { usePermissionsStore } from '@/stores/modules/permissions'
-import { accessContext, isCurrentContext, permissionEpoch } from '@/utils/access-context'
+import {
+  accessContext,
+  isCurrentContext,
+  permissionEpoch,
+} from '@/utils/access-context'
 
 /**
  * 危险操作区：注销（软删除）当前团队。
@@ -24,7 +28,8 @@ const submitting = ref(false)
 const error = ref('')
 
 const matched = computed(
-  () => Boolean(props.org?.slug) && confirmText.value.trim() === props.org?.slug,
+  () =>
+    Boolean(props.org?.slug) && confirmText.value.trim() === props.org?.slug,
 )
 
 // 切换团队时清空输入，避免把上一个团队的标识带过来
@@ -58,7 +63,8 @@ async function remove() {
     emit('deleted')
   } catch (cause) {
     if (!isCurrentContext(context)) return
-    error.value = cause instanceof Error ? cause.message : t('workspace.team.dangerFailed')
+    error.value =
+      cause instanceof Error ? cause.message : t('workspace.team.dangerFailed')
   } finally {
     submitting.value = false
   }
@@ -70,12 +76,28 @@ async function remove() {
     <template #title>{{ t('workspace.team.dangerZone') }}</template>
 
     <p class="danger-zone__hint">{{ t('workspace.team.dangerHint') }}</p>
-    <p v-if="!isOwner" class="danger-zone__locked">{{ t('workspace.team.dangerOwnerOnly') }}</p>
+    <p
+      v-if="!isOwner"
+      class="danger-zone__locked"
+    >
+      {{ t('workspace.team.dangerOwnerOnly') }}
+    </p>
 
     <template v-else>
-      <t-alert v-if="error" theme="error" :message="error" class="danger-zone__error" />
-      <t-form label-align="top" :colon="false" :data="{ confirmText }">
-        <t-form-item :label="t('workspace.team.dangerInput', { slug: org?.slug ?? '' })">
+      <t-alert
+        v-if="error"
+        theme="error"
+        :message="error"
+        class="danger-zone__error"
+      />
+      <t-form
+        label-align="top"
+        :colon="false"
+        :data="{ confirmText }"
+      >
+        <t-form-item
+          :label="t('workspace.team.dangerInput', { slug: org?.slug ?? '' })"
+        >
           <t-input
             v-model="confirmText"
             :placeholder="t('workspace.team.dangerInputPlaceholder')"
@@ -83,7 +105,12 @@ async function remove() {
           />
         </t-form-item>
       </t-form>
-      <t-button theme="danger" :disabled="!matched" :loading="submitting" @click="remove">
+      <t-button
+        theme="danger"
+        :disabled="!matched"
+        :loading="submitting"
+        @click="remove"
+      >
         {{ t('workspace.team.dangerConfirm') }}
       </t-button>
     </template>

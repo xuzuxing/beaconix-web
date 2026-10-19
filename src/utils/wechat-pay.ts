@@ -75,8 +75,7 @@ export function requestWechatPayment(params: WechatPayParams): Promise<WechatPay
       paySign: params.paySign,
       success: () => resolve('success'),
       // 用户主动取消与真正的失败要区分开，取消不应提示「支付失败」
-      fail: (res) =>
-        resolve(/(?:cancel|取消)/i.test(res.errMsg ?? '') ? 'cancelled' : 'failed'),
+      fail: (res) => resolve(/(?:cancel|取消)/i.test(res.errMsg ?? '') ? 'cancelled' : 'failed'),
     })
   })
 }
@@ -86,7 +85,10 @@ export function requestWechatPayment(params: WechatPayParams): Promise<WechatPay
  * 订单状态由后端支付回调更新，前端需自行轮询（见 waitForOrderPaid）。
  */
 export async function payOrder(orderId: string, openid: string): Promise<WechatPayOutcome> {
-  const params = await createOrderPayment(orderId, { openid, channel: 'WECHAT' })
+  const params = await createOrderPayment(orderId, {
+    openid,
+    channel: 'WECHAT',
+  })
   return requestWechatPayment(params)
 }
 

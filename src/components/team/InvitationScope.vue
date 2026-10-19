@@ -6,7 +6,9 @@ const { t } = useI18n()
 </script>
 <template>
   <div class="invitation-scope">
-    <span v-if="invitation.accessMode === 'ALL_PROJECTS'">{{ t('access.allProjects') }}</span>
+    <span v-if="invitation.accessMode === 'ALL_PROJECTS'">{{
+      t('access.allProjects')
+    }}</span>
     <t-tag
       v-for="project in invitation.projects"
       v-else

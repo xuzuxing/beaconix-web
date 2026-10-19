@@ -30,17 +30,28 @@ async function copyAll() {
     :header="t('workspace.security.recoveryTitle')"
     width="min(520px, calc(100vw - 32px))"
     :confirm-btn="t('workspace.security.savedConfirm')"
+    @confirm="visible = false"
   >
-    <p class="recovery-codes__intro">{{ t('workspace.security.recoveryIntro') }}</p>
+    <p class="recovery-codes__intro">
+      {{ t('workspace.security.recoveryIntro') }}
+    </p>
 
     <ul class="recovery-codes__list">
-      <li v-for="code in codes" :key="code" class="recovery-codes__item">
+      <li
+        v-for="code in codes"
+        :key="code"
+        class="recovery-codes__item"
+      >
         <code>{{ code }}</code>
       </li>
     </ul>
 
     <div class="recovery-codes__actions">
-      <t-button variant="outline" size="small" @click="copyAll">
+      <t-button
+        variant="outline"
+        size="small"
+        @click="copyAll"
+      >
         <template #icon><AppIcon :icon="Copy01Icon" /></template>
         {{ t('workspace.security.copyAll') }}
       </t-button>

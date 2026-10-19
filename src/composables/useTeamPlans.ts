@@ -39,7 +39,10 @@ export function useTeamPlans() {
           if (!permissions.canOrganization(item.id) || !isCurrentContext(context)) return
           const stack = await getSubscriptionStack(item.id)
           if (token !== request || !isCurrentContext(context)) return
-          orgPlans.value = { ...orgPlans.value, [item.id]: stack?.effectivePlan ?? null }
+          orgPlans.value = {
+            ...orgPlans.value,
+            [item.id]: stack?.effectivePlan ?? null,
+          }
         } catch {
           if (token !== request) return
           orgPlans.value = { ...orgPlans.value, [item.id]: null }

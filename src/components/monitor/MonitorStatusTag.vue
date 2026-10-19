@@ -8,7 +8,11 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <t-tag :theme="monitorStatusTheme[status]" variant="light" size="small">
+  <t-tag
+    :theme="monitorStatusTheme[status]"
+    variant="light"
+    size="small"
+  >
     {{ t(`workspace.monitor.status.${status}`) }}
   </t-tag>
 </template>

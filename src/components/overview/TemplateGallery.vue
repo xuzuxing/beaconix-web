@@ -63,7 +63,11 @@ const templates = computed(() => [
     <h3 class="templates__title">{{ t('overview.templates.title') }}</h3>
 
     <div class="templates__list">
-      <div v-for="item in templates" :key="item.key" class="templates__card">
+      <div
+        v-for="item in templates"
+        :key="item.key"
+        class="templates__card"
+      >
         <div class="templates__card-head">
           <AppIcon
             class="templates__card-icon"
@@ -78,18 +82,29 @@ const templates = computed(() => [
         </div>
 
         <div class="templates__card-actions">
-          <t-button variant="outline" size="small">
+          <t-button
+            variant="outline"
+            size="small"
+          >
             <template #icon>
               <AppIcon :icon="Download01Icon" />
             </template>
             {{ t('overview.templates.download') }}
           </t-button>
-          <t-button variant="outline" size="small" shape="square">
+          <t-button
+            variant="outline"
+            size="small"
+            shape="square"
+          >
             <template #icon>
               <AppIcon :icon="Github01Icon" />
             </template>
           </t-button>
-          <t-button variant="outline" size="small" shape="square">
+          <t-button
+            variant="outline"
+            size="small"
+            shape="square"
+          >
             <template #icon>
               <AppIcon :icon="LinkSquare02Icon" />
             </template>

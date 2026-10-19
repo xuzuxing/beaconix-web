@@ -11,7 +11,12 @@ import {
   unbindRuleGroup,
   updateMonitor,
 } from '@/api'
-import type { Monitor, MonitorConfig, MonitorType, UpdateMonitorParams } from '@/api/types'
+import type {
+  Monitor,
+  MonitorConfig,
+  MonitorType,
+  UpdateMonitorParams,
+} from '@/api/types'
 import type { NotificationChannel } from '@/api/types/notification'
 import type { BoundRuleGroup, RuleGroup } from '@/api/types/rule'
 import MonitorConfigForm from '@/components/monitor/MonitorConfigForm.vue'
@@ -20,7 +25,11 @@ import RuleTreeView from '@/components/rules/RuleTreeView.vue'
 import { useOrganizationStore } from '@/stores'
 import { useProjectAccess } from '@/composables/useProjectAccess'
 import { usePermissionsStore } from '@/stores/modules/permissions'
-import { accessContext, isCurrentContext, permissionEpoch } from '@/utils/access-context'
+import {
+  accessContext,
+  isCurrentContext,
+  permissionEpoch,
+} from '@/utils/access-context'
 import {
   MONITOR_TYPE_OPTIONS,
   monitorConfigDefaults,
@@ -66,10 +75,15 @@ const form = reactive({
 
 /** 协议下拉：与后端 MonitorType 枚举一致（共 11 种） */
 const typeOptions = computed(() =>
-  MONITOR_TYPE_OPTIONS.map((option) => ({ label: t(option.labelKey), value: option.value })),
+  MONITOR_TYPE_OPTIONS.map((option) => ({
+    label: t(option.labelKey),
+    value: option.value,
+  })),
 )
 /** 检查目标的占位提示按协议的目标形态区分 */
-const targetPlaceholder = computed(() => t(monitorTargetPlaceholderKey(form.type)))
+const targetPlaceholder = computed(() =>
+  t(monitorTargetPlaceholderKey(form.type)),
+)
 /** 编辑含凭据的协议时提醒：config 整体替换，凭据需要重新填写 */
 const credentialsHint = computed(
   () => Boolean(props.monitor) && monitorConfigHasCredentials(form.type),
@@ -83,7 +97,9 @@ interface MonitorConfigFormApi {
 const configForm = ref<MonitorConfigFormApi>()
 
 // ---------- 检测异常条件（规则组绑定） ----------
-const orgId = computed(() => props.monitor?.organizationId ?? org.currentOrganizationId)
+const orgId = computed(
+  () => props.monitor?.organizationId ?? org.currentOrganizationId,
+)
 const groups = ref<RuleGroup[]>([])
 const bindingGroups = ref<BoundRuleGroup[]>([])
 /** 弹窗打开时该监控项已有的绑定（编辑模式） */
@@ -98,8 +114,14 @@ const ruleDialog = ref(false)
 const candidates = computed(() =>
   [
     ...groups.value,
-    ...bindingGroups.value.filter((group) => !groups.value.some((item) => item.id === group.id)),
-  ].filter((group) => group.enabled && (!group.projectId || group.projectId === props.projectId)),
+    ...bindingGroups.value.filter(
+      (group) => !groups.value.some((item) => item.id === group.id),
+    ),
+  ].filter(
+    (group) =>
+      group.enabled &&
+      (!group.projectId || group.projectId === props.projectId),
+  ),
 )
 const selectedGroups = computed(() =>
   selectedIds.value
@@ -133,7 +155,9 @@ async function loadRules() {
   try {
     const [all, bindings] = await Promise.all([
       listRuleGroups(organizationId),
-      monitorId ? listMonitorRuleBindings(props.projectId, monitorId) : Promise.resolve([]),
+      monitorId
+        ? listMonitorRuleBindings(props.projectId, monitorId)
+        : Promise.resolve([]),
     ])
     if (token !== generation) return
     groups.value = all
@@ -144,7 +168,10 @@ async function loadRules() {
     selectedIds.value = [...boundIds.value]
   } catch (cause) {
     if (token === generation)
-      rulesError.value = cause instanceof Error ? cause.message : t('ruleGroup.monitor.loadFailed')
+      rulesError.value =
+        cause instanceof Error
+          ? cause.message
+          : t('ruleGroup.monitor.loadFailed')
   } finally {
     if (token === generation) rulesLoading.value = false
   }
@@ -178,7 +205,9 @@ async function loadChannels() {
   } catch (cause) {
     if (token === generation)
       channelsError.value =
-        cause instanceof Error ? cause.message : t('monitorPage.channelsLoadFailed')
+        cause instanceof Error
+          ? cause.message
+          : t('monitorPage.channelsLoadFailed')
   } finally {
     if (token === generation) channelsLoading.value = false
   }
@@ -197,8 +226,10 @@ function openRuleDialog() {
 }
 /** 规则组立即创建成功：并入本地列表并加入本次绑定集合 */
 function onRuleGroupSaved(group: RuleGroup) {
-  if (!groups.value.some((item) => item.id === group.id)) groups.value = [group, ...groups.value]
-  if (!selectedIds.value.includes(group.id)) selectedIds.value = [...selectedIds.value, group.id]
+  if (!groups.value.some((item) => item.id === group.id))
+    groups.value = [group, ...groups.value]
+  if (!selectedIds.value.includes(group.id))
+    selectedIds.value = [...selectedIds.value, group.id]
 }
 
 watch(
@@ -249,8 +280,17 @@ watch(
 )
 
 /** 保存监控项后按差异提交绑定关系：失败只提示，不掩盖监控项已保存的事实 */
-async function commitBindings(project: string, monitorId: string, token: number) {
-  if (token !== generation || project !== props.projectId || !canManage.value || !visible.value)
+async function commitBindings(
+  project: string,
+  monitorId: string,
+  token: number,
+) {
+  if (
+    token !== generation ||
+    project !== props.projectId ||
+    !canManage.value ||
+    !visible.value
+  )
     return
   const target = new Set(selectedIds.value)
   const toBind = [...target].filter((id) => !boundIds.value.includes(id))
@@ -258,11 +298,14 @@ async function commitBindings(project: string, monitorId: string, token: number)
   if (!toBind.length && !toUnbind.length) return
   try {
     await Promise.all([
-      ...toBind.map((id) => bindRuleGroup(project, monitorId, { ruleGroupId: id })),
+      ...toBind.map((id) =>
+        bindRuleGroup(project, monitorId, { ruleGroupId: id }),
+      ),
       ...toUnbind.map((id) => unbindRuleGroup(project, monitorId, id)),
     ])
   } catch {
-    if (token === generation) MessagePlugin.warning(t('ruleGroup.monitor.bindFailed'))
+    if (token === generation)
+      MessagePlugin.warning(t('ruleGroup.monitor.bindFailed'))
   }
 }
 
@@ -301,7 +344,12 @@ async function save() {
   submitting.value = true
   try {
     await permissions.ensureProject(project, true)
-    if (token !== generation || !isCurrentContext(context) || !canManage.value || !visible.value)
+    if (
+      token !== generation ||
+      !isCurrentContext(context) ||
+      !canManage.value ||
+      !visible.value
+    )
       return
     const basic = {
       name: form.name.trim(),
@@ -326,7 +374,8 @@ async function save() {
         ([key, value]) => value !== props.monitor?.[key as keyof Monitor],
       ),
     ) as UpdateMonitorParams
-    const config: MonitorConfig = configForm.value?.buildConfig() ?? ({} as MonitorConfig)
+    const config: MonitorConfig =
+      configForm.value?.buildConfig() ?? ({} as MonitorConfig)
     // 后端对 config 是整体替换：新建必传；编辑只在用户改过时提交，
     // 否则整段省略以保留密码 / token 等不回传的凭据。
     if (!editing || configForm.value?.isDirty()) changes.config = config
@@ -352,12 +401,15 @@ async function save() {
     // 检测异常条件（规则组绑定）随监控项一起保存：按差异提交绑定变更
     await commitBindings(project, result.id, token)
     if (token !== generation || project !== props.projectId) return
-    MessagePlugin.success(t(editing ? 'workspace.monitor.updated' : 'workspace.monitor.created'))
+    MessagePlugin.success(
+      t(editing ? 'workspace.monitor.updated' : 'workspace.monitor.created'),
+    )
     visible.value = false
     emit('saved', project, result.id)
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('monitorPage.saveFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('monitorPage.saveFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -374,13 +426,28 @@ async function save() {
     :close-on-overlay-click="!submitting"
     @confirm="save"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="editor-error" />
-    <t-form :data="form" label-align="top" :colon="false">
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="editor-error"
+    />
+    <t-form
+      :data="form"
+      label-align="top"
+      :colon="false"
+    >
       <t-form-item :label="t('workspace.monitor.name')"
-        ><t-input v-model="form.name" :maxlength="100"
+        ><t-input
+          v-model="form.name"
+          :maxlength="100"
       /></t-form-item>
       <t-form-item :label="t('workspace.monitor.type')">
-        <t-input v-if="monitor" :value="form.type" readonly />
+        <t-input
+          v-if="monitor"
+          :value="form.type"
+          readonly
+        />
         <t-select
           v-else
           v-model="form.type"
@@ -389,12 +456,17 @@ async function save() {
         />
       </t-form-item>
       <t-form-item :label="t('workspace.monitor.target')"
-        ><t-input v-model="form.target" :maxlength="2048" :placeholder="targetPlaceholder"
+        ><t-input
+          v-model="form.target"
+          :maxlength="2048"
+          :placeholder="targetPlaceholder"
       /></t-form-item>
       <!-- 协议配置：按协议渲染各自的 config（TCP / PING 无需额外配置） -->
       <section class="editor-config">
         <div class="editor-config__head">
-          <span class="editor-config__title">{{ t('workspace.monitor.config.title') }}</span>
+          <span class="editor-config__title">{{
+            t('workspace.monitor.config.title')
+          }}</span>
           <small>{{ t(`workspace.monitor.config.hint.${form.type}`) }}</small>
         </div>
         <t-alert
@@ -402,35 +474,61 @@ async function save() {
           theme="warning"
           :message="t('workspace.monitor.config.credentialsHint')"
         />
-        <MonitorConfigForm ref="configForm" :type="form.type" :config="form.config" />
+        <MonitorConfigForm
+          ref="configForm"
+          :type="form.type"
+          :config="form.config"
+        />
       </section>
       <div class="editor-grid">
         <t-form-item :label="t('workspace.monitor.interval')"
-          ><t-input-number v-model="form.interval" :min="10" :max="86400"
+          ><t-input-number
+            v-model="form.interval"
+            :min="10"
+            :max="86400"
         /></t-form-item>
         <t-form-item :label="t('workspace.monitor.timeout')"
-          ><t-input-number v-model="form.timeout" :min="100" :max="60000" :step="100"
+          ><t-input-number
+            v-model="form.timeout"
+            :min="100"
+            :max="60000"
+            :step="100"
         /></t-form-item>
         <t-form-item :label="t('workspace.monitor.failureThreshold')"
-          ><t-input-number v-model="form.failureThreshold" :min="1" :max="10"
+          ><t-input-number
+            v-model="form.failureThreshold"
+            :min="1"
+            :max="10"
         /></t-form-item>
-        <t-form-item v-if="form.type === 'HTTP'" :label="t('workspace.monitor.expectedStatus')"
-          ><t-input-number v-model="form.expectedStatus" :min="100" :max="599"
+        <t-form-item
+          v-if="form.type === 'HTTP'"
+          :label="t('workspace.monitor.expectedStatus')"
+          ><t-input-number
+            v-model="form.expectedStatus"
+            :min="100"
+            :max="599"
         /></t-form-item>
       </div>
       <template v-if="form.type === 'HTTP'">
         <t-form-item :label="t('monitorPage.sslEnabled')"
           ><t-switch v-model="form.checkSsl"
         /></t-form-item>
-        <t-form-item v-if="form.checkSsl" :label="t('monitorPage.sslThreshold')"
-          ><t-input-number v-model="form.sslExpiryThreshold" :min="1" :max="365"
+        <t-form-item
+          v-if="form.checkSsl"
+          :label="t('monitorPage.sslThreshold')"
+          ><t-input-number
+            v-model="form.sslExpiryThreshold"
+            :min="1"
+            :max="365"
         /></t-form-item>
       </template>
       <!-- 检测异常条件：绑定规则组（可选绑定已有组或立即新增），区块常驻、无开关门控 -->
       <section class="editor-rules">
         <div class="editor-rules__head">
           <div>
-            <span class="editor-rules__title">{{ t('ruleGroup.monitor.rules') }}</span>
+            <span class="editor-rules__title">{{
+              t('ruleGroup.monitor.rules')
+            }}</span>
             <small>{{ t('ruleGroup.monitor.createHint') }}</small>
           </div>
           <div class="editor-rules__actions">
@@ -442,63 +540,122 @@ async function save() {
               :aria-label="t('ruleGroup.monitor.bind')"
               @change="(value: string) => bindRule(value)"
             />
-            <t-button size="small" variant="outline" :disabled="!orgId" @click="openRuleDialog">{{
-              t('ruleGroup.monitor.addRule')
-            }}</t-button>
+            <t-button
+              size="small"
+              variant="outline"
+              :disabled="!orgId"
+              @click="openRuleDialog"
+              >{{ t('ruleGroup.monitor.addRule') }}</t-button
+            >
           </div>
         </div>
-        <t-alert v-if="rulesError" theme="error" :message="rulesError" />
-        <t-loading v-else-if="rulesLoading" size="small" :text="t('common.loading')" />
-        <div v-else-if="selectedGroups.length" class="editor-rules__list">
-          <article v-for="group in selectedGroups" :key="group.id" class="editor-rule">
+        <t-alert
+          v-if="rulesError"
+          theme="error"
+          :message="rulesError"
+        />
+        <t-loading
+          v-else-if="rulesLoading"
+          size="small"
+          :text="t('common.loading')"
+        />
+        <div
+          v-else-if="selectedGroups.length"
+          class="editor-rules__list"
+        >
+          <article
+            v-for="group in selectedGroups"
+            :key="group.id"
+            class="editor-rule"
+          >
             <div class="editor-rule__head">
               <span class="editor-rule__name">{{ group.name }}</span>
-              <t-tag size="small" variant="outline">{{
-                group.projectId
-                  ? t('ruleGroup.monitor.scopeProject')
-                  : t('ruleGroup.monitor.scopeOrg')
-              }}</t-tag>
-              <t-tag v-if="!group.enabled" size="small" variant="light">{{
-                t('ruleGroup.monitor.disabled')
-              }}</t-tag>
-              <t-button size="small" variant="text" theme="danger" @click="unbindRule(group.id)">{{
-                t('ruleGroup.monitor.unbind')
-              }}</t-button>
+              <t-tag
+                size="small"
+                variant="outline"
+                >{{
+                  group.projectId
+                    ? t('ruleGroup.monitor.scopeProject')
+                    : t('ruleGroup.monitor.scopeOrg')
+                }}</t-tag
+              >
+              <t-tag
+                v-if="!group.enabled"
+                size="small"
+                variant="light"
+                >{{ t('ruleGroup.monitor.disabled') }}</t-tag
+              >
+              <t-button
+                size="small"
+                variant="text"
+                theme="danger"
+                @click="unbindRule(group.id)"
+                >{{ t('ruleGroup.monitor.unbind') }}</t-button
+              >
             </div>
             <!-- 按结构回显规则树：逻辑组层级 + 每一条规则，而非一行摘要 -->
-            <div v-if="group.tree" class="editor-rule__tree">
+            <div
+              v-if="group.tree"
+              class="editor-rule__tree"
+            >
               <RuleTreeView :tree="group.tree" />
             </div>
           </article>
         </div>
-        <p v-else class="editor-rules__empty">{{ t('ruleGroup.monitor.empty') }}</p>
-        <p v-if="monitor" class="editor-rules__hint">{{ t('ruleGroup.monitor.pendingNote') }}</p>
+        <p
+          v-else
+          class="editor-rules__empty"
+        >
+          {{ t('ruleGroup.monitor.empty') }}
+        </p>
+        <p
+          v-if="monitor"
+          class="editor-rules__hint"
+        >
+          {{ t('ruleGroup.monitor.pendingNote') }}
+        </p>
       </section>
-      <t-form-item v-if="!monitor" :label="t('workspace.monitor.enabled')"
+      <t-form-item
+        v-if="!monitor"
+        :label="t('workspace.monitor.enabled')"
         ><t-switch v-model="form.enabled"
       /></t-form-item>
       <!-- 可用率条件：独立 section 置于表单最底部；区块无开关，保存时自动启用 availabilityEnabled -->
       <section class="editor-availability">
         <div class="editor-config__head">
-          <span class="editor-config__title">{{ t('monitorPage.availabilitySection') }}</span>
+          <span class="editor-config__title">{{
+            t('monitorPage.availabilitySection')
+          }}</span>
           <small>{{ t('monitorPage.availabilityHint') }}</small>
         </div>
         <div class="editor-grid">
           <t-form-item :label="t('monitorPage.availabilityThreshold')"
-            ><t-input-number v-model="form.availabilityThreshold" :min="0" :max="100"
+            ><t-input-number
+              v-model="form.availabilityThreshold"
+              :min="0"
+              :max="100"
           /></t-form-item>
           <t-form-item :label="t('monitorPage.availabilityWindow')"
-            ><t-input-number v-model="form.availabilityWindow" :min="1" :max="1000"
+            ><t-input-number
+              v-model="form.availabilityWindow"
+              :min="1"
+              :max="1000"
           /></t-form-item>
         </div>
       </section>
       <!-- 告警通知渠道：组织级渠道多选，留空表示走组织级默认渠道 -->
       <section class="editor-channels">
         <div class="editor-config__head">
-          <span class="editor-config__title">{{ t('monitorPage.boundChannels') }}</span>
+          <span class="editor-config__title">{{
+            t('monitorPage.boundChannels')
+          }}</span>
           <small>{{ t('monitorPage.channelsHint') }}</small>
         </div>
-        <t-alert v-if="channelsError" theme="error" :message="channelsError" />
+        <t-alert
+          v-if="channelsError"
+          theme="error"
+          :message="channelsError"
+        />
         <t-select
           v-model="form.notificationChannelIds"
           multiple

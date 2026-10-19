@@ -8,7 +8,11 @@ import type {
   AdminSchedulerQueue,
 } from '@/api/types/admin'
 import { formatDateTime } from '@/utils/billing'
-import { formatInterval, jobSchedule, queueBacklog } from '@/utils/admin-presenter'
+import {
+  formatInterval,
+  jobSchedule,
+  queueBacklog,
+} from '@/utils/admin-presenter'
 
 /**
  * 调度器与队列健康度：三个队列的积压、注册的定时任务、到期待检测的监控项与探针在线情况。
@@ -20,20 +24,31 @@ const props = defineProps<{ health: AdminSchedulerHealth }>()
 const { t } = useI18n()
 
 /** 队列展示顺序与文案 key */
-const QUEUES: Array<{ key: keyof Pick<AdminSchedulerHealth, 'scanQueue' | 'checkQueue' | 'scheduledQueue'>; labelKey: string }> = [
+const QUEUES: Array<{
+  key: keyof Pick<
+    AdminSchedulerHealth,
+    'scanQueue' | 'checkQueue' | 'scheduledQueue'
+  >
+  labelKey: string
+}> = [
   { key: 'scanQueue', labelKey: 'adminPage.metrics.queues.scan' },
   { key: 'checkQueue', labelKey: 'adminPage.metrics.queues.check' },
   { key: 'scheduledQueue', labelKey: 'adminPage.metrics.queues.scheduled' },
 ]
 
 const queues = computed(() =>
-  QUEUES.map((item) => ({ label: t(item.labelKey), queue: props.health[item.key] as AdminSchedulerQueue })),
+  QUEUES.map((item) => ({
+    label: t(item.labelKey),
+    queue: props.health[item.key] as AdminSchedulerQueue,
+  })),
 )
 
 function scheduleLabel(job: AdminSchedulerJob): string {
   const schedule = jobSchedule(job)
   if (schedule.kind === 'interval') {
-    return t('adminPage.metrics.jobInterval', { interval: formatInterval(schedule.ms) })
+    return t('adminPage.metrics.jobInterval', {
+      interval: formatInterval(schedule.ms),
+    })
   }
   if (schedule.kind === 'cron') return schedule.pattern
   return t('adminPage.metrics.jobUnknown')
@@ -43,11 +58,16 @@ function scheduleLabel(job: AdminSchedulerJob): string {
 <template>
   <div class="scheduler">
     <div class="scheduler__queues">
-      <div v-for="item in queues" :key="item.label" class="scheduler__queue">
+      <div
+        v-for="item in queues"
+        :key="item.label"
+        class="scheduler__queue"
+      >
         <header class="scheduler__queue-head">
           <span class="scheduler__queue-name">{{ item.label }}</span>
           <span class="scheduler__queue-backlog">
-            {{ t('adminPage.metrics.queueBacklog') }} {{ queueBacklog(item.queue) }}
+            {{ t('adminPage.metrics.queueBacklog') }}
+            {{ queueBacklog(item.queue) }}
           </span>
         </header>
         <dl class="scheduler__queue-body">
@@ -65,7 +85,9 @@ function scheduleLabel(job: AdminSchedulerJob): string {
           </div>
           <div>
             <dt>{{ t('adminPage.metrics.queueFailed') }}</dt>
-            <dd :class="{ 'is-danger': item.queue.failed > 0 }">{{ item.queue.failed }}</dd>
+            <dd :class="{ 'is-danger': item.queue.failed > 0 }">
+              {{ item.queue.failed }}
+            </dd>
           </div>
           <div>
             <dt>{{ t('adminPage.metrics.queueCompleted') }}</dt>
@@ -77,7 +99,9 @@ function scheduleLabel(job: AdminSchedulerJob): string {
 
     <div class="scheduler__side">
       <section class="scheduler__block">
-        <h4 class="scheduler__block-title">{{ t('adminPage.metrics.backlogTitle') }}</h4>
+        <h4 class="scheduler__block-title">
+          {{ t('adminPage.metrics.backlogTitle') }}
+        </h4>
         <dl class="scheduler__pairs">
           <div>
             <dt>{{ t('adminPage.metrics.backlogEnabled') }}</dt>
@@ -93,7 +117,9 @@ function scheduleLabel(job: AdminSchedulerJob): string {
       </section>
 
       <section class="scheduler__block">
-        <h4 class="scheduler__block-title">{{ t('adminPage.metrics.probeHealthTitle') }}</h4>
+        <h4 class="scheduler__block-title">
+          {{ t('adminPage.metrics.probeHealthTitle') }}
+        </h4>
         <dl class="scheduler__pairs">
           <div>
             <dt>{{ t('adminPage.metrics.probeOnline') }}</dt>
@@ -110,20 +136,36 @@ function scheduleLabel(job: AdminSchedulerJob): string {
     </div>
 
     <section class="scheduler__jobs">
-      <h4 class="scheduler__block-title">{{ t('adminPage.metrics.jobsTitle') }}</h4>
-      <div v-if="health.schedulers.length" class="scheduler__table">
+      <h4 class="scheduler__block-title">
+        {{ t('adminPage.metrics.jobsTitle') }}
+      </h4>
+      <div
+        v-if="health.schedulers.length"
+        class="scheduler__table"
+      >
         <div class="scheduler__table-head">
           <span>{{ t('adminPage.metrics.jobId') }}</span>
           <span>{{ t('adminPage.metrics.jobSchedule') }}</span>
           <span>{{ t('adminPage.metrics.jobNextRunAt') }}</span>
         </div>
-        <div v-for="job in health.schedulers" :key="job.id" class="scheduler__row">
+        <div
+          v-for="job in health.schedulers"
+          :key="job.id"
+          class="scheduler__row"
+        >
           <span class="scheduler__job-id">{{ job.id }}</span>
           <span>{{ scheduleLabel(job) }}</span>
-          <span class="scheduler__job-next">{{ formatDateTime(job.nextRunAt) }}</span>
+          <span class="scheduler__job-next">{{
+            formatDateTime(job.nextRunAt)
+          }}</span>
         </div>
       </div>
-      <p v-else class="scheduler__empty">{{ t('adminPage.common.empty') }}</p>
+      <p
+        v-else
+        class="scheduler__empty"
+      >
+        {{ t('adminPage.common.empty') }}
+      </p>
     </section>
   </div>
 </template>
@@ -247,7 +289,10 @@ function scheduleLabel(job: AdminSchedulerJob): string {
   &__table-head,
   &__row {
     display: grid;
-    grid-template-columns: minmax(160px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr);
+    grid-template-columns: minmax(160px, 1fr) minmax(140px, 1fr) minmax(
+        140px,
+        1fr
+      );
     gap: 16px;
     align-items: center;
     padding: 10px 12px;

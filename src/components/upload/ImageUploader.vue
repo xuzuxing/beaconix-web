@@ -84,7 +84,9 @@ const hint = computed(() =>
 /** 单图模式已有图时按钮表示「更换」而不是「添加」 */
 const addLabel = computed(() => {
   if (uploading.value) return t('upload.uploading')
-  return props.single && model.value.length ? t('upload.replaceImage') : t('upload.selectImage')
+  return props.single && model.value.length
+    ? t('upload.replaceImage')
+    : t('upload.selectImage')
 })
 
 function openPicker() {
@@ -126,7 +128,10 @@ defineExpose({ uploading })
     @dragleave.prevent="dragActive = false"
     @drop.prevent="onDrop"
   >
-    <div class="image-uploader__grid" :style="gridStyle">
+    <div
+      class="image-uploader__grid"
+      :style="gridStyle"
+    >
       <figure
         v-for="(item, index) in model"
         :key="item.fileKey || item.url"
@@ -138,7 +143,11 @@ defineExpose({ uploading })
           :aria-label="t('upload.preview')"
           @click="openViewer(index)"
         >
-          <img :src="item.url" :alt="item.filename" loading="lazy" />
+          <img
+            :src="item.url"
+            :alt="item.filename"
+            loading="lazy"
+          />
         </button>
         <button
           v-if="!disabled"
@@ -148,7 +157,10 @@ defineExpose({ uploading })
           :title="t('upload.remove')"
           @click="removeAt(index)"
         >
-          <AppIcon :icon="Delete02Icon" :size="12" />
+          <AppIcon
+            :icon="Delete02Icon"
+            :size="12"
+          />
         </button>
       </figure>
 
@@ -159,8 +171,15 @@ defineExpose({ uploading })
         :disabled="!canAdd"
         @click="openPicker"
       >
-        <t-loading v-if="uploading" size="16px" />
-        <AppIcon v-else :icon="PlusSignIcon" :size="18" />
+        <t-loading
+          v-if="uploading"
+          size="16px"
+        />
+        <AppIcon
+          v-else
+          :icon="PlusSignIcon"
+          :size="18"
+        />
         <span>{{ addLabel }}</span>
       </button>
     </div>
@@ -176,7 +195,11 @@ defineExpose({ uploading })
       @change="onChange"
     />
 
-    <t-image-viewer v-model:visible="viewerVisible" :images="images" :default-index="viewerIndex" />
+    <t-image-viewer
+      v-model:visible="viewerVisible"
+      :images="images"
+      :default-index="viewerIndex"
+    />
   </div>
 </template>
 

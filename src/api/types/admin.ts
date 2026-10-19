@@ -258,12 +258,7 @@ export type SettingValueType = 'STRING' | 'NUMBER' | 'BOOLEAN' | 'JSON'
 
 /** 配置项的值：标量、数组或对象 */
 export type SettingValue =
-  | string
-  | number
-  | boolean
-  | null
-  | SettingValue[]
-  | { [key: string]: SettingValue }
+  string | number | boolean | null | SettingValue[] | { [key: string]: SettingValue }
 
 /**
  * 平台运行时配置项。

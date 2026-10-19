@@ -5,10 +5,21 @@ import { useI18n } from 'vue-i18n'
 import type { StatusPage } from '@/api/types/status-page'
 import AppIcon from '@/components/AppIcon.vue'
 import type { StatusPageAction } from '@/composables/useStatusPageActions'
-import { Copy01Icon, Delete02Icon, Edit02Icon, LinkSquare02Icon, PauseIcon, PlayIcon } from '@/icons'
+import {
+  Copy01Icon,
+  Delete02Icon,
+  Edit02Icon,
+  LinkSquare02Icon,
+  PauseIcon,
+  PlayIcon,
+} from '@/icons'
 import { publicStatusPageUrl } from '@/utils/status-page-presenter'
 
-const props = defineProps<{ page: StatusPage; pending?: boolean; canManage: boolean }>()
+const props = defineProps<{
+  page: StatusPage
+  pending?: boolean
+  canManage: boolean
+}>()
 const emit = defineEmits<{ action: [action: StatusPageAction]; edit: [] }>()
 const { t } = useI18n()
 
@@ -48,12 +59,16 @@ async function copyLink() {
       /></t-button>
     </t-tooltip>
     <template v-if="canManage">
-      <t-tooltip :content="t(page.enabled ? 'statusPage.disable' : 'statusPage.enable')">
+      <t-tooltip
+        :content="t(page.enabled ? 'statusPage.disable' : 'statusPage.enable')"
+      >
         <t-button
           variant="text"
           shape="square"
           :disabled="pending"
-          :aria-label="t(page.enabled ? 'statusPage.disable' : 'statusPage.enable')"
+          :aria-label="
+            t(page.enabled ? 'statusPage.disable' : 'statusPage.enable')
+          "
           @click="emit('action', 'toggle')"
           ><AppIcon :icon="page.enabled ? PauseIcon : PlayIcon"
         /></t-button>
@@ -68,7 +83,10 @@ async function copyLink() {
           ><AppIcon :icon="Edit02Icon"
         /></t-button>
       </t-tooltip>
-      <t-popconfirm :content="t('statusPage.deleteConfirm')" @confirm="emit('action', 'delete')">
+      <t-popconfirm
+        :content="t('statusPage.deleteConfirm')"
+        @confirm="emit('action', 'delete')"
+      >
         <t-button
           variant="text"
           theme="danger"

@@ -175,7 +175,10 @@ export function notificationScope(notification: UserNotification) {
     const value = notification.meta?.[key]
     return typeof value === 'string' && /^[\w-]+$/.test(value) ? value : undefined
   }
-  return { organizationId: read('organizationId'), projectId: read('projectId') }
+  return {
+    organizationId: read('organizationId'),
+    projectId: read('projectId'),
+  }
 }
 
 /**
@@ -196,7 +199,10 @@ export function resolveNotificationTarget(
   const category = (TYPE_META[notification.type] ?? FALLBACK_META).key
   if (category === 'security') return { kind: 'route', to: '/security' }
   if (category === 'billing') {
-    return { kind: 'route', to: resourceType === 'ORDER' ? '/billing/orders' : '/billing' }
+    return {
+      kind: 'route',
+      to: resourceType === 'ORDER' ? '/billing/orders' : '/billing',
+    }
   }
   if (!resourceType) return null
 
@@ -206,16 +212,12 @@ export function resolveNotificationTarget(
     if (options.isSuperAdmin) {
       return {
         kind: 'route',
-        to: ticketId
-          ? { path: '/admin/tickets', query: { ticketId } }
-          : { path: '/admin/tickets' },
+        to: ticketId ? { path: '/admin/tickets', query: { ticketId } } : { path: '/admin/tickets' },
       }
     }
     return {
       kind: 'route',
-      to: ticketId
-        ? { path: `/tickets/${encodeURIComponent(ticketId)}` }
-        : { path: '/tickets' },
+      to: ticketId ? { path: `/tickets/${encodeURIComponent(ticketId)}` } : { path: '/tickets' },
     }
   }
 
@@ -228,10 +230,16 @@ export function resolveNotificationTarget(
       to: scope.projectId
         ? {
             name: 'monitor-detail',
-            params: { projectId: scope.projectId, monitorId: notification.resourceId },
+            params: {
+              projectId: scope.projectId,
+              monitorId: notification.resourceId,
+            },
             query: { highlight: notification.resourceId, ...scope },
           }
-        : { path: '/monitor', query: { highlight: notification.resourceId, ...scope } },
+        : {
+            path: '/monitor',
+            query: { highlight: notification.resourceId, ...scope },
+          },
     }
   }
   return { kind: 'route', to }

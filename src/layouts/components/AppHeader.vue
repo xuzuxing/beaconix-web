@@ -35,7 +35,11 @@ import {
   UserIcon,
   VerticalScrollPointIcon,
 } from '@/icons'
-import { useAppStore, useNotificationStore, useOrganizationStore } from '@/stores'
+import {
+  useAppStore,
+  useNotificationStore,
+  useOrganizationStore,
+} from '@/stores'
 import type { ThemeMode } from '@/types'
 import { planTagTheme, planTier } from '@/utils/billing'
 
@@ -87,13 +91,17 @@ const teamKeyword = ref('')
 const currentOrg = computed(() => orgStore.currentOrganization)
 
 /** 当前团队套餐标签：无生效订阅时回退为免费版文案 */
-const planLabel = computed(() => orgStore.currentPlan?.name ?? t('usage.package.freePlan'))
+const planLabel = computed(
+  () => orgStore.currentPlan?.name ?? t('usage.package.freePlan'),
+)
 
 const filteredOrgs = computed(() => {
   const keyword = teamKeyword.value.trim().toLowerCase()
   if (!keyword) return orgStore.organizations
   return orgStore.organizations.filter(
-    (org) => org.name.toLowerCase().includes(keyword) || org.slug.toLowerCase().includes(keyword),
+    (org) =>
+      org.name.toLowerCase().includes(keyword) ||
+      org.slug.toLowerCase().includes(keyword),
   )
 })
 
@@ -117,7 +125,8 @@ const teamInfoRows = computed<InfoRow[]>(() => {
 
 /** 切换团队后刷新当前页；监控详情依赖团队数据，回落到监控列表 */
 async function reloadAfterTeamSwitch() {
-  if (router.currentRoute.value.name === 'monitor-detail') await router.replace('/monitor')
+  if (router.currentRoute.value.name === 'monitor-detail')
+    await router.replace('/monitor')
   else
     await router.replace({
       path: router.currentRoute.value.path,
@@ -185,14 +194,16 @@ const filteredProjects = computed(() => {
   if (!keyword) return orgStore.projects
   return orgStore.projects.filter(
     (project) =>
-      project.name.toLowerCase().includes(keyword) || project.key.toLowerCase().includes(keyword),
+      project.name.toLowerCase().includes(keyword) ||
+      project.key.toLowerCase().includes(keyword),
   )
 })
 
 async function selectProject(project: Project) {
   await orgStore.switchProject(project.id)
   projectVisible.value = false
-  if (router.currentRoute.value.name === 'monitor-detail') await router.replace('/monitor')
+  if (router.currentRoute.value.name === 'monitor-detail')
+    await router.replace('/monitor')
 }
 
 /** 新建项目弹窗：只有组织管理员能创建（接口要求 ADMIN+） */
@@ -200,7 +211,8 @@ const projectCreateVisible = ref(false)
 
 const canCreateProject = computed(
   () =>
-    !!orgStore.currentOrganizationId && permissions.canOrganization(orgStore.currentOrganizationId),
+    !!orgStore.currentOrganizationId &&
+    permissions.canOrganization(orgStore.currentOrganizationId),
 )
 
 function openProjectCreate() {
@@ -210,7 +222,8 @@ function openProjectCreate() {
 
 /** store 已在创建成功后切到新项目，这里只补路由收尾（与 selectProject 一致） */
 async function onProjectCreated() {
-  if (router.currentRoute.value.name === 'monitor-detail') await router.replace('/monitor')
+  if (router.currentRoute.value.name === 'monitor-detail')
+    await router.replace('/monitor')
 }
 
 /** 复制团队信息卡里的字段 */
@@ -241,47 +254,99 @@ onMounted(() => {
 <template>
   <header class="app-header">
     <!-- 品牌区：宽度与一级侧栏对齐 -->
-    <div class="app-header__brand" :class="{ 'app-header__brand--collapsed': collapsed }">
-      <img class="app-header__logo" :src="logoSrc" :alt="siteName" />
+    <div
+      class="app-header__brand"
+      :class="{ 'app-header__brand--collapsed': collapsed }"
+    >
+      <img
+        class="app-header__logo"
+        :src="logoSrc"
+        :alt="siteName"
+      />
     </div>
 
     <!-- 左侧功能组 -->
     <div class="app-header__main">
       <!-- 团队：hover 看信息，点击切到团队列表 -->
-      <t-popup v-model:visible="teamVisible" trigger="hover" placement="bottom-left" :show-arrow="false"
-        overlay-class-name="app-team-popup">
-        <button type="button" class="app-header__team" @mouseenter="teamMode = 'info'"
-          @click="teamMode = teamMode === 'list' ? 'info' : 'list'">
-          <AppIcon class="app-header__team-icon" :icon="ResourcesAddIcon" />
-          <span class="app-header__team-name">{{ currentOrg?.name ?? t('layout.teamEmpty') }}</span>
-          <t-tag v-if="orgStore.subscription" class="app-header__team-tag beacon-plan-badge"
-            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`" :theme="planTagTheme(orgStore.currentPlan)"
-            variant="light" size="small">
+      <t-popup
+        v-model:visible="teamVisible"
+        trigger="hover"
+        placement="bottom-left"
+        :show-arrow="false"
+        overlay-class-name="app-team-popup"
+      >
+        <button
+          type="button"
+          class="app-header__team"
+          @mouseenter="teamMode = 'info'"
+          @click="teamMode = teamMode === 'list' ? 'info' : 'list'"
+        >
+          <AppIcon
+            class="app-header__team-icon"
+            :icon="ResourcesAddIcon"
+          />
+          <span class="app-header__team-name">{{
+            currentOrg?.name ?? t('layout.teamEmpty')
+          }}</span>
+          <t-tag
+            v-if="orgStore.subscription"
+            class="app-header__team-tag beacon-plan-badge"
+            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+            :theme="planTagTheme(orgStore.currentPlan)"
+            variant="light"
+            size="small"
+          >
             {{ planLabel }}
           </t-tag>
-          <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
+          <AppIcon
+            class="app-header__caret"
+            :icon="VerticalScrollPointIcon"
+          />
         </button>
 
         <template #content>
           <!-- 团队信息卡 -->
-          <div v-if="teamMode === 'info'" class="team-card">
-            <div v-for="row in teamInfoRows" :key="row.labelKey" class="team-card__row">
+          <div
+            v-if="teamMode === 'info'"
+            class="team-card"
+          >
+            <div
+              v-for="row in teamInfoRows"
+              :key="row.labelKey"
+              class="team-card__row"
+            >
               <span class="team-card__label">{{ t(row.labelKey) }}</span>
               <span class="team-card__value">
                 {{ row.value }}
-                <button v-if="row.copyable" type="button" class="team-card__copy" :aria-label="t('guide.copy')"
-                  @click="copyText(row.value)">
-                  <AppIcon :icon="Copy01Icon" :size="14" />
+                <button
+                  v-if="row.copyable"
+                  type="button"
+                  class="team-card__copy"
+                  :aria-label="t('guide.copy')"
+                  @click="copyText(row.value)"
+                >
+                  <AppIcon
+                    :icon="Copy01Icon"
+                    :size="14"
+                  />
                 </button>
               </span>
             </div>
 
             <!-- 当前团队套餐标签 -->
-            <div v-if="orgStore.subscription" class="team-card__row">
+            <div
+              v-if="orgStore.subscription"
+              class="team-card__row"
+            >
               <span class="team-card__label">{{ t('layout.teamPlan') }}</span>
               <span class="team-card__value">
-                <t-tag class="beacon-plan-badge" :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
-                  :theme="planTagTheme(orgStore.currentPlan)" variant="light" size="small">
+                <t-tag
+                  class="beacon-plan-badge"
+                  :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+                  :theme="planTagTheme(orgStore.currentPlan)"
+                  variant="light"
+                  size="small"
+                >
                   {{ planLabel }}
                 </t-tag>
               </span>
@@ -289,47 +354,106 @@ onMounted(() => {
           </div>
 
           <!-- 团队切换面板 -->
-          <div v-else class="team-list">
+          <div
+            v-else
+            class="team-list"
+          >
             <label class="team-list__search">
-              <AppIcon class="team-list__search-icon" :icon="Search01Icon" :size="14" />
-              <input v-model="teamKeyword" :placeholder="t('layout.teamSearch')" />
+              <AppIcon
+                class="team-list__search-icon"
+                :icon="Search01Icon"
+                :size="14"
+              />
+              <input
+                v-model="teamKeyword"
+                :placeholder="t('layout.teamSearch')"
+              />
             </label>
 
             <ul class="team-list__items">
-              <li v-for="org in filteredOrgs" :key="org.id">
-                <div class="team-list__item" :class="{ 'is-active': org.id === orgStore.currentOrganizationId }">
-                  <button type="button" class="team-list__main" @click="selectOrg(org)">
+              <li
+                v-for="org in filteredOrgs"
+                :key="org.id"
+              >
+                <div
+                  class="team-list__item"
+                  :class="{
+                    'is-active': org.id === orgStore.currentOrganizationId,
+                  }"
+                >
+                  <button
+                    type="button"
+                    class="team-list__main"
+                    @click="selectOrg(org)"
+                  >
                     <span class="team-list__name">{{ org.name }}</span>
-                    <t-tag v-if="planOf(org)" class="team-list__plan beacon-plan-badge"
-                      :class="`beacon-plan--${planTier(planOf(org))}`" :theme="planTagTheme(planOf(org))"
-                      variant="light" size="small">
+                    <t-tag
+                      v-if="planOf(org)"
+                      class="team-list__plan beacon-plan-badge"
+                      :class="`beacon-plan--${planTier(planOf(org))}`"
+                      :theme="planTagTheme(planOf(org))"
+                      variant="light"
+                      size="small"
+                    >
                       {{ planLabelOf(planOf(org)) }}
                     </t-tag>
                   </button>
 
                   <!-- 两个入口：该团队的成员页 / 团队管理页（都会先切到该团队） -->
-                  <div v-if="permissions.canOrganization(org.id)" class="team-list__entries">
-                    <button type="button" class="team-list__entry" :title="t('submenu.team.members')"
-                      :aria-label="t('submenu.team.members')" @click="openTeamPage(org, '/teams/members')">
-                      <AppIcon :icon="UserIcon" :size="14" />
+                  <div
+                    v-if="permissions.canOrganization(org.id)"
+                    class="team-list__entries"
+                  >
+                    <button
+                      type="button"
+                      class="team-list__entry"
+                      :title="t('submenu.team.members')"
+                      :aria-label="t('submenu.team.members')"
+                      @click="openTeamPage(org, '/teams/members')"
+                    >
+                      <AppIcon
+                        :icon="UserIcon"
+                        :size="14"
+                      />
                     </button>
-                    <button type="button" class="team-list__entry" :title="t('menu.team')" :aria-label="t('menu.team')"
-                      @click="openTeamPage(org, '/teams')">
-                      <AppIcon :icon="Settings01Icon" :size="14" />
+                    <button
+                      type="button"
+                      class="team-list__entry"
+                      :title="t('menu.team')"
+                      :aria-label="t('menu.team')"
+                      @click="openTeamPage(org, '/teams')"
+                    >
+                      <AppIcon
+                        :icon="Settings01Icon"
+                        :size="14"
+                      />
                     </button>
                   </div>
                 </div>
               </li>
             </ul>
 
-            <p v-if="!filteredOrgs.length" class="team-list__empty">{{ t('layout.teamEmpty') }}</p>
+            <p
+              v-if="!filteredOrgs.length"
+              class="team-list__empty"
+            >
+              {{ t('layout.teamEmpty') }}
+            </p>
 
             <div class="team-list__actions">
-              <button type="button" class="team-list__action" @click="goTeams">
+              <button
+                type="button"
+                class="team-list__action"
+                @click="goTeams"
+              >
                 <AppIcon :icon="Settings01Icon" />
                 {{ t('menu.team') }}
               </button>
-              <button type="button" class="team-list__action" @click="goCreateTeam">
+              <button
+                type="button"
+                class="team-list__action"
+                @click="goCreateTeam"
+              >
                 <AppIcon :icon="PlusSignIcon" />
                 {{ t('layout.teamCreate') }}
               </button>
@@ -339,39 +463,79 @@ onMounted(() => {
       </t-popup>
 
       <!-- 项目：点击切换当前项目 -->
-      <t-popup v-model:visible="projectVisible" trigger="click" placement="bottom-left" :show-arrow="false"
-        overlay-class-name="app-project-popup">
-        <button type="button" class="app-header__project">
-          <AppIcon class="app-header__project-icon" :icon="Folder01Icon" />
+      <t-popup
+        v-model:visible="projectVisible"
+        trigger="click"
+        placement="bottom-left"
+        :show-arrow="false"
+        overlay-class-name="app-project-popup"
+      >
+        <button
+          type="button"
+          class="app-header__project"
+        >
+          <AppIcon
+            class="app-header__project-icon"
+            :icon="Folder01Icon"
+          />
           <span class="app-header__project-name">
             {{ currentProject?.name ?? t('layout.projectEmpty') }}
           </span>
-          <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
+          <AppIcon
+            class="app-header__caret"
+            :icon="VerticalScrollPointIcon"
+          />
         </button>
 
         <template #content>
           <div class="project-list">
             <label class="project-list__search">
-              <AppIcon class="project-list__search-icon" :icon="Search01Icon" :size="14" />
-              <input v-model="projectKeyword" :placeholder="t('layout.projectSearch')" />
+              <AppIcon
+                class="project-list__search-icon"
+                :icon="Search01Icon"
+                :size="14"
+              />
+              <input
+                v-model="projectKeyword"
+                :placeholder="t('layout.projectSearch')"
+              />
             </label>
 
             <ul class="project-list__items">
-              <li v-for="project in filteredProjects" :key="project.id">
-                <button type="button" class="project-list__item"
-                  :class="{ 'is-active': project.id === orgStore.currentProjectId }" @click="selectProject(project)">
+              <li
+                v-for="project in filteredProjects"
+                :key="project.id"
+              >
+                <button
+                  type="button"
+                  class="project-list__item"
+                  :class="{
+                    'is-active': project.id === orgStore.currentProjectId,
+                  }"
+                  @click="selectProject(project)"
+                >
                   <span class="project-list__name">{{ project.name }}</span>
                   <span class="project-list__key">{{ project.key }}</span>
                 </button>
               </li>
             </ul>
 
-            <p v-if="!filteredProjects.length" class="project-list__empty">
+            <p
+              v-if="!filteredProjects.length"
+              class="project-list__empty"
+            >
               {{ t('layout.projectEmpty') }}
             </p>
 
-            <div v-if="canCreateProject" class="project-list__actions">
-              <button type="button" class="project-list__action" @click="openProjectCreate">
+            <div
+              v-if="canCreateProject"
+              class="project-list__actions"
+            >
+              <button
+                type="button"
+                class="project-list__action"
+                @click="openProjectCreate"
+              >
                 <AppIcon :icon="PlusSignIcon" />
                 {{ t('layout.projectCreate') }}
               </button>
@@ -393,30 +557,62 @@ onMounted(() => {
       <!-- 全局搜索：输入框触发，结果面板在下方弹出 -->
       <GlobalSearch />
 
-      <button type="button" class="app-header__pending" @click="notificationStore.toggleDrawer()">
-        <AppIcon class="app-header__pending-icon" :icon="Notification03Icon" />
+      <button
+        type="button"
+        class="app-header__pending"
+        @click="notificationStore.toggleDrawer()"
+      >
+        <AppIcon
+          class="app-header__pending-icon"
+          :icon="Notification03Icon"
+        />
         {{
           notificationStore.hasUnread
             ? t('layout.pending', { count: notificationStore.unreadCount })
             : t('layout.pendingEmpty')
         }}
-        <span v-if="notificationStore.hasUnread" class="app-header__dot" />
+        <span
+          v-if="notificationStore.hasUnread"
+          class="app-header__dot"
+        />
       </button>
 
-      <t-tooltip :content="t('layout.docs')" placement="bottom">
-        <button type="button" class="app-header__icon-btn" :aria-label="t('layout.docs')">
+      <t-tooltip
+        :content="t('layout.docs')"
+        placement="bottom"
+      >
+        <button
+          type="button"
+          class="app-header__icon-btn"
+          :aria-label="t('layout.docs')"
+        >
           <AppIcon :icon="BookOpen01Icon" />
         </button>
       </t-tooltip>
 
-      <t-tooltip :content="t('layout.help')" placement="bottom">
-        <button type="button" class="app-header__icon-btn" :aria-label="t('layout.help')">
+      <t-tooltip
+        :content="t('layout.help')"
+        placement="bottom"
+      >
+        <button
+          type="button"
+          class="app-header__icon-btn"
+          :aria-label="t('layout.help')"
+        >
           <AppIcon :icon="HelpCircleIcon" />
         </button>
       </t-tooltip>
 
-      <t-dropdown trigger="click" :options="themeOptions" @click="handleThemeSelect">
-        <button type="button" class="app-header__icon-btn" :aria-label="t('layout.theme')">
+      <t-dropdown
+        trigger="click"
+        :options="themeOptions"
+        @click="handleThemeSelect"
+      >
+        <button
+          type="button"
+          class="app-header__icon-btn"
+          :aria-label="t('layout.theme')"
+        >
           <AppIcon :icon="themeIcon" />
         </button>
       </t-dropdown>
@@ -428,8 +624,14 @@ onMounted(() => {
     </div>
 
     <GuideDialog v-model="guideVisible" />
-    <TeamCreateDialog v-model:visible="createVisible" @created="handleTeamCreated" />
-    <ProjectCreateDialog v-model:visible="projectCreateVisible" @created="onProjectCreated" />
+    <TeamCreateDialog
+      v-model:visible="createVisible"
+      @created="handleTeamCreated"
+    />
+    <ProjectCreateDialog
+      v-model:visible="projectCreateVisible"
+      @created="onProjectCreated"
+    />
     <NotificationDrawer />
   </header>
 </template>

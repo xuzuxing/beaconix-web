@@ -4,7 +4,10 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import type { NotificationReadFilter, UserNotification } from '@/api/types/notification-center'
+import type {
+  NotificationReadFilter,
+  UserNotification,
+} from '@/api/types/notification-center'
 import AppIcon from '@/components/AppIcon.vue'
 import NotificationItem from '@/components/notifications/NotificationItem.vue'
 import { RefreshIcon } from '@/icons'
@@ -102,7 +105,11 @@ function goList() {
 </script>
 
 <template>
-  <t-drawer v-model:visible="visible" size="min(600px, 100vw)" :footer="false">
+  <t-drawer
+    v-model:visible="visible"
+    size="min(600px, 100vw)"
+    :footer="false"
+  >
     <template #header>
       <span class="notification-drawer__heading">{{ heading }}</span>
     </template>
@@ -128,14 +135,26 @@ function goList() {
         </t-tooltip>
       </div>
 
-      <div v-if="store.error" class="notification-drawer__state">
-        <t-alert theme="error" :message="store.error" />
-        <t-button variant="outline" @click="store.refresh">
+      <div
+        v-if="store.error"
+        class="notification-drawer__state"
+      >
+        <t-alert
+          theme="error"
+          :message="store.error"
+        />
+        <t-button
+          variant="outline"
+          @click="store.refresh"
+        >
           {{ t('notificationCenter.retry') }}
         </t-button>
       </div>
 
-      <div v-else-if="store.loading && !store.recent.length" class="notification-drawer__state">
+      <div
+        v-else-if="store.loading && !store.recent.length"
+        class="notification-drawer__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -152,12 +171,20 @@ function goList() {
           />
         </div>
 
-        <t-button class="notification-drawer__more" variant="text" block @click="goList">
+        <t-button
+          class="notification-drawer__more"
+          variant="text"
+          block
+          @click="goList"
+        >
           {{ t('notificationCenter.more') }}
         </t-button>
       </template>
 
-      <p v-else class="notification-drawer__empty">
+      <p
+        v-else
+        class="notification-drawer__empty"
+      >
         {{
           store.loaded && store.filter !== 'all'
             ? t('notificationCenter.noMatches')

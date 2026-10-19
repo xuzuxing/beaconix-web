@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { MessagePlugin } from 'tdesign-vue-next'
-import { computed, onActivated, onBeforeUnmount, onDeactivated, ref, watch } from 'vue'
+import {
+  computed,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  ref,
+  watch,
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -39,7 +46,9 @@ let generation = 0
 const id = computed(() => String(route.params.id ?? ''))
 
 usePageHeader({
-  title: computed(() => notification.value?.title || t('notificationCenter.detailTitle')),
+  title: computed(
+    () => notification.value?.title || t('notificationCenter.detailTitle'),
+  ),
   back: '/notifications',
 })
 
@@ -56,7 +65,9 @@ const text = computed(() =>
 )
 const target = computed(() =>
   notification.value
-    ? resolveNotificationTarget(notification.value, { isSuperAdmin: userStore.isSuperAdmin })
+    ? resolveNotificationTarget(notification.value, {
+        isSuperAdmin: userStore.isSuperAdmin,
+      })
     : null,
 )
 const icon = computed(() => notificationIcon(notification.value?.type ?? ''))
@@ -88,7 +99,10 @@ async function load() {
     }
   } catch (cause) {
     if (request !== generation) return
-    error.value = cause instanceof Error ? cause.message : t('notificationCenter.loadFailed')
+    error.value =
+      cause instanceof Error
+        ? cause.message
+        : t('notificationCenter.loadFailed')
     notification.value = null
   } finally {
     if (request === generation) loading.value = false
@@ -171,21 +185,49 @@ void load()
 
 <template>
   <section class="notice-detail">
-    <div v-if="error" class="notice-detail__state">
-      <t-alert theme="error" :message="error" />
-      <t-button variant="outline" @click="load">{{ t('notificationCenter.retry') }}</t-button>
+    <div
+      v-if="error"
+      class="notice-detail__state"
+    >
+      <t-alert
+        theme="error"
+        :message="error"
+      />
+      <t-button
+        variant="outline"
+        @click="load"
+        >{{ t('notificationCenter.retry') }}</t-button
+      >
     </div>
 
-    <div v-else-if="loading" class="notice-detail__state">
+    <div
+      v-else-if="loading"
+      class="notice-detail__state"
+    >
       <t-loading :text="t('common.loading')" />
     </div>
 
-    <t-card v-else-if="notification" :bordered="false">
+    <t-card
+      v-else-if="notification"
+      :bordered="false"
+    >
       <template #title>
         <div class="notice-detail__head">
-          <AppIcon :icon="icon" :size="16" />
-          <t-tag :theme="theme" variant="light" size="small">{{ t(labelKey) }}</t-tag>
-          <t-tag :theme="notification.isRead ? 'default' : 'danger'" variant="light" size="small">
+          <AppIcon
+            :icon="icon"
+            :size="16"
+          />
+          <t-tag
+            :theme="theme"
+            variant="light"
+            size="small"
+            >{{ t(labelKey) }}</t-tag
+          >
+          <t-tag
+            :theme="notification.isRead ? 'default' : 'danger'"
+            variant="light"
+            size="small"
+          >
             {{
               notification.isRead
                 ? t('notificationCenter.statusRead')
@@ -201,11 +243,23 @@ void load()
           {{ formatNotificationTime(notification.createdAt, true) }}
         </p>
 
-        <p v-if="text" class="notice-detail__text">{{ text }}</p>
+        <p
+          v-if="text"
+          class="notice-detail__text"
+        >
+          {{ text }}
+        </p>
 
-        <InvitationActions :notification="notification" :disabled="pending" />
+        <InvitationActions
+          :notification="notification"
+          :disabled="pending"
+        />
 
-        <t-descriptions :column="1" bordered class="notice-detail__fields">
+        <t-descriptions
+          :column="1"
+          bordered
+          class="notice-detail__fields"
+        >
           <t-descriptions-item :label="t('notificationCenter.resource')">
             {{ notification.resourceType ?? '-' }}
           </t-descriptions-item>
@@ -216,10 +270,21 @@ void load()
             {{ formatNotificationTime(notification.createdAt, true) }}
           </t-descriptions-item>
           <t-descriptions-item :label="t('notificationCenter.readAt')">
-            {{ notification.readAt ? formatNotificationTime(notification.readAt, true) : '-' }}
+            {{
+              notification.readAt
+                ? formatNotificationTime(notification.readAt, true)
+                : '-'
+            }}
           </t-descriptions-item>
-          <t-descriptions-item v-if="metaRows.length" :label="t('notificationCenter.meta')">
-            <span v-for="row in metaRows" :key="row.key" class="notice-detail__meta">
+          <t-descriptions-item
+            v-if="metaRows.length"
+            :label="t('notificationCenter.meta')"
+          >
+            <span
+              v-for="row in metaRows"
+              :key="row.key"
+              class="notice-detail__meta"
+            >
               {{ row.key }}：{{ row.value }}
             </span>
           </t-descriptions-item>
@@ -234,21 +299,43 @@ void load()
           >
             {{ t('notificationCenter.readAction') }}
           </t-button>
-          <t-button v-if="target" theme="primary" :loading="pending" @click="onHandle">
+          <t-button
+            v-if="target"
+            theme="primary"
+            :loading="pending"
+            @click="onHandle"
+          >
             {{ t('notificationCenter.handle') }}
-            <AppIcon class="notice-detail__action-icon" :icon="LinkSquare02Icon" :size="14" />
+            <AppIcon
+              class="notice-detail__action-icon"
+              :icon="LinkSquare02Icon"
+              :size="14"
+            />
           </t-button>
-          <t-button variant="outline" theme="danger" :loading="pending" @click="onIgnore">
+          <t-button
+            variant="outline"
+            theme="danger"
+            :loading="pending"
+            @click="onIgnore"
+          >
             {{ t('notificationCenter.ignore') }}
           </t-button>
         </div>
       </div>
     </t-card>
 
-    <t-card v-else :bordered="false">
+    <t-card
+      v-else
+      :bordered="false"
+    >
       <div class="notice-detail__state">
-        <p class="notice-detail__empty">{{ t('notificationCenter.notFound') }}</p>
-        <t-button variant="outline" @click="router.push('/notifications')">
+        <p class="notice-detail__empty">
+          {{ t('notificationCenter.notFound') }}
+        </p>
+        <t-button
+          variant="outline"
+          @click="router.push('/notifications')"
+        >
           {{ t('notificationCenter.backToList') }}
         </t-button>
       </div>

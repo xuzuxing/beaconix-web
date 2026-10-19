@@ -39,13 +39,24 @@ async function copy() {
     :header="t('workspace.pat.createdTitle')"
     width="min(560px, calc(100vw - 32px))"
     :confirm-btn="t('common.confirm')"
+    @confirm="visible = false"
   >
-    <t-alert theme="warning" :message="t('workspace.pat.createdHint')" class="pat-secret__hint" />
+    <t-alert
+      theme="warning"
+      :message="t('workspace.pat.createdHint')"
+      class="pat-secret__hint"
+    />
 
     <div class="pat-secret__value">
       <code class="pat-secret__code">{{ secret }}</code>
-      <t-button variant="outline" size="small" @click="copy">
-        <template #icon><AppIcon :icon="Copy01Icon" /></template>
+      <t-button
+        variant="outline"
+        size="small"
+        @click="copy"
+      >
+        <template #icon>
+          <AppIcon :icon="Copy01Icon" />
+        </template>
         {{ copied ? t('workspace.pat.copied') : t('workspace.pat.copy') }}
       </t-button>
     </div>

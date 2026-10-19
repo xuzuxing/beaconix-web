@@ -98,7 +98,11 @@ export const layoutChildren: RouteRecordRaw[] = [
     path: 'probes/overview',
     name: 'probes-overview',
     component: () => import('@/views/probes/ProbesOverviewView.vue'),
-    meta: { titleKey: 'submenu.probes.overview', group: 'main', keepAlive: false },
+    meta: {
+      titleKey: 'submenu.probes.overview',
+      group: 'main',
+      keepAlive: false,
+    },
   },
   {
     path: 'probes',
@@ -213,25 +217,45 @@ export const layoutChildren: RouteRecordRaw[] = [
     path: 'profile',
     name: 'profile',
     component: () => import('@/views/account/ProfileView.vue'),
-    meta: { titleKey: 'menu.profile', icon: UserCircleIcon, group: 'main', hidden: true },
+    meta: {
+      titleKey: 'menu.profile',
+      icon: UserCircleIcon,
+      group: 'main',
+      hidden: true,
+    },
   },
   {
     path: 'security',
     name: 'security',
     component: () => import('@/views/account/SecurityView.vue'),
-    meta: { titleKey: 'menu.security', icon: LockPasswordIcon, group: 'main', hidden: true },
+    meta: {
+      titleKey: 'menu.security',
+      icon: LockPasswordIcon,
+      group: 'main',
+      hidden: true,
+    },
   },
   {
     path: 'access-tokens',
     name: 'access-tokens',
     component: () => import('@/views/account/AccessTokensView.vue'),
-    meta: { titleKey: 'menu.accessTokens', icon: ApiIcon, group: 'main', hidden: true },
+    meta: {
+      titleKey: 'menu.accessTokens',
+      icon: ApiIcon,
+      group: 'main',
+      hidden: true,
+    },
   },
   {
     path: 'notifications',
     name: 'notifications',
     component: () => import('@/views/notifications/NotificationListView.vue'),
-    meta: { titleKey: 'menu.notifications', icon: Notification03Icon, group: 'main', hidden: true },
+    meta: {
+      titleKey: 'menu.notifications',
+      icon: Notification03Icon,
+      group: 'main',
+      hidden: true,
+    },
   },
   {
     // 事项详情：后端没有单条查询接口，页面按 id 从列表回捞
@@ -251,7 +275,12 @@ export const layoutChildren: RouteRecordRaw[] = [
     path: 'tickets',
     name: 'tickets',
     component: () => import('@/views/support/MyTicketsView.vue'),
-    meta: { titleKey: 'menu.tickets', icon: CustomerServiceIcon, group: 'main', hidden: true },
+    meta: {
+      titleKey: 'menu.tickets',
+      icon: CustomerServiceIcon,
+      group: 'main',
+      hidden: true,
+    },
   },
   {
     path: 'tickets/:id',
@@ -282,33 +311,53 @@ export const layoutChildren: RouteRecordRaw[] = [
     path: 'admin/tenants',
     name: 'admin-tenants',
     component: () => import('@/views/admin/AdminTenantsView.vue'),
-    meta: { titleKey: 'submenu.admin.tenants', group: 'admin', roles: ADMIN_ROLES },
+    meta: {
+      titleKey: 'submenu.admin.tenants',
+      group: 'admin',
+      roles: ADMIN_ROLES,
+    },
   },
   {
     path: 'admin/system-probes',
     name: 'admin-system-probes',
     component: () => import('@/views/admin/AdminSystemProbesView.vue'),
-    meta: { titleKey: 'submenu.admin.probes', group: 'admin', roles: ADMIN_ROLES },
+    meta: {
+      titleKey: 'submenu.admin.probes',
+      group: 'admin',
+      roles: ADMIN_ROLES,
+    },
   },
   {
     path: 'admin/audit-logs',
     name: 'admin-audit-logs',
     component: () => import('@/views/admin/AdminAuditLogsView.vue'),
-    meta: { titleKey: 'submenu.admin.auditLogs', group: 'admin', roles: ADMIN_ROLES },
+    meta: {
+      titleKey: 'submenu.admin.auditLogs',
+      group: 'admin',
+      roles: ADMIN_ROLES,
+    },
   },
   {
     // 跨租户订单：与「账单 → 订单管理」（单组织维度）不同，这里覆盖全平台
     path: 'admin/orders',
     name: 'admin-orders',
     component: () => import('@/views/admin/AdminOrdersView.vue'),
-    meta: { titleKey: 'submenu.admin.orders', group: 'admin', roles: ADMIN_ROLES },
+    meta: {
+      titleKey: 'submenu.admin.orders',
+      group: 'admin',
+      roles: ADMIN_ROLES,
+    },
   },
   {
     // 跨账号工单：用户侧入口在顶栏「我的工单」，这里做全平台处理
     path: 'admin/tickets',
     name: 'admin-tickets',
     component: () => import('@/views/admin/AdminTicketsView.vue'),
-    meta: { titleKey: 'submenu.admin.tickets', group: 'admin', roles: ADMIN_ROLES },
+    meta: {
+      titleKey: 'submenu.admin.tickets',
+      group: 'admin',
+      roles: ADMIN_ROLES,
+    },
   },
   {
     // 工单分类：从工单管理页进入的二级页面，不进侧边栏（页面左上角返回工单管理）
@@ -327,7 +376,11 @@ export const layoutChildren: RouteRecordRaw[] = [
     path: 'admin/settings',
     name: 'admin-settings',
     component: () => import('@/views/admin/AdminSettingsView.vue'),
-    meta: { titleKey: 'submenu.admin.settings', group: 'admin', roles: ADMIN_ROLES },
+    meta: {
+      titleKey: 'submenu.admin.settings',
+      group: 'admin',
+      roles: ADMIN_ROLES,
+    },
   },
 
   // ---------- 不在菜单中展示 ----------
@@ -358,7 +411,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/access-unavailable',
     component: PlainLayout,
-    children: [{ path: '', component: () => import('@/views/common/AccessUnavailableView.vue') }],
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/common/AccessUnavailableView.vue'),
+      },
+    ],
   },
   {
     path: '/',

@@ -2,13 +2,22 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { useI18n } from 'vue-i18n'
-import { bindProbeMonitors, getProbe, unbindProbeMonitor } from '@/api/modules/probe'
+import {
+  bindProbeMonitors,
+  getProbe,
+  unbindProbeMonitor,
+} from '@/api/modules/probe'
 import type { TenantProbe } from '@/api/types/probe'
 import AppIcon from '@/components/AppIcon.vue'
 import ProbeHistory from './ProbeHistory.vue'
 import { useOrganizationMonitors } from '@/composables/useOrganizationMonitors'
 import { useProbeActions } from '@/composables/useProbeActions'
-import { RefreshIcon, PlusSignIcon, LinkSquare02Icon, Delete02Icon } from '@/icons'
+import {
+  RefreshIcon,
+  PlusSignIcon,
+  LinkSquare02Icon,
+  Delete02Icon,
+} from '@/icons'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import {
   accessContext,
@@ -61,12 +70,15 @@ async function load() {
   if (!scope.value || !props.probeId) return
   loading.value = true
   try {
-    const result = await getProbe(props.orgId, props.probeId, { signal: controller.signal })
+    const result = await getProbe(props.orgId, props.probeId, {
+      signal: controller.signal,
+    })
     if (token === generation && isCurrentContext(context) && scope.value)
       probe.value = withoutProbeSecret(result)
   } catch (cause) {
     if (token === generation && isCurrentContext(context))
-      error.value = cause instanceof Error ? cause.message : t('probePage.bindingsFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('probePage.bindingsFailed')
   } finally {
     if (token === generation) loading.value = false
   }
@@ -110,7 +122,9 @@ async function bind() {
     bindError.value = t('probePage.bindRequired')
     return
   }
-  const result = await run('bind', (orgId) => bindProbeMonitors(orgId, props.probeId, ids))
+  const result = await run('bind', (orgId) =>
+    bindProbeMonitors(orgId, props.probeId, ids),
+  )
   if (!result) return
   probe.value = withoutProbeSecret(result)
   selected.value = []
@@ -122,7 +136,9 @@ async function bind() {
 async function unbind() {
   const id = removing.value
   if (!id) return
-  const result = await run('unbind', (orgId) => unbindProbeMonitor(orgId, props.probeId, id))
+  const result = await run('unbind', (orgId) =>
+    unbindProbeMonitor(orgId, props.probeId, id),
+  )
   if (!result) return
   probe.value = withoutProbeSecret(result)
   removing.value = undefined
@@ -142,13 +158,24 @@ onScopeDispose(() => {
 </script>
 
 <template>
-  <t-drawer v-model:visible="visible" size="min(760px, 100vw)" :footer="false" destroy-on-close>
+  <t-drawer
+    v-model:visible="visible"
+    size="min(760px, 100vw)"
+    :footer="false"
+    destroy-on-close
+  >
     <template #header
-      ><span class="probe-detail__title">{{ probe?.name || t('probePage.detail') }}</span></template
+      ><span class="probe-detail__title">{{
+        probe?.name || t('probePage.detail')
+      }}</span></template
     >
     <div class="probe-detail">
       <div class="probe-detail__toolbar">
-        <t-radio-group v-model="tab" variant="outline" size="small">
+        <t-radio-group
+          v-model="tab"
+          variant="outline"
+          size="small"
+        >
           <t-radio-button
             v-for="value in ['monitors', 'results', 'executions']"
             :key="value"
@@ -166,8 +193,15 @@ onScopeDispose(() => {
             ><AppIcon :icon="RefreshIcon" /></t-button
         ></t-tooltip>
       </div>
-      <t-alert v-if="error || actionError" theme="error" :message="error || actionError" />
-      <div v-if="loading" class="probe-detail__state">
+      <t-alert
+        v-if="error || actionError"
+        theme="error"
+        :message="error || actionError"
+      />
+      <div
+        v-if="loading"
+        class="probe-detail__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
       <template v-else-if="probe">
@@ -203,7 +237,9 @@ onScopeDispose(() => {
               <dt>{{ t('probePage.heartbeat') }}</dt>
               <dd>
                 {{
-                  probe.lastHeartbeat ? formatDateTime(probe.lastHeartbeat) : t('probePage.never')
+                  probe.lastHeartbeat
+                    ? formatDateTime(probe.lastHeartbeat)
+                    : t('probePage.never')
                 }}
               </dd>
             </div>
@@ -214,11 +250,19 @@ onScopeDispose(() => {
           </dl>
           <div class="probe-detail__toolbar">
             <h3>{{ t('probePage.monitors') }} ({{ probe.monitors.length }})</h3>
-            <t-button :disabled="!!busy" variant="outline" @click="binding = !binding">
-              <template #icon><AppIcon :icon="PlusSignIcon" /></template>{{ t('probePage.bind') }}
+            <t-button
+              :disabled="!!busy"
+              variant="outline"
+              @click="binding = !binding"
+            >
+              <template #icon><AppIcon :icon="PlusSignIcon" /></template
+              >{{ t('probePage.bind') }}
             </t-button>
           </div>
-          <div v-if="binding" class="probe-detail__binding">
+          <div
+            v-if="binding"
+            class="probe-detail__binding"
+          >
             <t-alert
               v-if="candidatesError || bindError"
               theme="error"
@@ -242,11 +286,17 @@ onScopeDispose(() => {
               <template #icon><AppIcon :icon="LinkSquare02Icon" /></template
               >{{ t('probePage.bind') }}
             </t-button>
-            <t-button v-if="candidatesError" variant="outline" @click="loadCandidates">{{
-              t('probePage.retry')
-            }}</t-button>
+            <t-button
+              v-if="candidatesError"
+              variant="outline"
+              @click="loadCandidates"
+              >{{ t('probePage.retry') }}</t-button
+            >
           </div>
-          <p v-if="!probe.monitors.length" class="probe-detail__state">
+          <p
+            v-if="!probe.monitors.length"
+            class="probe-detail__state"
+          >
             {{ t('probePage.noBindings') }}
           </p>
           <article

@@ -90,10 +90,22 @@ export const RULE_TEMPLATES: Record<'HTTP' | 'TCP', RuleNode> = {
             operator: 'statusClass',
             value: [5],
           },
-          { type: 'condition', id: 'tpl-http-slow', field: 'latency', operator: 'gt', value: 3000 },
+          {
+            type: 'condition',
+            id: 'tpl-http-slow',
+            field: 'latency',
+            operator: 'gt',
+            value: 3000,
+          },
         ],
       },
-      { type: 'condition', id: 'tpl-http-failed', field: 'success', operator: 'eq', value: false },
+      {
+        type: 'condition',
+        id: 'tpl-http-failed',
+        field: 'success',
+        operator: 'eq',
+        value: false,
+      },
       {
         type: 'condition',
         id: 'tpl-http-cert',
@@ -108,8 +120,20 @@ export const RULE_TEMPLATES: Record<'HTTP' | 'TCP', RuleNode> = {
     id: 'tpl-tcp-root',
     operator: 'or',
     children: [
-      { type: 'condition', id: 'tpl-tcp-failed', field: 'success', operator: 'eq', value: false },
-      { type: 'condition', id: 'tpl-tcp-slow', field: 'latency', operator: 'gt', value: 3000 },
+      {
+        type: 'condition',
+        id: 'tpl-tcp-failed',
+        field: 'success',
+        operator: 'eq',
+        value: false,
+      },
+      {
+        type: 'condition',
+        id: 'tpl-tcp-slow',
+        field: 'latency',
+        operator: 'gt',
+        value: 3000,
+      },
     ],
   },
 }

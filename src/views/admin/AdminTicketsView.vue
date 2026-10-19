@@ -6,7 +6,11 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { getAdminTicket } from '@/api'
 import type { AttachmentRef } from '@/api/types/attachment'
-import type { Ticket, TicketDetail, UpdateTicketParams } from '@/api/types/ticket'
+import type {
+  Ticket,
+  TicketDetail,
+  UpdateTicketParams,
+} from '@/api/types/ticket'
 import AdminTicketDetailDrawer from '@/components/admin/AdminTicketDetailDrawer.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
@@ -62,7 +66,11 @@ const {
   reset,
   changePage,
 } = useAdminTickets()
-const { categories, options: categoryOptions, load: loadCategories } = useTicketCategories()
+const {
+  categories,
+  options: categoryOptions,
+  load: loadCategories,
+} = useTicketCategories()
 
 const statusOptions = computed(() => [
   { label: t('adminPage.ticket.allStatuses'), value: 'all' },
@@ -134,7 +142,12 @@ async function handleReply(payload: {
 }) {
   const current = detail.value
   if (!current) return
-  const done = await reply(current.id, payload.body, payload.isInternalNote, payload.attachments)
+  const done = await reply(
+    current.id,
+    payload.body,
+    payload.isInternalNote,
+    payload.attachments,
+  )
   if (!done) return
   sentAt.value = Date.now()
   MessagePlugin.success(t('adminPage.ticket.replyDone'))
@@ -237,17 +250,40 @@ watch(
           </span>
         </template>
 
-        <t-alert v-if="statsError" theme="error" :message="statsError" />
+        <t-alert
+          v-if="statsError"
+          theme="error"
+          :message="statsError"
+        />
 
-        <div v-else class="admin-tickets__stats">
-          <div v-for="row in statRows" :key="row.status" class="admin-tickets__stat">
-            <t-tag size="small" variant="light" :theme="ticketStatusTheme(row.status)">
+        <div
+          v-else
+          class="admin-tickets__stats"
+        >
+          <div
+            v-for="row in statRows"
+            :key="row.status"
+            class="admin-tickets__stat"
+          >
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="ticketStatusTheme(row.status)"
+            >
               {{ t(ticketStatusLabelKey(row.status)) }}
             </t-tag>
             <strong class="admin-tickets__count">{{ row.count }}</strong>
           </div>
-          <div v-for="row in priorityStatRows" :key="row.priority" class="admin-tickets__stat">
-            <t-tag size="small" variant="light" :theme="ticketPriorityTheme(row.priority)">
+          <div
+            v-for="row in priorityStatRows"
+            :key="row.priority"
+            class="admin-tickets__stat"
+          >
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="ticketPriorityTheme(row.priority)"
+            >
               {{ t(ticketPriorityLabelKey(row.priority)) }}
             </t-tag>
             <strong class="admin-tickets__count">{{ row.count }}</strong>
@@ -258,10 +294,14 @@ watch(
       <t-card class="admin-tickets__panel">
         <template #title>{{ t('adminPage.ticket.title') }}</template>
         <template #actions>
-          <span class="admin-tickets__total"> {{ t('adminPage.ticket.total') }} {{ total }} </span>
+          <span class="admin-tickets__total">
+            {{ t('adminPage.ticket.total') }} {{ total }}
+          </span>
         </template>
 
-        <p class="admin-tickets__subtitle">{{ t('adminPage.ticket.subtitle') }}</p>
+        <p class="admin-tickets__subtitle">
+          {{ t('adminPage.ticket.subtitle') }}
+        </p>
 
         <div class="admin-tickets__filters">
           <t-select
@@ -294,25 +334,48 @@ watch(
             :aria-label="t('adminPage.ticket.q')"
             @enter="applyFilters"
           />
-          <t-checkbox v-model="filters.unassigned" @change="applyFilters">
+          <t-checkbox
+            v-model="filters.unassigned"
+            @change="applyFilters"
+          >
             {{ t('adminPage.ticket.unassignedOnly') }}
           </t-checkbox>
           <div class="admin-tickets__filter-actions">
-            <t-button theme="primary" :loading="loading" @click="applyFilters">
+            <t-button
+              theme="primary"
+              :loading="loading"
+              @click="applyFilters"
+            >
               {{ t('adminPage.common.search') }}
             </t-button>
-            <t-button variant="outline" @click="reset">
+            <t-button
+              variant="outline"
+              @click="reset"
+            >
               {{ t('adminPage.common.reset') }}
             </t-button>
           </div>
         </div>
 
-        <div v-if="error" class="admin-tickets__state">
-          <t-alert theme="error" :message="error" />
-          <t-button variant="outline" @click="load">{{ t('adminPage.common.refresh') }}</t-button>
+        <div
+          v-if="error"
+          class="admin-tickets__state"
+        >
+          <t-alert
+            theme="error"
+            :message="error"
+          />
+          <t-button
+            variant="outline"
+            @click="load"
+            >{{ t('adminPage.common.refresh') }}</t-button
+          >
         </div>
 
-        <div v-else-if="loading && !tickets.length" class="admin-tickets__state">
+        <div
+          v-else-if="loading && !tickets.length"
+          class="admin-tickets__state"
+        >
           <t-loading :text="t('common.loading')" />
         </div>
 
@@ -329,31 +392,59 @@ watch(
               <span>{{ t('ticketPage.updatedAt') }}</span>
               <span>{{ t('adminPage.common.actions') }}</span>
             </div>
-            <div v-for="ticket in tickets" :key="ticket.id" class="admin-tickets__row">
-              <span class="admin-tickets__number">{{ ticketNumberLabel(ticket.number) }}</span>
-              <span class="admin-tickets__subject" :title="ticket.subject">
+            <div
+              v-for="ticket in tickets"
+              :key="ticket.id"
+              class="admin-tickets__row"
+            >
+              <span class="admin-tickets__number">{{
+                ticketNumberLabel(ticket.number)
+              }}</span>
+              <span
+                class="admin-tickets__subject"
+                :title="ticket.subject"
+              >
                 {{ ticket.subject }}
               </span>
-              <span class="admin-tickets__author" :title="ticket.authorId">
+              <span
+                class="admin-tickets__author"
+                :title="ticket.authorId"
+              >
                 {{ ticketAuthorLabel(ticket) || shortId(ticket.authorId) }}
               </span>
               <span>
-                <t-tag size="small" variant="light" :theme="ticketStatusTheme(ticket.status)">
+                <t-tag
+                  size="small"
+                  variant="light"
+                  :theme="ticketStatusTheme(ticket.status)"
+                >
                   {{ t(ticketStatusLabelKey(ticket.status)) }}
                 </t-tag>
               </span>
               <span>
-                <t-tag size="small" variant="light" :theme="ticketPriorityTheme(ticket.priority)">
+                <t-tag
+                  size="small"
+                  variant="light"
+                  :theme="ticketPriorityTheme(ticket.priority)"
+                >
                   {{ t(ticketPriorityLabelKey(ticket.priority)) }}
                 </t-tag>
               </span>
-              <span class="admin-tickets__muted">{{ ticketCategoryLabel(ticket) || '—' }}</span>
+              <span class="admin-tickets__muted">{{
+                ticketCategoryLabel(ticket) || '—'
+              }}</span>
               <span class="admin-tickets__muted">
                 {{ ticketAssigneeLabel(ticket) || t('ticketPage.unassigned') }}
               </span>
-              <span class="admin-tickets__muted">{{ formatDateTime(ticket.updatedAt) }}</span>
+              <span class="admin-tickets__muted">{{
+                formatDateTime(ticket.updatedAt)
+              }}</span>
               <span class="admin-tickets__actions">
-                <t-button variant="text" size="small" @click="openDetail(ticket)">
+                <t-button
+                  variant="text"
+                  size="small"
+                  @click="openDetail(ticket)"
+                >
                   {{ t('adminPage.ticket.viewDetail') }}
                 </t-button>
                 <t-button
@@ -379,7 +470,10 @@ watch(
           />
         </template>
 
-        <div v-else class="admin-tickets__state">
+        <div
+          v-else
+          class="admin-tickets__state"
+        >
           <p class="admin-tickets__empty">{{ t('adminPage.ticket.empty') }}</p>
         </div>
       </t-card>
@@ -464,7 +558,9 @@ watch(
 
   &__filters {
     display: grid;
-    grid-template-columns: 150px 140px 160px minmax(140px, 1fr) minmax(160px, 1fr) auto auto;
+    grid-template-columns:
+      150px 140px 160px minmax(140px, 1fr) minmax(160px, 1fr)
+      auto auto;
     gap: 8px;
     align-items: center;
     margin-bottom: 16px;

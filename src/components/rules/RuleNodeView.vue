@@ -16,19 +16,39 @@ const join = computed(() =>
 </script>
 
 <template>
-  <div v-if="node.kind === 'logic'" class="rule-view__group">
+  <div
+    v-if="node.kind === 'logic'"
+    class="rule-view__group"
+  >
     <p class="rule-view__group-title">
       {{ t('ruleGroup.groupTitle', { index: depth, label: node.label }) }}
     </p>
     <div class="rule-view__children">
-      <template v-for="(child, index) in node.children" :key="child.id">
-        <span v-if="index" class="rule-view__join">{{ join }}</span>
-        <RuleNodeView :node="child" :depth="depth + 1" />
+      <template
+        v-for="(child, index) in node.children"
+        :key="child.id"
+      >
+        <span
+          v-if="index"
+          class="rule-view__join"
+          >{{ join }}</span
+        >
+        <RuleNodeView
+          :node="child"
+          :depth="depth + 1"
+        />
       </template>
     </div>
   </div>
-  <p v-else class="rule-view__condition">
-    <span class="rule-view__bullet" aria-hidden="true">•</span><span>{{ node.text }}</span>
+  <p
+    v-else
+    class="rule-view__condition"
+  >
+    <span
+      class="rule-view__bullet"
+      aria-hidden="true"
+      >•</span
+    ><span>{{ node.text }}</span>
   </p>
 </template>
 

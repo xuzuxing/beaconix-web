@@ -9,7 +9,13 @@ import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import UserMenu from '@/components/UserMenu.vue'
 import { useBrand } from '@/composables/useBrand'
-import { BookOpen01Icon, ComputerIcon, HelpCircleIcon, Moon01Icon, Sun01Icon } from '@/icons'
+import {
+  BookOpen01Icon,
+  ComputerIcon,
+  HelpCircleIcon,
+  Moon01Icon,
+  Sun01Icon,
+} from '@/icons'
 import { useAppStore } from '@/stores'
 import type { ThemeMode } from '@/types'
 
@@ -45,23 +51,49 @@ function handleThemeSelect(data: { value?: string | number }) {
 <template>
   <div class="plain-layout">
     <header class="plain-layout__header">
-      <img class="plain-layout__logo" :src="logoSrc" :alt="siteName" />
+      <img
+        class="plain-layout__logo"
+        :src="logoSrc"
+        :alt="siteName"
+      />
 
       <div class="plain-layout__extra">
-        <t-tooltip :content="t('layout.docs')" placement="bottom">
-          <button type="button" class="plain-layout__icon-btn plain-layout__support" :aria-label="t('layout.docs')">
+        <t-tooltip
+          :content="t('layout.docs')"
+          placement="bottom"
+        >
+          <button
+            type="button"
+            class="plain-layout__icon-btn plain-layout__support"
+            :aria-label="t('layout.docs')"
+          >
             <AppIcon :icon="BookOpen01Icon" />
           </button>
         </t-tooltip>
 
-        <t-tooltip :content="t('layout.help')" placement="bottom">
-          <button type="button" class="plain-layout__icon-btn plain-layout__support" :aria-label="t('layout.help')">
+        <t-tooltip
+          :content="t('layout.help')"
+          placement="bottom"
+        >
+          <button
+            type="button"
+            class="plain-layout__icon-btn plain-layout__support"
+            :aria-label="t('layout.help')"
+          >
             <AppIcon :icon="HelpCircleIcon" />
           </button>
         </t-tooltip>
 
-        <t-dropdown trigger="click" :options="themeOptions" @click="handleThemeSelect">
-          <button type="button" class="plain-layout__icon-btn" :aria-label="t('layout.theme')">
+        <t-dropdown
+          trigger="click"
+          :options="themeOptions"
+          @click="handleThemeSelect"
+        >
+          <button
+            type="button"
+            class="plain-layout__icon-btn"
+            :aria-label="t('layout.theme')"
+          >
             <AppIcon :icon="themeIcon" />
           </button>
         </t-dropdown>

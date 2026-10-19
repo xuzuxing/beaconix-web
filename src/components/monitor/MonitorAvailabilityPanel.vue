@@ -27,9 +27,11 @@ const theme = useChartTheme()
 
 const props = defineProps<{ heatmap: Availability; codes: StatusCodes }>()
 const statusCodes = computed(() => ({
-  labels: props.codes.buckets.map(b => timeLabel(b.time)),
-  success: props.codes.buckets.map(b => b.success2xx), redirect: props.codes.buckets.map(b => b.redirect3xx),
-  clientError: props.codes.buckets.map(b => b.clientError4xx), serverError: props.codes.buckets.map(b => b.serverError5xx),
+  labels: props.codes.buckets.map((b) => timeLabel(b.time)),
+  success: props.codes.buckets.map((b) => b.success2xx),
+  redirect: props.codes.buckets.map((b) => b.redirect3xx),
+  clientError: props.codes.buckets.map((b) => b.clientError4xx),
+  serverError: props.codes.buckets.map((b) => b.serverError5xx),
 }))
 
 const heatmapOption = computed<ChartOption>(() => {
@@ -83,7 +85,10 @@ const heatmapOption = computed<ChartOption>(() => {
       },
       {
         type: 'heatmap',
-        data: props.heatmap.unavailableCells.map(([x, y]) => ({ value: [x, y, 0], itemStyle: { color: palette.axisLine } })),
+        data: props.heatmap.unavailableCells.map(([x, y]) => ({
+          value: [x, y, 0],
+          itemStyle: { color: palette.axisLine },
+        })),
         tooltip: { formatter: () => t('dashboard.live.truncated') },
         itemStyle: { borderWidth: 1, borderColor: palette.container },
       },
@@ -114,7 +119,9 @@ const statusOption = computed<ChartOption>(() => {
         type: 'bar',
         stack: 'total',
         data: statusCodes.value.redirect,
-        itemStyle: { color: withAlpha(palette.series[4] ?? palette.brand, 0.9) },
+        itemStyle: {
+          color: withAlpha(palette.series[4] ?? palette.brand, 0.9),
+        },
       },
       {
         name: t('dashboard.statusCode.clientError'),
@@ -130,10 +137,20 @@ const statusOption = computed<ChartOption>(() => {
         data: statusCodes.value.serverError,
         itemStyle: { color: withAlpha(palette.error, 0.9) },
       },
-      { name: t('dashboard.live.otherStatus'), type: 'bar', stack: 'total',
-        data: props.codes.buckets.map(b => b.otherStatusCode), itemStyle: { color: palette.textSecondary } },
-      { name: t('dashboard.live.noStatus'), type: 'bar', stack: 'total',
-        data: props.codes.buckets.map(b => b.noStatusCode), itemStyle: { color: palette.textTertiary } },
+      {
+        name: t('dashboard.live.otherStatus'),
+        type: 'bar',
+        stack: 'total',
+        data: props.codes.buckets.map((b) => b.otherStatusCode),
+        itemStyle: { color: palette.textSecondary },
+      },
+      {
+        name: t('dashboard.live.noStatus'),
+        type: 'bar',
+        stack: 'total',
+        data: props.codes.buckets.map((b) => b.noStatusCode),
+        itemStyle: { color: palette.textTertiary },
+      },
     ],
   })
 })
@@ -145,26 +162,46 @@ const statusOption = computed<ChartOption>(() => {
       :title="t('dashboard.heatmap.title')"
       :tip="t('dashboard.heatmap.tip')"
       :extra="
-        heatmap.worst ? t('dashboard.heatmap.worst', {
-          day: heatmap.worst.day,
-          hour: String(heatmap.worst.hour).padStart(2, '0'),
-          value: heatmap.worst.value.toFixed(2),
-        }) : ''
+        heatmap.worst
+          ? t('dashboard.heatmap.worst', {
+              day: heatmap.worst.day,
+              hour: String(heatmap.worst.hour).padStart(2, '0'),
+              value: heatmap.worst.value.toFixed(2),
+            })
+          : ''
       "
       height="300px"
     >
-      <EChart v-if="heatmap.cells.length || heatmap.unavailableCells.length" :option="heatmapOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+      <EChart
+        v-if="heatmap.cells.length || heatmap.unavailableCells.length"
+        :option="heatmapOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
 
     <ChartCard
       :title="t('dashboard.statusCode.title')"
       :tip="t('dashboard.statusCode.tip')"
-      :extra="codes.unclassifiedChecks ? t('dashboard.live.unclassified', { count: codes.unclassifiedChecks }) : ''"
+      :extra="
+        codes.unclassifiedChecks
+          ? t('dashboard.live.unclassified', {
+              count: codes.unclassifiedChecks,
+            })
+          : ''
+      "
       height="300px"
     >
-      <EChart v-if="codes.buckets.length" :option="statusOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+      <EChart
+        v-if="codes.buckets.length"
+        :option="statusOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
   </div>
 </template>
@@ -175,6 +212,8 @@ const statusOption = computed<ChartOption>(() => {
   // 热力图需要更宽的可视区，状态码分布窄一些
   grid-template-columns: 1.6fr 1fr;
   gap: @beacon-gap-l;
-  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 1000px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

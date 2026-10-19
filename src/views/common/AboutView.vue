@@ -12,17 +12,26 @@ const structure = [
   { path: 'src/router', desc: '路由实例与路由表' },
   { path: 'src/stores', desc: 'pinia 实例与按模块拆分的 store' },
   { path: 'src/types', desc: '全局共享类型' },
-  { path: 'src/utils/request.ts', desc: 'axios 封装：token 注入、统一解包与错误提示' },
+  {
+    path: 'src/utils/request.ts',
+    desc: 'axios 封装：token 注入、统一解包与错误提示',
+  },
   { path: 'src/views/<domain>', desc: '页面组件，按业务域分目录' },
 ]
 </script>
 
 <template>
-  <t-card :title="t('about.title')" :bordered="false">
+  <t-card
+    :title="t('about.title')"
+    :bordered="false"
+  >
     <p class="about__desc">{{ t('about.desc') }}</p>
     <h3 class="about__subtitle">{{ t('about.structure') }}</h3>
     <ul class="about__list">
-      <li v-for="item in structure" :key="item.path">
+      <li
+        v-for="item in structure"
+        :key="item.path"
+      >
         <code>{{ item.path }}</code>
         <span>{{ item.desc }}</span>
       </li>

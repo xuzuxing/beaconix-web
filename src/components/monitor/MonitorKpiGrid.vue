@@ -16,27 +16,54 @@ const { t } = useI18n()
 
 <template>
   <div class="kpi-grid">
-    <div v-for="kpi in kpis" :key="kpi.key" class="kpi">
+    <div
+      v-for="kpi in kpis"
+      :key="kpi.key"
+      class="kpi"
+    >
       <div class="kpi__head">
         <span class="kpi__label">{{ t(kpi.labelKey) }}</span>
-        <t-tooltip v-if="kpi.tipKey" :content="t(kpi.tipKey)" placement="top">
-          <AppIcon class="kpi__tip" :icon="InformationCircleIcon" />
+        <t-tooltip
+          v-if="kpi.tipKey"
+          :content="t(kpi.tipKey)"
+          placement="top"
+        >
+          <AppIcon
+            class="kpi__tip"
+            :icon="InformationCircleIcon"
+          />
         </t-tooltip>
       </div>
 
       <div class="kpi__row">
         <span class="kpi__value">
           {{ kpi.value }}
-          <span v-if="kpi.unitKey" class="kpi__unit">{{ t(kpi.unitKey) }}</span>
+          <span
+            v-if="kpi.unitKey"
+            class="kpi__unit"
+            >{{ t(kpi.unitKey) }}</span
+          >
         </span>
-        <span v-if="kpi.deltaText" class="kpi__delta" :class="kpi.good ? 'kpi__delta--good' : 'kpi__delta--bad'">
-          <AppIcon :icon="kpi.deltaText.startsWith('-') ? ArrowDown01Icon : ArrowUp01Icon" :size="12" />
+        <span
+          v-if="kpi.deltaText"
+          class="kpi__delta"
+          :class="kpi.good ? 'kpi__delta--good' : 'kpi__delta--bad'"
+        >
+          <AppIcon
+            :icon="
+              kpi.deltaText.startsWith('-') ? ArrowDown01Icon : ArrowUp01Icon
+            "
+            :size="12"
+          />
           {{ kpi.deltaText }}
         </span>
       </div>
 
       <div class="kpi__trend">
-        <MiniTrend :values="kpi.trend" :tone="kpi.tone" />
+        <MiniTrend
+          :values="kpi.trend"
+          :tone="kpi.tone"
+        />
       </div>
     </div>
   </div>
@@ -47,8 +74,12 @@ const { t } = useI18n()
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: @beacon-gap-l;
-  @media (max-width: 1200px) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  @media (max-width: 600px) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  @media (max-width: 600px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .kpi {

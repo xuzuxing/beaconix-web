@@ -14,9 +14,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="pending-invitations" :aria-label="t('notificationCenter.invitation.pending')">
-    <h3 class="pending-invitations__title">{{ t('notificationCenter.invitation.pending') }}</h3>
-    <div v-if="store.pendingError" class="pending-invitations__state" role="alert">
+  <section
+    class="pending-invitations"
+    :aria-label="t('notificationCenter.invitation.pending')"
+  >
+    <h3 class="pending-invitations__title">
+      {{ t('notificationCenter.invitation.pending') }}
+    </h3>
+    <div
+      v-if="store.pendingError"
+      class="pending-invitations__state"
+      role="alert"
+    >
       <span>{{ t('notificationCenter.invitation.loadFailed') }}</span>
       <t-button
         variant="outline"
@@ -31,7 +40,10 @@ onMounted(() => {
       v-else-if="store.pendingLoading && !store.pendingInvitations.length"
       :text="t('common.loading')"
     />
-    <div v-else-if="store.pendingInvitations.length" class="pending-invitations__list">
+    <div
+      v-else-if="store.pendingInvitations.length"
+      class="pending-invitations__list"
+    >
       <NotificationItem
         v-for="item in store.pendingInvitations"
         :key="item.id"
@@ -40,7 +52,12 @@ onMounted(() => {
         with-time
       />
     </div>
-    <p v-else class="pending-invitations__empty">{{ t('notificationCenter.invitation.empty') }}</p>
+    <p
+      v-else
+      class="pending-invitations__empty"
+    >
+      {{ t('notificationCenter.invitation.empty') }}
+    </p>
   </section>
 </template>
 

@@ -39,16 +39,23 @@ const inputRef = ref<HTMLInputElement>()
 
 /** 按当前用户的全局角色过滤，与侧边菜单同一口径 */
 const entries = computed(() =>
-  buildFeatureEntries(featureSearchSources, userStore.user ? [userStore.user.globalRole] : []),
+  buildFeatureEntries(
+    featureSearchSources,
+    userStore.user ? [userStore.user.globalRole] : [],
+  ),
 )
 
-const matches = computed(() => filterFeatureEntries(entries.value, keyword.value, (key) => t(key)))
+const matches = computed(() =>
+  filterFeatureEntries(entries.value, keyword.value, (key) => t(key)),
+)
 
 /** 只有输入了关键词才出结果，否则展示搜索历史 */
 const isSearching = computed(() => keyword.value.trim().length > 0)
 
 /** 键盘游标对应的列表长度：结果列表或历史列表 */
-const itemCount = computed(() => (isSearching.value ? matches.value.length : history.value.length))
+const itemCount = computed(() =>
+  isSearching.value ? matches.value.length : history.value.length,
+)
 
 /** 本地搜索历史：隐私模式、坏数据都退化为空列表 */
 function readHistory(): string[] {
@@ -65,7 +72,10 @@ function readHistory(): string[] {
 function remember(keywordText: string) {
   history.value = pushHistory(history.value, keywordText)
   try {
-    window.localStorage.setItem(SEARCH_HISTORY_STORAGE_KEY, JSON.stringify(history.value))
+    window.localStorage.setItem(
+      SEARCH_HISTORY_STORAGE_KEY,
+      JSON.stringify(history.value),
+    )
   } catch {
     // 忽略写入失败
   }
@@ -104,7 +114,8 @@ async function selectFeature(entry: FeatureEntry) {
   const searched = keyword.value.trim()
   close()
   if (searched) remember(searched)
-  if (router.currentRoute.value.path !== entry.path) await router.push(entry.path)
+  if (router.currentRoute.value.path !== entry.path)
+    await router.push(entry.path)
 }
 
 /** 点/选历史记录：回填关键词并切到结果列表，面板保持打开 */
@@ -178,7 +189,8 @@ function onInputClick() {
 
 /** 非输入态按下「/」聚焦搜索框，对应顶栏那枚快捷键徽标 */
 function onShortcut(event: KeyboardEvent) {
-  if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return
+  if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey)
+    return
   const target = event.target as HTMLElement | null
   if (target?.isContentEditable) return
   if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
@@ -191,23 +203,56 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onShortcut))
 </script>
 
 <template>
-  <t-popup v-model:visible="visible" trigger="click" placement="bottom-right" :show-arrow="false"
-    overlay-class-name="app-search-popup">
+  <t-popup
+    v-model:visible="visible"
+    trigger="click"
+    placement="bottom-right"
+    :show-arrow="false"
+    overlay-class-name="app-search-popup"
+  >
     <label class="global-search">
-      <AppIcon class="global-search__icon" :icon="Search01Icon" />
-      <input ref="inputRef" v-model="keyword" class="global-search__input" type="search"
-        :placeholder="t('layout.searchPlaceholder')" @click.stop="onInputClick" @keydown="onKeydown" />
-      <button v-if="keyword" type="button" class="global-search__clear"
-        :aria-label="t('layout.searchClear')" @click.stop="clearKeyword">
-        <AppIcon :icon="Cancel01Icon" :size="14" />
+      <AppIcon
+        class="global-search__icon"
+        :icon="Search01Icon"
+      />
+      <input
+        ref="inputRef"
+        v-model="keyword"
+        class="global-search__input"
+        type="search"
+        :placeholder="t('layout.searchPlaceholder')"
+        @click.stop="onInputClick"
+        @keydown="onKeydown"
+      />
+      <button
+        v-if="keyword"
+        type="button"
+        class="global-search__clear"
+        :aria-label="t('layout.searchClear')"
+        @click.stop="clearKeyword"
+      >
+        <AppIcon
+          :icon="Cancel01Icon"
+          :size="14"
+        />
       </button>
-      <span v-else class="global-search__hotkey">/</span>
+      <span
+        v-else
+        class="global-search__hotkey"
+        >/</span
+      >
     </label>
 
     <template #content>
-      <GlobalSearchPanel :keyword="keyword" :matches="matches" :history="history"
-        :active-index="activeIndex" @select="selectFeature" @select-history="selectHistory"
-        @clear-history="clearHistory" />
+      <GlobalSearchPanel
+        :keyword="keyword"
+        :matches="matches"
+        :history="history"
+        :active-index="activeIndex"
+        @select="selectFeature"
+        @select-history="selectHistory"
+        @clear-history="clearHistory"
+      />
     </template>
   </t-popup>
 </template>

@@ -14,9 +14,18 @@ const { maintenanceMode } = useBrand()
 </script>
 
 <template>
-  <div v-if="maintenanceMode" class="maintenance-banner" role="status">
-    <span class="maintenance-banner__dot" aria-hidden="true"></span>
-    <span class="maintenance-banner__text">{{ t('common.maintenanceBanner') }}</span>
+  <div
+    v-if="maintenanceMode"
+    class="maintenance-banner"
+    role="status"
+  >
+    <span
+      class="maintenance-banner__dot"
+      aria-hidden="true"
+    ></span>
+    <span class="maintenance-banner__text">{{
+      t('common.maintenanceBanner')
+    }}</span>
   </div>
 </template>
 

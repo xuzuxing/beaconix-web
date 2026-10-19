@@ -32,7 +32,9 @@ export function useStatusPageList(orgId: MaybeRefOrGetter<string | undefined>) {
     }
     loading.value = true
     try {
-      const result = await listStatusPages(organization, { signal: controller.signal })
+      const result = await listStatusPages(organization, {
+        signal: controller.signal,
+      })
       if (token === generation) pages.value = result
     } catch (cause) {
       if (token === generation)

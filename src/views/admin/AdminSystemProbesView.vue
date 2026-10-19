@@ -95,7 +95,8 @@ async function submitProbe(data: CreateSystemProbeParams) {
       }
     }
   } catch (cause) {
-    submitError.value = cause instanceof Error ? cause.message : t('adminPage.probe.saveFailed')
+    submitError.value =
+      cause instanceof Error ? cause.message : t('adminPage.probe.saveFailed')
   } finally {
     submitting.value = false
   }
@@ -167,7 +168,8 @@ async function runRebalance() {
     rebalanceVisible.value = true
     MessagePlugin.success(
       t('adminPage.probe.rebalanceDone', {
-        count: Object.values(assignments.value).filter((ids) => ids?.length).length,
+        count: Object.values(assignments.value).filter((ids) => ids?.length)
+          .length,
       }),
     )
   } catch {
@@ -206,15 +208,25 @@ onMounted(() => {
           <template #icon><AppIcon :icon="RefreshIcon" /></template>
         </t-button>
       </t-tooltip>
-      <t-button :disabled="!userStore.isSuperAdmin" @click="openCreate">
+      <t-button
+        :disabled="!userStore.isSuperAdmin"
+        @click="openCreate"
+      >
         <template #icon><AppIcon :icon="PlusSignIcon" /></template>
         {{ t('adminPage.probe.create') }}
       </t-button>
     </HeaderActions>
 
-    <t-alert v-if="!userStore.isSuperAdmin" theme="info" :message="t('adminPage.common.noPermission')" />
+    <t-alert
+      v-if="!userStore.isSuperAdmin"
+      theme="info"
+      :message="t('adminPage.common.noPermission')"
+    />
 
-    <t-card v-else class="admin-probes__panel">
+    <t-card
+      v-else
+      class="admin-probes__panel"
+    >
       <template #title>{{ t('adminPage.probe.title') }}</template>
       <p class="admin-probes__subtitle">{{ t('adminPage.probe.subtitle') }}</p>
 
@@ -232,12 +244,25 @@ onMounted(() => {
         />
       </div>
 
-      <div v-if="error" class="admin-probes__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('adminPage.common.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="admin-probes__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('adminPage.common.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !probes.length" class="admin-probes__state">
+      <div
+        v-else-if="loading && !probes.length"
+        class="admin-probes__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -255,13 +280,25 @@ onMounted(() => {
             <span>{{ t('adminPage.probe.monitors') }}</span>
             <span>{{ t('adminPage.common.actions') }}</span>
           </div>
-          <div v-for="probe in filtered" :key="probe.id" class="admin-probes__row">
+          <div
+            v-for="probe in filtered"
+            :key="probe.id"
+            class="admin-probes__row"
+          >
             <span class="admin-probes__identity">
               <span class="admin-probes__name">{{ probe.name }}</span>
-              <span class="admin-probes__id" :title="probe.callbackUrl">{{ shortId(probe.id) }}</span>
+              <span
+                class="admin-probes__id"
+                :title="probe.callbackUrl"
+                >{{ shortId(probe.id) }}</span
+              >
             </span>
             <span>
-              <t-tag size="small" variant="light" :theme="probeProviderTheme(probe.provider)">
+              <t-tag
+                size="small"
+                variant="light"
+                :theme="probeProviderTheme(probe.provider)"
+              >
                 {{ t(probeProviderLabelKey(probe.provider)) }}
               </t-tag>
             </span>
@@ -285,7 +322,11 @@ onMounted(() => {
             <span>{{ probe.maxTenants ?? 0 }}</span>
             <span>{{ probe.priority }}</span>
             <span class="admin-probes__heartbeat">
-              {{ probe.lastHeartbeat ? formatDateTime(probe.lastHeartbeat) : t('adminPage.probe.heartbeatNever') }}
+              {{
+                probe.lastHeartbeat
+                  ? formatDateTime(probe.lastHeartbeat)
+                  : t('adminPage.probe.heartbeatNever')
+              }}
             </span>
             <span class="admin-probes__monitors">
               {{ probeMonitorCount(probe) }}
@@ -294,7 +335,11 @@ onMounted(() => {
               </template>
             </span>
             <span class="admin-probes__actions">
-              <t-button variant="text" size="small" @click="openEdit(probe)">
+              <t-button
+                variant="text"
+                size="small"
+                @click="openEdit(probe)"
+              >
                 {{ t('adminPage.probe.edit') }}
               </t-button>
               <t-button
@@ -305,7 +350,11 @@ onMounted(() => {
               >
                 {{ t('adminPage.probe.validate') }}
               </t-button>
-              <t-button variant="text" size="small" @click="askRemove(probe)">
+              <t-button
+                variant="text"
+                size="small"
+                @click="askRemove(probe)"
+              >
                 {{ t('adminPage.probe.remove') }}
               </t-button>
             </span>
@@ -313,9 +362,16 @@ onMounted(() => {
         </div>
       </template>
 
-      <div v-else class="admin-probes__state">
+      <div
+        v-else
+        class="admin-probes__state"
+      >
         <p class="admin-probes__empty">
-          {{ probes.length ? t('adminPage.common.noMatches') : t('adminPage.probe.empty') }}
+          {{
+            probes.length
+              ? t('adminPage.common.noMatches')
+              : t('adminPage.probe.empty')
+          }}
         </p>
       </div>
     </t-card>
@@ -350,7 +406,10 @@ onMounted(() => {
       v-model:visible="removeVisible"
       :header="t('adminPage.probe.remove')"
       width="min(480px, calc(100vw - 32px))"
-      :confirm-btn="{ content: t('adminPage.common.confirm'), loading: busyId === removing?.id }"
+      :confirm-btn="{
+        content: t('adminPage.common.confirm'),
+        loading: busyId === removing?.id,
+      }"
       :cancel-btn="t('adminPage.common.cancel')"
       @confirm="confirmRemove"
     >
@@ -390,7 +449,9 @@ onMounted(() => {
   &__table-head,
   &__row {
     display: grid;
-    grid-template-columns: minmax(170px, 1.3fr) 110px 130px 110px 80px 92px 72px 160px 96px 200px;
+    grid-template-columns:
+      minmax(170px, 1.3fr)
+      110px 130px 110px 80px 92px 72px 160px 96px 200px;
     gap: 12px;
     align-items: center;
     min-width: 1280px;

@@ -24,14 +24,22 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <div class="monitor-actions" @click.stop>
-    <t-tooltip v-if="canCheck" :content="t('workspace.monitor.checkNow')">
+  <div
+    class="monitor-actions"
+    @click.stop
+  >
+    <t-tooltip
+      v-if="canCheck"
+      :content="t('workspace.monitor.checkNow')"
+    >
       <t-button
         variant="text"
         shape="square"
         :aria-label="t('workspace.monitor.checkNow')"
         :loading="pending"
-        :disabled="pending || !monitor.enabled || monitor.executionEligible === false"
+        :disabled="
+          pending || !monitor.enabled || monitor.executionEligible === false
+        "
         @click="emit('action', 'check')"
         ><template #icon><AppIcon :icon="FlashIcon" /></template
       ></t-button>
@@ -54,13 +62,25 @@ const { t } = useI18n()
     </t-popconfirm>
     <template v-if="canManage">
       <t-tooltip
-        :content="t(monitor.enabled ? 'workspace.monitor.pause' : 'workspace.monitor.resume')"
+        :content="
+          t(
+            monitor.enabled
+              ? 'workspace.monitor.pause'
+              : 'workspace.monitor.resume',
+          )
+        "
       >
         <t-button
           variant="text"
           shape="square"
           :disabled="pending"
-          :aria-label="t(monitor.enabled ? 'workspace.monitor.pause' : 'workspace.monitor.resume')"
+          :aria-label="
+            t(
+              monitor.enabled
+                ? 'workspace.monitor.pause'
+                : 'workspace.monitor.resume',
+            )
+          "
           @click="emit('action', 'toggle')"
           ><AppIcon :icon="monitor.enabled ? PauseIcon : PlayIcon"
         /></t-button>

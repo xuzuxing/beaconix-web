@@ -38,19 +38,34 @@ async function copy() {
     v-model:visible="visible"
     :header="header"
     width="min(560px, calc(100vw - 32px))"
-    :footer="false"
   >
     <div class="probe-secret">
-      <t-alert theme="warning" :message="t('adminPage.probe.secretDesc')" />
+      <t-alert
+        theme="warning"
+        :message="t('adminPage.probe.secretDesc')"
+      />
 
       <div class="probe-secret__value">
         <code class="probe-secret__code">{{ secret }}</code>
-        <t-button variant="outline" size="small" @click="copy">
+        <t-button
+          variant="outline"
+          size="small"
+          @click="copy"
+        >
           <template #icon><AppIcon :icon="Copy01Icon" /></template>
           {{ t('adminPage.probe.copy') }}
         </t-button>
       </div>
     </div>
+
+    <template #footer>
+      <t-button
+        theme="primary"
+        @click="visible = false"
+      >
+        {{ t('adminPage.common.close') }}
+      </t-button>
+    </template>
   </t-dialog>
 </template>
 

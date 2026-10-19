@@ -33,7 +33,9 @@ onMounted(() => {
   if (!containerRef.value) {
     return
   }
-  chart.value = echarts.init(containerRef.value, undefined, { renderer: 'canvas' })
+  chart.value = echarts.init(containerRef.value, undefined, {
+    renderer: 'canvas',
+  })
   render()
 })
 
@@ -49,7 +51,11 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="containerRef" class="echart" :style="{ height }"></div>
+  <div
+    ref="containerRef"
+    class="echart"
+    :style="{ height }"
+  ></div>
 </template>
 
 <style scoped lang="less">

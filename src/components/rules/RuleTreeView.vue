@@ -2,7 +2,12 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { RuleNode } from '@/api/types/rule'
-import { countRuleNodes, describeRuleTree, summarizeRuleTree, type RuleTranslator } from '@/utils/rule-presenter'
+import {
+  countRuleNodes,
+  describeRuleTree,
+  summarizeRuleTree,
+  type RuleTranslator,
+} from '@/utils/rule-presenter'
 import RuleNodeView from './RuleNodeView.vue'
 
 /**
@@ -26,26 +31,57 @@ const rootHint = computed(() =>
 </script>
 
 <template>
-  <p v-if="compact" class="rule-view__summary" :title="summary">
+  <p
+    v-if="compact"
+    class="rule-view__summary"
+    :title="summary"
+  >
     <span class="rule-view__count">{{
-      t('ruleGroup.rulesCount', { rules: counts.conditions, groups: counts.logics })
+      t('ruleGroup.rulesCount', {
+        rules: counts.conditions,
+        groups: counts.logics,
+      })
     }}</span>
     <span class="rule-view__summary-text">{{ summary }}</span>
   </p>
-  <div v-else class="rule-view">
+  <div
+    v-else
+    class="rule-view"
+  >
     <p class="rule-view__root-hint">{{ rootHint }}</p>
     <template v-if="tree.type === 'logic'">
       <div class="rule-view__children">
-        <template v-for="(child, index) in text.kind === 'logic' ? text.children : []" :key="child.id">
-          <span v-if="index" class="rule-view__join">{{
-            tree.operator === 'and' ? t('ruleGroup.joinAndShort') : t('ruleGroup.joinOrShort')
-          }}</span>
-          <RuleNodeView :node="child" :depth="1" />
+        <template
+          v-for="(child, index) in text.kind === 'logic' ? text.children : []"
+          :key="child.id"
+        >
+          <span
+            v-if="index"
+            class="rule-view__join"
+            >{{
+              tree.operator === 'and'
+                ? t('ruleGroup.joinAndShort')
+                : t('ruleGroup.joinOrShort')
+            }}</span
+          >
+          <RuleNodeView
+            :node="child"
+            :depth="1"
+          />
         </template>
       </div>
-      <p v-if="!tree.children.length" class="rule-view__empty">{{ t('ruleGroup.emptyGroup') }}</p>
+      <p
+        v-if="!tree.children.length"
+        class="rule-view__empty"
+      >
+        {{ t('ruleGroup.emptyGroup') }}
+      </p>
     </template>
-    <RuleNodeView v-else :node="text" :depth="1" />
+    <RuleNodeView
+      v-else
+      :node="text"
+      :depth="1"
+    />
   </div>
 </template>
 

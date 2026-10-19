@@ -9,8 +9,7 @@ export default {
   editTitle: 'Edit status page',
   edit: 'Edit',
   delete: 'Delete',
-  deleteConfirm:
-    'Delete this status page? Its public address stops working immediately.',
+  deleteConfirm: 'Delete this status page? Its public address stops working immediately.',
   refresh: 'Refresh',
   retry: 'Retry',
   search: 'Search title or slug',
@@ -63,7 +62,8 @@ export default {
   descriptionPlaceholder: 'One line shown under the title on the public page',
   monitorsLabel: 'Monitors to show',
   monitorsPlaceholder: 'Pick the monitors shown on the public page',
-  monitorsHint: 'Multiple choice; with none selected the public page only shows the overall status.',
+  monitorsHint:
+    'Multiple choice; with none selected the public page only shows the overall status.',
   publicUrl: 'Public address',
   templateApplied: 'Template “{name}” applied',
   field: {

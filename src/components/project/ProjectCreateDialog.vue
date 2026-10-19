@@ -58,7 +58,8 @@ watch(
 function validate(): string {
   if (!form.name.trim()) return t('workspace.project.nameRequired')
   if (!form.key.trim()) return t('workspace.project.keyRequired')
-  if (!/^[A-Z0-9]{2,10}$/.test(form.key.trim())) return t('workspace.project.keyInvalid')
+  if (!/^[A-Z0-9]{2,10}$/.test(form.key.trim()))
+    return t('workspace.project.keyInvalid')
   return ''
 }
 
@@ -87,7 +88,10 @@ async function submit() {
     emit('created', project)
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('workspace.project.createFailed')
+      error.value =
+        cause instanceof Error
+          ? cause.message
+          : t('workspace.project.createFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -104,9 +108,18 @@ async function submit() {
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="project-create__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="project-create__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+    >
       <t-form-item :label="t('workspace.project.name')">
         <t-input
           v-model="form.name"
@@ -114,7 +127,10 @@ async function submit() {
           :placeholder="t('workspace.project.namePlaceholder')"
         />
       </t-form-item>
-      <t-form-item :label="t('workspace.project.key')" :help="t('workspace.project.keyHint')">
+      <t-form-item
+        :label="t('workspace.project.key')"
+        :help="t('workspace.project.keyHint')"
+      >
         <t-input
           v-model="form.key"
           :maxlength="10"

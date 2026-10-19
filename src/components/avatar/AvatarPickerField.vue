@@ -50,8 +50,17 @@ function open() {
       :aria-label="t('workspace.avatar.change')"
       @click="open"
     >
-      <img v-if="model" class="avatar-field__image" :src="model" alt="" />
-      <span v-else class="avatar-field__empty">{{ t('workspace.avatar.emptyHint') }}</span>
+      <img
+        v-if="model"
+        class="avatar-field__image"
+        :src="model"
+        alt=""
+      />
+      <span
+        v-else
+        class="avatar-field__empty"
+        >{{ t('workspace.avatar.emptyHint') }}</span
+      >
     </button>
 
     <AvatarPickerDialog

@@ -32,7 +32,11 @@ onDeactivated(() => {
 </script>
 
 <template>
-  <Teleport v-if="visible" defer :to="to">
+  <Teleport
+    v-if="visible"
+    defer
+    :to="to"
+  >
     <slot />
   </Teleport>
 </template>

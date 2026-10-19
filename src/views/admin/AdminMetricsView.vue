@@ -21,7 +21,8 @@ defineOptions({ name: 'AdminMetricsView' })
 
 const { t } = useI18n()
 const userStore = useUserStore()
-const { overview, scheduler, tenantMetrics, loading, error, load } = useAdminMetrics()
+const { overview, scheduler, tenantMetrics, loading, error, load } =
+  useAdminMetrics()
 
 const keyword = ref('')
 
@@ -38,7 +39,11 @@ const kpis = computed(() => {
         deleted: data.tenants.deleted,
       }),
     },
-    { key: 'users', label: t('adminPage.metrics.users'), value: formatCompactNumber(data.users) },
+    {
+      key: 'users',
+      label: t('adminPage.metrics.users'),
+      value: formatCompactNumber(data.users),
+    },
     {
       key: 'projects',
       label: t('adminPage.metrics.projects'),
@@ -48,7 +53,9 @@ const kpis = computed(() => {
       key: 'monitors',
       label: t('adminPage.metrics.monitors'),
       value: formatCompactNumber(data.monitors.total),
-      hint: t('adminPage.metrics.monitorsDetail', { enabled: data.monitors.enabled }),
+      hint: t('adminPage.metrics.monitorsDetail', {
+        enabled: data.monitors.enabled,
+      }),
     },
     {
       key: 'probes',
@@ -82,7 +89,9 @@ const kpis = computed(() => {
   ]
 })
 
-const healthLevel = computed(() => (scheduler.value ? schedulerHealthLevel(scheduler.value) : null))
+const healthLevel = computed(() =>
+  scheduler.value ? schedulerHealthLevel(scheduler.value) : null,
+)
 
 const healthTag = computed(() => {
   if (!healthLevel.value) return null
@@ -125,41 +134,70 @@ onMounted(() => {
       </t-tooltip>
     </HeaderActions>
 
-    <t-alert v-if="!userStore.isSuperAdmin" theme="info" :message="t('adminPage.common.noPermission')" />
+    <t-alert
+      v-if="!userStore.isSuperAdmin"
+      theme="info"
+      :message="t('adminPage.common.noPermission')"
+    />
 
-    <t-alert v-else-if="error" theme="error" :message="error">
+    <t-alert
+      v-else-if="error"
+      theme="error"
+      :message="error"
+    >
       <template #operation>
-        <t-button variant="outline" size="small" @click="load">
+        <t-button
+          variant="outline"
+          size="small"
+          @click="load"
+        >
           {{ t('adminPage.common.refresh') }}
         </t-button>
       </template>
     </t-alert>
 
-    <t-loading v-else-if="loading && !overview" :text="t('common.loading')" />
+    <t-loading
+      v-else-if="loading && !overview"
+      :text="t('common.loading')"
+    />
 
     <template v-else-if="overview">
       <t-card class="admin-metrics__panel">
         <template #title>{{ t('adminPage.metrics.overviewTitle') }}</template>
         <template #actions>
-          <span class="admin-metrics__caption">{{ t('adminPage.metrics.overviewSubtitle') }}</span>
+          <span class="admin-metrics__caption">{{
+            t('adminPage.metrics.overviewSubtitle')
+          }}</span>
         </template>
         <AdminKpiGrid :items="kpis" />
       </t-card>
 
-      <t-card v-if="scheduler" class="admin-metrics__panel">
+      <t-card
+        v-if="scheduler"
+        class="admin-metrics__panel"
+      >
         <template #title>{{ t('adminPage.metrics.schedulerTitle') }}</template>
         <template #actions>
-          <t-tag v-if="healthTag" size="small" variant="light" :theme="healthTag.theme">
+          <t-tag
+            v-if="healthTag"
+            size="small"
+            variant="light"
+            :theme="healthTag.theme"
+          >
             {{ healthTag.label }}
           </t-tag>
         </template>
-        <p class="admin-metrics__subtitle">{{ t('adminPage.metrics.schedulerSubtitle') }}</p>
+        <p class="admin-metrics__subtitle">
+          {{ t('adminPage.metrics.schedulerSubtitle') }}
+        </p>
         <AdminSchedulerPanel :health="scheduler" />
       </t-card>
 
       <t-card class="admin-metrics__panel">
         <template #title>{{ t('adminPage.metrics.tenantTitle') }}</template>
-        <p class="admin-metrics__subtitle">{{ t('adminPage.metrics.tenantSubtitle') }}</p>
+        <p class="admin-metrics__subtitle">
+          {{ t('adminPage.metrics.tenantSubtitle') }}
+        </p>
 
         <t-input
           v-model="keyword"
@@ -169,7 +207,10 @@ onMounted(() => {
           :aria-label="t('adminPage.metrics.tenantSearch')"
         />
 
-        <div v-if="tenantRows.length" class="admin-metrics__table">
+        <div
+          v-if="tenantRows.length"
+          class="admin-metrics__table"
+        >
           <div class="admin-metrics__table-head">
             <span>{{ t('adminPage.metrics.organization') }}</span>
             <span>{{ t('adminPage.common.status') }}</span>
@@ -181,7 +222,11 @@ onMounted(() => {
             <span>{{ t('adminPage.metrics.notificationVolume') }}</span>
             <span>{{ t('adminPage.metrics.statusPageCount') }}</span>
           </div>
-          <div v-for="row in tenantRows" :key="row.organizationId" class="admin-metrics__row">
+          <div
+            v-for="row in tenantRows"
+            :key="row.organizationId"
+            class="admin-metrics__row"
+          >
             <span class="admin-metrics__tenant">
               <span class="admin-metrics__tenant-name">{{ row.name }}</span>
               <span class="admin-metrics__tenant-slug">{{ row.slug }}</span>
@@ -209,15 +254,23 @@ onMounted(() => {
           </div>
         </div>
 
-        <p v-else class="admin-metrics__empty">
+        <p
+          v-else
+          class="admin-metrics__empty"
+        >
           {{
-            tenantMetrics.length ? t('adminPage.common.noMatches') : t('adminPage.common.empty')
+            tenantMetrics.length
+              ? t('adminPage.common.noMatches')
+              : t('adminPage.common.empty')
           }}
         </p>
       </t-card>
     </template>
 
-    <div v-else-if="userStore.isSuperAdmin" class="admin-metrics__empty-state">
+    <div
+      v-else-if="userStore.isSuperAdmin"
+      class="admin-metrics__empty-state"
+    >
       <p class="admin-metrics__empty">{{ t('adminPage.common.empty') }}</p>
     </div>
   </section>
@@ -257,7 +310,9 @@ onMounted(() => {
   &__table-head,
   &__row {
     display: grid;
-    grid-template-columns: minmax(180px, 1.4fr) 96px repeat(3, 96px) 110px repeat(3, 100px);
+    grid-template-columns:
+      minmax(180px, 1.4fr) 96px repeat(3, 96px)
+      110px repeat(3, 100px);
     gap: 12px;
     align-items: center;
     min-width: 1080px;

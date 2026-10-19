@@ -18,13 +18,21 @@ const props = withDefaults(
   { tone: 'brand' },
 )
 
-const width = computed(() => `${Math.round(Math.min(1, Math.max(0, props.ratio)) * 100)}%`)
+const width = computed(
+  () => `${Math.round(Math.min(1, Math.max(0, props.ratio)) * 100)}%`,
+)
 </script>
 
 <template>
-  <span class="metric-bar" :class="`metric-bar--${tone}`">
+  <span
+    class="metric-bar"
+    :class="`metric-bar--${tone}`"
+  >
     <span class="metric-bar__track">
-      <span class="metric-bar__fill" :style="{ width }" />
+      <span
+        class="metric-bar__fill"
+        :style="{ width }"
+      />
     </span>
     <span class="metric-bar__value">{{ text }}</span>
   </span>

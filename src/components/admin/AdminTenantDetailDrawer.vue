@@ -24,7 +24,10 @@ const { t } = useI18n()
     :header="t('adminPage.tenant.detailTitle')"
     :footer="false"
   >
-    <div v-if="tenant" class="tenant-detail">
+    <div
+      v-if="tenant"
+      class="tenant-detail"
+    >
       <header class="tenant-detail__head">
         <span class="tenant-detail__name">{{ tenant.name }}</span>
         <t-tag

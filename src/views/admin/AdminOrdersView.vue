@@ -7,11 +7,19 @@ import type { AdminOrder } from '@/api/types/admin'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import AdminOrderDetailDrawer from '@/components/admin/AdminOrderDetailDrawer.vue'
-import { useAdminOrders, type AdminOrderAction } from '@/composables/useAdminOrders'
+import {
+  useAdminOrders,
+  type AdminOrderAction,
+} from '@/composables/useAdminOrders'
 import { RefreshIcon } from '@/icons'
 import { useUserStore } from '@/stores'
 import { formatAmount, formatDateTime } from '@/utils/billing'
-import { isOrderExpired, ORDER_STATUSES, orderActions, orderStatusTheme } from '@/utils/admin-presenter'
+import {
+  isOrderExpired,
+  ORDER_STATUSES,
+  orderActions,
+  orderStatusTheme,
+} from '@/utils/admin-presenter'
 import { shortId } from '@/utils/team-presenter'
 
 /** 订单管理：全平台订单列表、筛选、详情与三种运营操作（取消 / 标记已支付 / 标记已退款）。仅 SUPER_ADMIN。 */
@@ -19,8 +27,21 @@ defineOptions({ name: 'AdminOrdersView' })
 
 const { t } = useI18n()
 const userStore = useUserStore()
-const { orders, total, loading, error, page, pageSize, filters, actingId, load, applyFilters, reset, changePage, act } =
-  useAdminOrders()
+const {
+  orders,
+  total,
+  loading,
+  error,
+  page,
+  pageSize,
+  filters,
+  actingId,
+  load,
+  applyFilters,
+  reset,
+  changePage,
+  act,
+} = useAdminOrders()
 
 const statusOptions = computed(() => [
   { label: t('adminPage.order.allStatuses'), value: 'all' },
@@ -49,15 +70,19 @@ function openDetail(order: AdminOrder) {
 }
 
 // ---------- 运营操作确认 ----------
-const pending = ref<{ order: AdminOrder; action: AdminOrderAction } | null>(null)
+const pending = ref<{ order: AdminOrder; action: AdminOrderAction } | null>(
+  null,
+)
 const confirmVisible = ref(false)
 
 const confirmMessage = computed(() => {
   const target = pending.value
   if (!target) return ''
   const name = { orderNo: target.order.orderNo }
-  if (target.action === 'cancel') return t('adminPage.order.cancelConfirm', name)
-  if (target.action === 'markPaid') return t('adminPage.order.markPaidConfirm', name)
+  if (target.action === 'cancel')
+    return t('adminPage.order.cancelConfirm', name)
+  if (target.action === 'markPaid')
+    return t('adminPage.order.markPaidConfirm', name)
   return t('adminPage.order.refundConfirm', name)
 })
 
@@ -112,9 +137,16 @@ onMounted(() => {
       </t-tooltip>
     </HeaderActions>
 
-    <t-alert v-if="!userStore.isSuperAdmin" theme="info" :message="t('adminPage.common.noPermission')" />
+    <t-alert
+      v-if="!userStore.isSuperAdmin"
+      theme="info"
+      :message="t('adminPage.common.noPermission')"
+    />
 
-    <t-card v-else class="admin-orders__panel">
+    <t-card
+      v-else
+      class="admin-orders__panel"
+    >
       <template #title>{{ t('adminPage.order.title') }}</template>
       <template #actions>
         <span class="admin-orders__total">
@@ -164,21 +196,41 @@ onMounted(() => {
           :aria-label="t('adminPage.order.range')"
         />
         <div class="admin-orders__filter-actions">
-          <t-button theme="primary" :loading="loading" @click="applyFilters">
+          <t-button
+            theme="primary"
+            :loading="loading"
+            @click="applyFilters"
+          >
             {{ t('adminPage.order.search') }}
           </t-button>
-          <t-button variant="outline" @click="reset">
+          <t-button
+            variant="outline"
+            @click="reset"
+          >
             {{ t('adminPage.common.reset') }}
           </t-button>
         </div>
       </div>
 
-      <div v-if="error" class="admin-orders__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('adminPage.common.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="admin-orders__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('adminPage.common.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !orders.length" class="admin-orders__state">
+      <div
+        v-else-if="loading && !orders.length"
+        class="admin-orders__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -195,32 +247,63 @@ onMounted(() => {
             <span>{{ t('adminPage.order.createdAt') }}</span>
             <span>{{ t('adminPage.common.actions') }}</span>
           </div>
-          <div v-for="order in orders" :key="order.id" class="admin-orders__row">
+          <div
+            v-for="order in orders"
+            :key="order.id"
+            class="admin-orders__row"
+          >
             <span class="admin-orders__no">
               <span class="admin-orders__no-text">{{ order.orderNo }}</span>
-              <span v-if="order.status === 'PENDING' && isOrderExpired(order)" class="admin-orders__expired">
+              <span
+                v-if="order.status === 'PENDING' && isOrderExpired(order)"
+                class="admin-orders__expired"
+              >
                 {{ t('adminPage.order.expired') }}
               </span>
             </span>
             <span class="admin-orders__org">
-              <span class="admin-orders__org-name">{{ order.organization?.name ?? shortId(order.organizationId) }}</span>
-              <span class="admin-orders__org-id">{{ shortId(order.organizationId) }}</span>
+              <span class="admin-orders__org-name">{{
+                order.organization?.name ?? shortId(order.organizationId)
+              }}</span>
+              <span class="admin-orders__org-id">{{
+                shortId(order.organizationId)
+              }}</span>
             </span>
             <span class="admin-orders__user">
-              <span class="admin-orders__user-name">{{ order.user?.name ?? shortId(order.userId) }}</span>
-              <span class="admin-orders__user-id">{{ order.user?.email ?? shortId(order.userId) }}</span>
+              <span class="admin-orders__user-name">{{
+                order.user?.name ?? shortId(order.userId)
+              }}</span>
+              <span class="admin-orders__user-id">{{
+                order.user?.email ?? shortId(order.userId)
+              }}</span>
             </span>
-            <span class="admin-orders__plan">{{ order.plan?.name ?? order.planId }}</span>
-            <span class="admin-orders__amount">{{ formatAmount(order.amount) }}</span>
-            <span>{{ t('adminPage.order.durationDays', { days: order.durationDays }) }}</span>
+            <span class="admin-orders__plan">{{
+              order.plan?.name ?? order.planId
+            }}</span>
+            <span class="admin-orders__amount">{{
+              formatAmount(order.amount)
+            }}</span>
+            <span>{{
+              t('adminPage.order.durationDays', { days: order.durationDays })
+            }}</span>
             <span>
-              <t-tag size="small" variant="light" :theme="orderStatusTheme(order.status)">
+              <t-tag
+                size="small"
+                variant="light"
+                :theme="orderStatusTheme(order.status)"
+              >
                 {{ t(`adminPage.order.statusLabel.${order.status}`) }}
               </t-tag>
             </span>
-            <span class="admin-orders__time">{{ formatDateTime(order.createdAt) }}</span>
+            <span class="admin-orders__time">{{
+              formatDateTime(order.createdAt)
+            }}</span>
             <span class="admin-orders__actions">
-              <t-button variant="text" size="small" @click="openDetail(order)">
+              <t-button
+                variant="text"
+                size="small"
+                @click="openDetail(order)"
+              >
                 {{ t('adminPage.order.viewDetail') }}
               </t-button>
               <template v-if="orderActions(order).canMarkPaid">
@@ -232,7 +315,11 @@ onMounted(() => {
                 >
                   {{ t('adminPage.order.markPaid') }}
                 </t-button>
-                <t-button variant="text" size="small" @click="ask(order, 'cancel')">
+                <t-button
+                  variant="text"
+                  size="small"
+                  @click="ask(order, 'cancel')"
+                >
                   {{ t('adminPage.order.cancel') }}
                 </t-button>
               </template>
@@ -259,7 +346,10 @@ onMounted(() => {
         />
       </template>
 
-      <div v-else class="admin-orders__state">
+      <div
+        v-else
+        class="admin-orders__state"
+      >
         <p class="admin-orders__empty">{{ t('adminPage.order.empty') }}</p>
       </div>
     </t-card>
@@ -275,7 +365,10 @@ onMounted(() => {
       v-model:visible="confirmVisible"
       :header="t('adminPage.order.title')"
       width="min(520px, calc(100vw - 32px))"
-      :confirm-btn="{ content: t('adminPage.common.confirm'), loading: Boolean(actingId) }"
+      :confirm-btn="{
+        content: t('adminPage.common.confirm'),
+        loading: Boolean(actingId),
+      }"
       :cancel-btn="t('adminPage.common.cancel')"
       @confirm="confirmAction"
     >
@@ -323,7 +416,9 @@ onMounted(() => {
   &__table-head,
   &__row {
     display: grid;
-    grid-template-columns: 170px minmax(160px, 1fr) minmax(160px, 1fr) 120px 100px 90px 100px 150px 220px;
+    grid-template-columns:
+      170px minmax(160px, 1fr) minmax(160px, 1fr)
+      120px 100px 90px 100px 150px 220px;
     gap: 12px;
     align-items: center;
     min-width: 1240px;

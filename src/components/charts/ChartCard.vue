@@ -19,15 +19,29 @@ withDefaults(
 </script>
 
 <template>
-  <section class="chart-card" :style="{ height }">
+  <section
+    class="chart-card"
+    :style="{ height }"
+  >
     <header class="chart-card__head">
       <div class="chart-card__titles">
         <span class="chart-card__title">{{ title }}</span>
-        <t-tooltip v-if="tip" :content="tip" placement="top">
-          <AppIcon class="chart-card__tip" :icon="InformationCircleIcon" />
+        <t-tooltip
+          v-if="tip"
+          :content="tip"
+          placement="top"
+        >
+          <AppIcon
+            class="chart-card__tip"
+            :icon="InformationCircleIcon"
+          />
         </t-tooltip>
       </div>
-      <span v-if="extra" class="chart-card__extra">{{ extra }}</span>
+      <span
+        v-if="extra"
+        class="chart-card__extra"
+        >{{ extra }}</span
+      >
     </header>
 
     <div class="chart-card__body">

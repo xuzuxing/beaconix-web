@@ -74,7 +74,9 @@ function resetForm() {
 watch(() => org.value?.id, resetForm, { immediate: true, flush: 'sync' })
 
 const dirty = computed(() =>
-  (Object.keys(form) as (keyof typeof form)[]).some((key) => form[key] !== baseline[key]),
+  (Object.keys(form) as (keyof typeof form)[]).some(
+    (key) => form[key] !== baseline[key],
+  ),
 )
 
 /** 所有者名称：优先用成员里的用户资料，未加载到时回退 userId 短码 */
@@ -86,9 +88,11 @@ const ownerLabel = computed(() => {
 
 function validate(): string {
   if (!form.name.trim()) return t('workspace.team.required')
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) return t('workspace.team.slugInvalid')
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim()))
+    return t('workspace.team.slugInvalid')
   const website = form.website.trim()
-  if (website && !/^https?:\/\//i.test(website)) return t('workspace.team.websiteInvalid')
+  if (website && !/^https?:\/\//i.test(website))
+    return t('workspace.team.websiteInvalid')
   return ''
 }
 
@@ -134,7 +138,8 @@ async function save() {
     await orgStore.loadOrganizations()
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('workspace.team.saveFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('workspace.team.saveFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -150,7 +155,8 @@ async function loadMembers() {
   }
   try {
     const result = await listMembers(id)
-    if (request === membersRequest && id === orgId.value) members.value = result ?? []
+    if (request === membersRequest && id === orgId.value)
+      members.value = result ?? []
   } catch {
     // 请求层已统一提示；成员缺失时所有者回退展示 userId
   }
@@ -202,13 +208,20 @@ onMounted(() => {
       ></t-tooltip>
     </HeaderActions>
 
-    <t-alert v-if="!canManage" theme="info" :message="t('workspace.team.readOnlyHint')" />
+    <t-alert
+      v-if="!canManage"
+      theme="info"
+      :message="t('workspace.team.readOnlyHint')"
+    />
 
     <t-card class="team-info__panel">
       <template #title>{{ t('workspace.team.infoTitle') }}</template>
       <p class="team-info__subtitle">{{ t('workspace.team.infoSubtitle') }}</p>
 
-      <div v-if="!org" class="team-info__empty">
+      <div
+        v-if="!org"
+        class="team-info__empty"
+      >
         {{ loading ? t('common.loading') : t('workspace.team.empty') }}
       </div>
 
@@ -228,14 +241,35 @@ onMounted(() => {
           </div>
         </dl>
 
-        <t-alert v-if="error" theme="error" :message="error" class="team-info__error" />
+        <t-alert
+          v-if="error"
+          theme="error"
+          :message="error"
+          class="team-info__error"
+        />
 
-        <t-form class="team-info__form" label-align="top" :colon="false" :data="form">
+        <t-form
+          class="team-info__form"
+          label-align="top"
+          :colon="false"
+          :data="form"
+        >
           <t-form-item :label="t('workspace.team.name')">
-            <t-input v-model="form.name" :maxlength="100" :disabled="!canManage || submitting" />
+            <t-input
+              v-model="form.name"
+              :maxlength="100"
+              :disabled="!canManage || submitting"
+            />
           </t-form-item>
-          <t-form-item :label="t('workspace.team.slug')" :help="t('workspace.team.slugHint')">
-            <t-input v-model="form.slug" :maxlength="50" :disabled="!canManage || submitting" />
+          <t-form-item
+            :label="t('workspace.team.slug')"
+            :help="t('workspace.team.slugHint')"
+          >
+            <t-input
+              v-model="form.slug"
+              :maxlength="50"
+              :disabled="!canManage || submitting"
+            />
           </t-form-item>
           <t-form-item :label="t('workspace.team.description')">
             <t-textarea
@@ -253,7 +287,10 @@ onMounted(() => {
               :disabled="!canManage || submitting"
             />
           </t-form-item>
-          <t-form-item :label="t('workspace.team.logo')" :help="t('workspace.team.logoHint')">
+          <t-form-item
+            :label="t('workspace.team.logo')"
+            :help="t('workspace.team.logoHint')"
+          >
             <!-- 单入口：点预览框打开弹窗，在里面随机选择或自己上传 -->
             <AvatarPickerField
               v-model="form.logoUrl"
@@ -276,20 +313,34 @@ onMounted(() => {
       </template>
     </t-card>
 
-    <t-card v-if="org" class="team-info__panel">
+    <t-card
+      v-if="org"
+      class="team-info__panel"
+    >
       <template #title>{{ t('workspace.team.transfer') }}</template>
       <p class="team-info__subtitle">{{ t('workspace.team.transferHint') }}</p>
 
       <div class="team-info__owner">
-        <span class="team-info__owner-label">{{ t('workspace.team.owner') }}</span>
+        <span class="team-info__owner-label">{{
+          t('workspace.team.owner')
+        }}</span>
         <span class="team-info__owner-name">{{ ownerLabel }}</span>
-        <t-button v-if="isOwner" class="team-info__owner-action" @click="transferVisible = true">
+        <t-button
+          v-if="isOwner"
+          class="team-info__owner-action"
+          @click="transferVisible = true"
+        >
           {{ t('workspace.team.transfer') }}
         </t-button>
       </div>
     </t-card>
 
-    <TeamDangerSection v-if="org" :org="org" :is-owner="isOwner" @deleted="onDeleted" />
+    <TeamDangerSection
+      v-if="org"
+      :org="org"
+      :is-owner="isOwner"
+      @deleted="onDeleted"
+    />
 
     <TeamOwnerTransferDialog
       v-model:visible="transferVisible"

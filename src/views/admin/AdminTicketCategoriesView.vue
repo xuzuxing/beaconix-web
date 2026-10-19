@@ -3,7 +3,10 @@ import { MessagePlugin } from 'tdesign-vue-next'
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { CreateTicketCategoryParams, TicketCategory } from '@/api/types/ticket'
+import type {
+  CreateTicketCategoryParams,
+  TicketCategory,
+} from '@/api/types/ticket'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import { useAdminTicketCategories } from '@/composables/useAdminTicketCategories'
@@ -24,10 +27,22 @@ defineOptions({ name: 'AdminTicketCategoriesView' })
 
 const { t } = useI18n()
 const userStore = useUserStore()
-const { categories, loading, error, creating, actingId, load, create, update, remove } =
-  useAdminTicketCategories()
+const {
+  categories,
+  loading,
+  error,
+  creating,
+  actingId,
+  load,
+  create,
+  update,
+  remove,
+} = useAdminTicketCategories()
 
-usePageHeader({ title: t('adminPage.ticketCategory.title'), back: '/admin/tickets' })
+usePageHeader({
+  title: t('adminPage.ticketCategory.title'),
+  back: '/admin/tickets',
+})
 
 // ---------- 新建 / 编辑弹窗 ----------
 const formVisible = ref(false)
@@ -43,7 +58,12 @@ const form = reactive({
 function openCreate() {
   editing.value = null
   formError.value = ''
-  Object.assign(form, { name: '', description: '', sortOrder: 0, isActive: true })
+  Object.assign(form, {
+    name: '',
+    description: '',
+    sortOrder: 0,
+    isActive: true,
+  })
   formVisible.value = true
 }
 
@@ -68,7 +88,9 @@ async function submitForm() {
 
   const payload: CreateTicketCategoryParams = {
     name,
-    sortOrder: Number.isFinite(Number(form.sortOrder)) ? Number(form.sortOrder) : 0,
+    sortOrder: Number.isFinite(Number(form.sortOrder))
+      ? Number(form.sortOrder)
+      : 0,
     isActive: form.isActive,
   }
   if (form.description.trim()) payload.description = form.description.trim()
@@ -78,7 +100,11 @@ async function submitForm() {
   if (!done) return
 
   MessagePlugin.success(
-    t(target ? 'adminPage.ticketCategory.updated' : 'adminPage.ticketCategory.created'),
+    t(
+      target
+        ? 'adminPage.ticketCategory.updated'
+        : 'adminPage.ticketCategory.created',
+    ),
   )
   formVisible.value = false
 }
@@ -88,7 +114,11 @@ async function toggleActive(category: TicketCategory) {
   const done = await update(category.id, { isActive: !category.isActive })
   if (!done) return
   MessagePlugin.success(
-    t(category.isActive ? 'adminPage.ticketCategory.disabled' : 'adminPage.ticketCategory.enabled'),
+    t(
+      category.isActive
+        ? 'adminPage.ticketCategory.disabled'
+        : 'adminPage.ticketCategory.enabled',
+    ),
   )
 }
 
@@ -130,7 +160,11 @@ onMounted(() => {
           <template #icon><AppIcon :icon="RefreshIcon" /></template>
         </t-button>
       </t-tooltip>
-      <t-button theme="primary" :disabled="!userStore.isSuperAdmin" @click="openCreate">
+      <t-button
+        theme="primary"
+        :disabled="!userStore.isSuperAdmin"
+        @click="openCreate"
+      >
         <template #icon><AppIcon :icon="PlusSignIcon" /></template>
         {{ t('adminPage.ticketCategory.create') }}
       </t-button>
@@ -142,25 +176,43 @@ onMounted(() => {
       :message="t('adminPage.common.noPermission')"
     />
 
-    <t-card v-else class="ticket-categories__panel">
+    <t-card
+      v-else
+      class="ticket-categories__panel"
+    >
       <template #title>{{ t('adminPage.ticketCategory.title') }}</template>
       <template #actions>
         <span class="ticket-categories__total">{{ categories.length }}</span>
       </template>
 
-      <p class="ticket-categories__subtitle">{{ t('adminPage.ticketCategory.subtitle') }}</p>
+      <p class="ticket-categories__subtitle">
+        {{ t('adminPage.ticketCategory.subtitle') }}
+      </p>
       <t-alert
         theme="info"
         :message="t('adminPage.ticketCategory.onlyActiveHint')"
         class="ticket-categories__hint"
       />
 
-      <div v-if="error" class="ticket-categories__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('adminPage.common.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="ticket-categories__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('adminPage.common.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !categories.length" class="ticket-categories__state">
+      <div
+        v-else-if="loading && !categories.length"
+        class="ticket-categories__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -174,10 +226,18 @@ onMounted(() => {
             <span>{{ t('adminPage.common.createdAt') }}</span>
             <span>{{ t('adminPage.common.actions') }}</span>
           </div>
-          <div v-for="category in categories" :key="category.id" class="ticket-categories__row">
+          <div
+            v-for="category in categories"
+            :key="category.id"
+            class="ticket-categories__row"
+          >
             <span class="ticket-categories__name">{{ category.name }}</span>
-            <span class="ticket-categories__muted">{{ category.description || '—' }}</span>
-            <span class="ticket-categories__muted">{{ category.sortOrder }}</span>
+            <span class="ticket-categories__muted">{{
+              category.description || '—'
+            }}</span>
+            <span class="ticket-categories__muted">{{
+              category.sortOrder
+            }}</span>
             <span>
               <t-tag
                 size="small"
@@ -185,13 +245,21 @@ onMounted(() => {
                 :theme="category.isActive ? 'success' : 'default'"
               >
                 {{
-                  category.isActive ? t('adminPage.common.active') : t('adminPage.common.inactive')
+                  category.isActive
+                    ? t('adminPage.common.active')
+                    : t('adminPage.common.inactive')
                 }}
               </t-tag>
             </span>
-            <span class="ticket-categories__muted">{{ formatDateTime(category.createdAt) }}</span>
+            <span class="ticket-categories__muted">{{
+              formatDateTime(category.createdAt)
+            }}</span>
             <span class="ticket-categories__actions">
-              <t-button variant="text" size="small" @click="openEdit(category)">
+              <t-button
+                variant="text"
+                size="small"
+                @click="openEdit(category)"
+              >
                 {{ t('adminPage.ticketCategory.edit') }}
               </t-button>
               <t-button
@@ -220,9 +288,17 @@ onMounted(() => {
         </div>
       </template>
 
-      <div v-else class="ticket-categories__state">
-        <p class="ticket-categories__empty">{{ t('adminPage.ticketCategory.empty') }}</p>
-        <t-button theme="primary" @click="openCreate">
+      <div
+        v-else
+        class="ticket-categories__state"
+      >
+        <p class="ticket-categories__empty">
+          {{ t('adminPage.ticketCategory.empty') }}
+        </p>
+        <t-button
+          theme="primary"
+          @click="openCreate"
+        >
           {{ t('adminPage.ticketCategory.create') }}
         </t-button>
       </div>
@@ -230,7 +306,11 @@ onMounted(() => {
 
     <t-dialog
       v-model:visible="formVisible"
-      :header="editing ? t('adminPage.ticketCategory.edit') : t('adminPage.ticketCategory.create')"
+      :header="
+        editing
+          ? t('adminPage.ticketCategory.edit')
+          : t('adminPage.ticketCategory.create')
+      "
       width="min(520px, calc(100vw - 32px))"
       :confirm-btn="{
         content: t('adminPage.common.confirm'),
@@ -246,7 +326,11 @@ onMounted(() => {
         class="ticket-categories__error"
       />
 
-      <t-form label-align="top" :colon="false" :data="form">
+      <t-form
+        label-align="top"
+        :colon="false"
+        :data="form"
+      >
         <t-form-item :label="t('adminPage.common.name')">
           <t-input
             v-model="form.name"
@@ -263,7 +347,13 @@ onMounted(() => {
           />
         </t-form-item>
         <t-form-item :label="t('adminPage.ticketCategory.sortOrder')">
-          <t-input-number v-model="form.sortOrder" :min="0" :max="9999" :step="1" theme="normal" />
+          <t-input-number
+            v-model="form.sortOrder"
+            :min="0"
+            :max="9999"
+            :step="1"
+            theme="normal"
+          />
         </t-form-item>
         <t-form-item :label="t('adminPage.common.status')">
           <t-switch v-model="form.isActive" />
@@ -284,7 +374,11 @@ onMounted(() => {
       @confirm="confirmRemove"
     >
       <p class="ticket-categories__confirm">
-        {{ t('adminPage.ticketCategory.deleteConfirm', { name: removeTarget?.name ?? '' }) }}
+        {{
+          t('adminPage.ticketCategory.deleteConfirm', {
+            name: removeTarget?.name ?? '',
+          })
+        }}
       </p>
     </t-dialog>
   </section>
@@ -321,7 +415,9 @@ onMounted(() => {
   &__table-head,
   &__row {
     display: grid;
-    grid-template-columns: minmax(140px, 1fr) minmax(200px, 2fr) 80px 100px 150px 220px;
+    grid-template-columns:
+      minmax(140px, 1fr) minmax(200px, 2fr)
+      80px 100px 150px 220px;
     gap: 12px;
     align-items: center;
     min-width: 940px;

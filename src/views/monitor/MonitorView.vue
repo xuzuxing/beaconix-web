@@ -30,7 +30,13 @@ const { canManage, canCheck, canTestAlert } = useMonitorAccess()
 const { monitors, loading, error, load } = useMonitorList(projectId)
 const dialog = ref(false)
 const editing = ref<Monitor>()
-const statuses: MonitorStatus[] = ['UP', 'DOWN', 'DEGRADED', 'PAUSED', 'UNKNOWN']
+const statuses: MonitorStatus[] = [
+  'UP',
+  'DOWN',
+  'DEGRADED',
+  'PAUSED',
+  'UNKNOWN',
+]
 const protocols: MonitorType[] = [
   'HTTP',
   'TCP',
@@ -55,7 +61,10 @@ function setFilter(key: string, value: string | number) {
     },
   })
 }
-const search = computed({ get: () => queryValue('q'), set: (value) => setFilter('q', value) })
+const search = computed({
+  get: () => queryValue('q'),
+  set: (value) => setFilter('q', value),
+})
 const status = computed({
   get: () =>
     statuses.includes(queryValue('status') as MonitorStatus)
@@ -88,10 +97,18 @@ const sort = computed({
   set: (value) => setFilter('sort', value),
 })
 const pageSize = computed(() =>
-  [10, 20, 50].includes(Number(queryValue('size'))) ? Number(queryValue('size')) : 10,
+  [10, 20, 50].includes(Number(queryValue('size')))
+    ? Number(queryValue('size'))
+    : 10,
 )
 const filtered = computed(() =>
-  selectMonitors(monitors.value, search.value, status.value, type.value, sort.value),
+  selectMonitors(
+    monitors.value,
+    search.value,
+    status.value,
+    type.value,
+    sort.value,
+  ),
 )
 const page = computed(() =>
   Math.min(
@@ -100,7 +117,10 @@ const page = computed(() =>
   ),
 )
 const rows = computed(() =>
-  filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
+  filtered.value.slice(
+    (page.value - 1) * pageSize.value,
+    page.value * pageSize.value,
+  ),
 )
 // 切换项目时关闭编辑弹窗；列表本身由 useMonitorList 负责重载
 watch(
@@ -124,8 +144,16 @@ function detail(monitor: Monitor) {
     query: route.query,
   }
 }
-function paginate({ current, pageSize: size }: { current: number; pageSize: number }) {
-  void router.replace({ query: { ...route.query, page: String(current), size: String(size) } })
+function paginate({
+  current,
+  pageSize: size,
+}: {
+  current: number
+  pageSize: number
+}) {
+  void router.replace({
+    query: { ...route.query, page: String(current), size: String(size) },
+  })
 }
 </script>
 
@@ -143,7 +171,10 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           @click="load"
           ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
-      <t-button v-if="canManage" :disabled="!projectId" @click="edit()"
+      <t-button
+        v-if="canManage"
+        :disabled="!projectId"
+        @click="edit()"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('workspace.monitor.create') }}</t-button
       >
@@ -152,10 +183,15 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
       <template #title>{{ t('monitorPage.title') }}</template>
       <template #actions>
         <span class="monitor-page__scope">
-          {{ org.currentOrganization?.name ?? '-' }} / {{ org.currentProject?.name ?? '-' }}
+          {{ org.currentOrganization?.name ?? '-' }} /
+          {{ org.currentProject?.name ?? '-' }}
         </span>
       </template>
-      <t-alert v-if="actionError" theme="error" :message="actionError" />
+      <t-alert
+        v-if="actionError"
+        theme="error"
+        :message="actionError"
+      />
       <div class="monitor-page__filters">
         <t-input
           v-model="search"
@@ -169,7 +205,10 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           :aria-label="t('monitorPage.allStatuses')"
           :options="[
             { label: t('monitorPage.allStatuses'), value: 'all' },
-            ...statuses.map((value) => ({ label: t(`workspace.monitor.status.${value}`), value })),
+            ...statuses.map((value) => ({
+              label: t(`workspace.monitor.status.${value}`),
+              value,
+            })),
           ]"
         />
         <t-select
@@ -193,15 +232,25 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           "
         />
       </div>
-      <div v-if="error" class="monitor-page__empty">
-        <t-alert theme="error" :message="error" /><t-button @click="load">{{
-          t('monitorPage.retry')
-        }}</t-button>
+      <div
+        v-if="error"
+        class="monitor-page__empty"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        /><t-button @click="load">{{ t('monitorPage.retry') }}</t-button>
       </div>
-      <div v-else-if="loading" class="monitor-page__empty">
+      <div
+        v-else-if="loading"
+        class="monitor-page__empty"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
-      <div v-else-if="!projectId" class="monitor-page__empty">
+      <div
+        v-else-if="!projectId"
+        class="monitor-page__empty"
+      >
         {{ t('monitorPage.noProjectData') }}
       </div>
       <template v-else-if="rows.length">
@@ -220,23 +269,43 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           >
             <div class="monitor-row__identity">
               <div class="monitor-row__name">
-                <RouterLink :to="detail(monitor)" @click.stop>{{ monitor.name }}</RouterLink
+                <RouterLink
+                  :to="detail(monitor)"
+                  @click.stop
+                  >{{ monitor.name }}</RouterLink
                 ><MonitorStatusTag :status="monitorStatus(monitor)" /><span
                   class="monitor-row__protocol"
                   >{{ monitor.type }}</span
                 >
               </div>
-              <p class="monitor-row__target" :title="monitor.target">{{ monitor.target }}</p>
-              <p v-if="monitor.lastError" class="monitor-row__error" :title="monitor.lastError">
+              <p
+                class="monitor-row__target"
+                :title="monitor.target"
+              >
+                {{ monitor.target }}
+              </p>
+              <p
+                v-if="monitor.lastError"
+                class="monitor-row__error"
+                :title="monitor.lastError"
+              >
                 {{ monitor.lastError }}
               </p>
-              <p v-if="monitor.executionEligible === false" class="monitor-row__error">
-                {{ t('monitorPage.executionBlocked') }} · {{ monitor.executionBlockedReason }}
+              <p
+                v-if="monitor.executionEligible === false"
+                class="monitor-row__error"
+              >
+                {{ t('monitorPage.executionBlocked') }} ·
+                {{ monitor.executionBlockedReason }}
               </p>
             </div>
             <div class="monitor-row__latency">
-              <span>{{ monitor.lastLatency == null ? '-' : `${monitor.lastLatency} ms` }}</span
-              ><small>{{ t('monitorPage.seconds', { value: monitor.interval }) }}</small>
+              <span>{{
+                monitor.lastLatency == null ? '-' : `${monitor.lastLatency} ms`
+              }}</span
+              ><small>{{
+                t('monitorPage.seconds', { value: monitor.interval })
+              }}</small>
             </div>
             <time class="monitor-row__time">{{
               monitor.lastCheckAt
@@ -263,11 +332,25 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           @change="paginate"
         />
       </template>
-      <div v-else class="monitor-page__empty">
-        <p>{{ t(monitors.length ? 'monitorPage.noMatches' : 'workspace.monitor.empty') }}</p>
-        <t-button v-if="monitors.length" variant="outline" @click="router.replace({ query: {} })">{{
-          t('monitorPage.reset')
-        }}</t-button>
+      <div
+        v-else
+        class="monitor-page__empty"
+      >
+        <p>
+          {{
+            t(
+              monitors.length
+                ? 'monitorPage.noMatches'
+                : 'workspace.monitor.empty',
+            )
+          }}
+        </p>
+        <t-button
+          v-if="monitors.length"
+          variant="outline"
+          @click="router.replace({ query: {} })"
+          >{{ t('monitorPage.reset') }}</t-button
+        >
       </div>
     </t-card>
     <MonitorEditorDialog

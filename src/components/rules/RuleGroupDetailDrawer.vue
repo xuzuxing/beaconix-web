@@ -16,7 +16,9 @@ const emit = defineEmits<{ edit: [group: RuleGroup] }>()
 const { t, locale } = useI18n()
 
 const counts = computed(() =>
-  props.group?.tree ? countRuleNodes(props.group.tree) : { conditions: 0, logics: 0 },
+  props.group?.tree
+    ? countRuleNodes(props.group.tree)
+    : { conditions: 0, logics: 0 },
 )
 const fields = computed(() =>
   (props.group?.fieldsUsed ?? []).map((field) => {
@@ -33,15 +35,28 @@ const fields = computed(() =>
     :header="group?.name ?? t('ruleGroup.detailTitle')"
     :footer="false"
   >
-    <div v-if="group" class="rule-group-detail">
+    <div
+      v-if="group"
+      class="rule-group-detail"
+    >
       <dl class="rule-group-detail__info">
         <div>
           <dt>{{ t('ruleGroup.scopeLabel') }}</dt>
-          <dd>{{ group.projectId ? t('ruleGroup.scope.project') : t('ruleGroup.scope.org') }}</dd>
+          <dd>
+            {{
+              group.projectId
+                ? t('ruleGroup.scope.project')
+                : t('ruleGroup.scope.org')
+            }}
+          </dd>
         </div>
         <div>
           <dt>{{ t('ruleGroup.stateLabel') }}</dt>
-          <dd>{{ t(group.enabled ? 'ruleGroup.state.on' : 'ruleGroup.state.off') }}</dd>
+          <dd>
+            {{
+              t(group.enabled ? 'ruleGroup.state.on' : 'ruleGroup.state.off')
+            }}
+          </dd>
         </div>
         <div>
           <dt>{{ t('ruleGroup.fieldsLabel') }}</dt>
@@ -50,7 +65,12 @@ const fields = computed(() =>
         <div v-if="group.tree">
           <dt>{{ t('ruleGroup.rulesLabel') }}</dt>
           <dd>
-            {{ t('ruleGroup.rulesCount', { rules: counts.conditions, groups: counts.logics }) }}
+            {{
+              t('ruleGroup.rulesCount', {
+                rules: counts.conditions,
+                groups: counts.logics,
+              })
+            }}
           </dd>
         </div>
         <div>
@@ -62,15 +82,30 @@ const fields = computed(() =>
           <dd>{{ formatMonitorTime(group.updatedAt, locale) }}</dd>
         </div>
       </dl>
-      <p v-if="group.description" class="rule-group-detail__desc">{{ group.description }}</p>
-      <section v-if="group.tree" class="rule-group-detail__tree">
+      <p
+        v-if="group.description"
+        class="rule-group-detail__desc"
+      >
+        {{ group.description }}
+      </p>
+      <section
+        v-if="group.tree"
+        class="rule-group-detail__tree"
+      >
         <div class="rule-group-detail__tree-head">
           <h4>{{ t('ruleGroup.treeTitle') }}</h4>
-          <t-button v-if="editable" size="small" variant="outline" @click="emit('edit', group)">{{
-            t('ruleGroup.edit')
-          }}</t-button>
+          <t-button
+            v-if="editable"
+            size="small"
+            variant="outline"
+            @click="emit('edit', group)"
+            >{{ t('ruleGroup.edit') }}</t-button
+          >
         </div>
-        <RuleTreeView v-if="group.tree" :tree="group.tree" />
+        <RuleTreeView
+          v-if="group.tree"
+          :tree="group.tree"
+        />
       </section>
     </div>
   </t-drawer>

@@ -39,7 +39,10 @@ export function useAdminAuditLogs() {
 
   /** 组装后端查询参数：空筛选不下发 */
   function buildQuery(): AdminAuditLogQuery {
-    const query: AdminAuditLogQuery = { page: page.value, limit: pageSize.value }
+    const query: AdminAuditLogQuery = {
+      page: page.value,
+      limit: pageSize.value,
+    }
     if (filters.action !== 'all') query.action = filters.action
     if (filters.entity.trim()) query.entity = filters.entity.trim()
     if (filters.actorId.trim()) query.actorId = filters.actorId.trim()

@@ -4,7 +4,12 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { sendInvitation, listProjects } from '@/api'
-import type { Invitation, InvitableRole, Membership, Project } from '@/api/types'
+import type {
+  Invitation,
+  InvitableRole,
+  Membership,
+  Project,
+} from '@/api/types'
 import type { ProjectGrant } from '@/api/types/permissions'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { permissionEpoch } from '@/utils/access-context'
@@ -34,22 +39,34 @@ const grants = ref<ProjectGrant[]>([])
 const loadingProjects = ref(false)
 const adminConfirmed = ref(false)
 const permissions = usePermissionsStore()
-const allowed = computed(() => permissions.canOrganization(props.orgId, 'inviteMembers'))
+const allowed = computed(() =>
+  permissions.canOrganization(props.orgId, 'inviteMembers'),
+)
 let generation = 0
 
 const roleOptions = computed(() =>
   INVITABLE_ROLES.filter(
     (role) =>
-      role !== 'ADMIN' || permissions.canOrganization(props.orgId, 'grantOrganizationAdmin'),
-  ).map((role) => ({ label: t(`workspace.member.roleOption.${role}`), value: role })),
+      role !== 'ADMIN' ||
+      permissions.canOrganization(props.orgId, 'grantOrganizationAdmin'),
+  ).map((role) => ({
+    label: t(`workspace.member.roleOption.${role}`),
+    value: role,
+  })),
 )
 
 /** 已占用邮箱：现役成员 + 待处理邀请 */
 const takenEmails = computed(() => {
   const list = props.members
     .map((member) => member.user?.email ?? '')
-    .concat(props.invitations.filter((item) => item.status === 'PENDING').map((item) => item.email))
-  return new Set(list.filter(Boolean).map((email) => email.trim().toLowerCase()))
+    .concat(
+      props.invitations
+        .filter((item) => item.status === 'PENDING')
+        .map((item) => item.email),
+    )
+  return new Set(
+    list.filter(Boolean).map((email) => email.trim().toLowerCase()),
+  )
 })
 
 watch(
@@ -122,15 +139,21 @@ function validate(): string {
   } else if (
     !grants.value.length ||
     grants.value.length > 100 ||
-    new Set(grants.value.map((grant) => grant.projectId)).size !== grants.value.length ||
-    grants.value.some((grant) => !projects.value.some((project) => project.id === grant.projectId))
+    new Set(grants.value.map((grant) => grant.projectId)).size !==
+      grants.value.length ||
+    grants.value.some(
+      (grant) =>
+        !projects.value.some((project) => project.id === grant.projectId),
+    )
   ) {
     return t('access.selectRequired')
   }
   const email = form.email.trim()
   if (!email) return t('workspace.member.inviteRequired')
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return t('workspace.member.inviteInvalidEmail')
-  if (takenEmails.value.has(email.toLowerCase())) return t('workspace.member.inviteDuplicate')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return t('workspace.member.inviteInvalidEmail')
+  if (takenEmails.value.has(email.toLowerCase()))
+    return t('workspace.member.inviteDuplicate')
   return ''
 }
 
@@ -164,7 +187,10 @@ async function submit() {
     emit('saved')
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('workspace.member.inviteFailed')
+      error.value =
+        cause instanceof Error
+          ? cause.message
+          : t('workspace.member.inviteFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -185,9 +211,18 @@ async function submit() {
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="invite__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="invite__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+    >
       <t-form-item :label="t('workspace.member.inviteEmail')">
         <t-input
           v-model="form.email"
@@ -196,12 +231,20 @@ async function submit() {
         />
       </t-form-item>
       <t-form-item :label="t('workspace.member.inviteRole')">
-        <t-select v-model="form.role" :options="roleOptions" />
+        <t-select
+          v-model="form.role"
+          :options="roleOptions"
+        />
       </t-form-item>
-      <t-checkbox v-if="form.role === 'ADMIN'" v-model="adminConfirmed">{{
-        t('access.adminConfirm')
-      }}</t-checkbox>
-      <t-form-item v-else :label="t('access.projects')">
+      <t-checkbox
+        v-if="form.role === 'ADMIN'"
+        v-model="adminConfirmed"
+        >{{ t('access.adminConfirm') }}</t-checkbox
+      >
+      <t-form-item
+        v-else
+        :label="t('access.projects')"
+      >
         <t-loading v-if="loadingProjects" />
         <ProjectGrantSelector
           v-else

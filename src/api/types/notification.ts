@@ -3,12 +3,7 @@
 // ============================================================
 
 /** 渠道投递方，对应 NotificationChannelEntity.type */
-export type NotificationChannelType =
-  | 'FEISHU'
-  | 'WECOM'
-  | 'DINGTALK'
-  | 'WECHAT_SUBSCRIBE'
-  | 'EMAIL'
+export type NotificationChannelType = 'FEISHU' | 'WECOM' | 'DINGTALK' | 'WECHAT_SUBSCRIBE' | 'EMAIL'
 
 /** FEISHU / WECOM / DINGTALK 共用 webhook 配置 */
 export interface WebhookChannelConfig {
@@ -35,10 +30,7 @@ export interface EmailChannelConfig {
 
 /** 渠道配置（后端按 type 校验字段，前端只负责原样提交） */
 export type NotificationChannelConfig =
-  | WebhookChannelConfig
-  | WechatSubscribeChannelConfig
-  | EmailChannelConfig
-  | Record<string, unknown>
+  WebhookChannelConfig | WechatSubscribeChannelConfig | EmailChannelConfig | Record<string, unknown>
 
 /** 通知渠道 */
 export interface NotificationChannel {

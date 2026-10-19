@@ -36,22 +36,28 @@ const metaTitle = computed(() => {
   return titleKey ? t(titleKey) : ''
 })
 const pageTitle = computed(() => pageHeader.title.value || metaTitle.value)
-const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitle.value))
+const showPageHeader = computed(
+  () => !route.meta.hideHeader && Boolean(pageTitle.value),
+)
 </script>
 
 <template>
-  <div class="layout" :class="{
-    'layout--dashboard':
-      route.name === 'dashboard' ||
-      route.name === 'monitor' ||
-      route.name === 'monitor-detail' ||
-      route.path.startsWith('/probes') ||
-      route.path.startsWith('/teams'),
-    'layout--monitor': route.name === 'monitor' || route.name === 'monitor-detail',
-    'layout--probes': route.path.startsWith('/probes'),
-    'layout--notifications':
-      route.name === 'notifications' || route.name === 'notification-detail',
-  }">
+  <div
+    class="layout"
+    :class="{
+      'layout--dashboard':
+        route.name === 'dashboard' ||
+        route.name === 'monitor' ||
+        route.name === 'monitor-detail' ||
+        route.path.startsWith('/probes') ||
+        route.path.startsWith('/teams'),
+      'layout--monitor':
+        route.name === 'monitor' || route.name === 'monitor-detail',
+      'layout--probes': route.path.startsWith('/probes'),
+      'layout--notifications':
+        route.name === 'notifications' || route.name === 'notification-detail',
+    }"
+  >
     <AppHeader />
 
     <AppMaintenanceBanner />
@@ -69,22 +75,43 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
           标题与返回按钮用 usePageHeader 声明。
           容器用 v-show 常驻 DOM：页面挂载时就要能找到 Teleport 目标。
         -->
-        <div v-show="showPageHeader" class="layout__content-header">
+        <div
+          v-show="showPageHeader"
+          class="layout__content-header"
+        >
           <div class="layout__content-header-left">
-            <t-button v-if="back" class="layout__header-back" variant="text" shape="square"
-              :aria-label="t('layout.back')" @click="goBack">
-              <AppIcon :icon="ArrowLeft01Icon" :size="20" />
+            <t-button
+              v-if="back"
+              class="layout__header-back"
+              variant="text"
+              shape="square"
+              :aria-label="t('layout.back')"
+              @click="goBack"
+            >
+              <AppIcon
+                :icon="ArrowLeft01Icon"
+                :size="20"
+              />
             </t-button>
             <h2 class="layout__page-title">{{ pageTitle }}</h2>
-            <div id="layout-header-title-addon" class="layout__header-slot"></div>
+            <div
+              id="layout-header-title-addon"
+              class="layout__header-slot"
+            ></div>
           </div>
 
           <div class="layout__content-header-right">
-            <div id="layout-header-actions" class="layout__header-slot"></div>
+            <div
+              id="layout-header-actions"
+              class="layout__header-slot"
+            ></div>
           </div>
         </div>
 
-        <div class="layout__content-body" :class="{ 'layout__content-body--large': !showPageHeader }">
+        <div
+          class="layout__content-body"
+          :class="{ 'layout__content-body--large': !showPageHeader }"
+        >
           <AppContent />
         </div>
 
@@ -117,7 +144,6 @@ const showPageHeader = computed(() => !route.meta.hideHeader && Boolean(pageTitl
     }
 
     @media (max-width: 900px) {
-
       :deep(.app-header__search),
       :deep(.app-header__pending),
       :deep(.app-header__icon-btn) {

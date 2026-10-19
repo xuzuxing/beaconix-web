@@ -50,21 +50,36 @@ function renderTitle(item: MenuItem) {
 </script>
 
 <template>
-  <aside v-if="current?.submenu" class="secondary-nav">
+  <aside
+    v-if="current?.submenu"
+    class="secondary-nav"
+  >
     <div class="secondary-nav__header">
       <h2 class="secondary-nav__title">{{ renderTitle(current) }}</h2>
     </div>
 
     <nav class="secondary-nav__body">
       <ul class="secondary-nav__list">
-        <template v-for="item in current.submenu" :key="item.path">
-          <li v-if="item.type === 'group'" class="secondary-nav__group">
+        <template
+          v-for="item in current.submenu"
+          :key="item.path"
+        >
+          <li
+            v-if="item.type === 'group'"
+            class="secondary-nav__group"
+          >
             {{ renderTitle(item) }}
           </li>
-          <li v-else class="secondary-nav__cell">
+          <li
+            v-else
+            class="secondary-nav__cell"
+          >
             <router-link
               class="secondary-nav__link"
-              :class="{ 'secondary-nav__link--active': (route.meta.activeMenu ?? route.path) === item.path }"
+              :class="{
+                'secondary-nav__link--active':
+                  (route.meta.activeMenu ?? route.path) === item.path,
+              }"
               :to="item.path"
             >
               {{ renderTitle(item) }}

@@ -40,8 +40,17 @@ const route = useRoute()
 const router = useRouter()
 
 const ticketId = computed(() => String(route.params.id ?? ''))
-const { ticket, timeline, loading, error, replying, closing, load, reply, close } =
-  useTicketDetail(ticketId)
+const {
+  ticket,
+  timeline,
+  loading,
+  error,
+  replying,
+  closing,
+  load,
+  reply,
+  close,
+} = useTicketDetail(ticketId)
 const { nameOf, load: loadCategories } = useTicketCategories()
 
 void loadCategories()
@@ -63,7 +72,9 @@ const closeVisible = ref(false)
 const categoryText = computed(() => {
   const item = ticket.value
   if (!item) return ''
-  return item.category?.name ?? nameOf(item.categoryId) ?? ticketCategoryLabel(item)
+  return (
+    item.category?.name ?? nameOf(item.categoryId) ?? ticketCategoryLabel(item)
+  )
 })
 
 const organizationText = computed(() =>
@@ -102,12 +113,25 @@ async function confirmClose() {
       </t-tooltip>
     </HeaderActions>
 
-    <div v-if="error" class="ticket-detail__state">
-      <t-alert theme="error" :message="error" />
-      <t-button variant="outline" @click="load">{{ t('ticketPage.refresh') }}</t-button>
+    <div
+      v-if="error"
+      class="ticket-detail__state"
+    >
+      <t-alert
+        theme="error"
+        :message="error"
+      />
+      <t-button
+        variant="outline"
+        @click="load"
+        >{{ t('ticketPage.refresh') }}</t-button
+      >
     </div>
 
-    <div v-else-if="loading && !ticket" class="ticket-detail__state">
+    <div
+      v-else-if="loading && !ticket"
+      class="ticket-detail__state"
+    >
       <t-loading :text="t('common.loading')" />
     </div>
 
@@ -115,14 +139,28 @@ async function confirmClose() {
       <t-card :bordered="false">
         <template #title>
           <div class="ticket-detail__head">
-            <span class="ticket-detail__number">{{ ticketNumberLabel(ticket.number) }}</span>
-            <t-tag size="small" variant="light" :theme="ticketStatusTheme(ticket.status)">
+            <span class="ticket-detail__number">{{
+              ticketNumberLabel(ticket.number)
+            }}</span>
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="ticketStatusTheme(ticket.status)"
+            >
               {{ t(ticketStatusLabelKey(ticket.status)) }}
             </t-tag>
-            <t-tag size="small" variant="light" :theme="ticketPriorityTheme(ticket.priority)">
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="ticketPriorityTheme(ticket.priority)"
+            >
               {{ t(ticketPriorityLabelKey(ticket.priority)) }}
             </t-tag>
-            <t-tag v-if="categoryText" size="small" variant="outline">
+            <t-tag
+              v-if="categoryText"
+              size="small"
+              variant="outline"
+            >
               {{ categoryText }}
             </t-tag>
           </div>
@@ -131,7 +169,11 @@ async function confirmClose() {
         <div class="ticket-detail__body">
           <h3 class="ticket-detail__subject">{{ ticket.subject }}</h3>
 
-          <t-descriptions :column="2" bordered size="small">
+          <t-descriptions
+            :column="2"
+            bordered
+            size="small"
+          >
             <t-descriptions-item :label="t('ticketPage.author')">
               {{ ticketAuthorLabel(ticket) }}
             </t-descriptions-item>
@@ -144,28 +186,42 @@ async function confirmClose() {
             <t-descriptions-item :label="t('ticketPage.assignee')">
               {{ ticketAssigneeLabel(ticket) || t('ticketPage.unassigned') }}
             </t-descriptions-item>
-            <t-descriptions-item v-if="organizationText" :label="t('ticketPage.organization')">
+            <t-descriptions-item
+              v-if="organizationText"
+              :label="t('ticketPage.organization')"
+            >
               {{ organizationText }}
             </t-descriptions-item>
           </t-descriptions>
 
           <div class="ticket-detail__section">
-            <h4 class="ticket-detail__section-title">{{ t('ticketPage.content') }}</h4>
+            <h4 class="ticket-detail__section-title">
+              {{ t('ticketPage.content') }}
+            </h4>
             <p class="ticket-detail__content">{{ ticket.content }}</p>
           </div>
 
-          <div v-if="ticket.attachments?.length" class="ticket-detail__section">
-            <h4 class="ticket-detail__section-title">{{ t('ticketPage.attachments') }}</h4>
+          <div
+            v-if="ticket.attachments?.length"
+            class="ticket-detail__section"
+          >
+            <h4 class="ticket-detail__section-title">
+              {{ t('ticketPage.attachments') }}
+            </h4>
             <TicketAttachmentList :attachments="ticket.attachments" />
           </div>
 
           <div class="ticket-detail__section">
-            <h4 class="ticket-detail__section-title">{{ t('ticketPage.timelineTitle') }}</h4>
+            <h4 class="ticket-detail__section-title">
+              {{ t('ticketPage.timelineTitle') }}
+            </h4>
             <TicketTimeline :entries="timeline" />
           </div>
 
           <div class="ticket-detail__section">
-            <h4 class="ticket-detail__section-title">{{ t('ticketPage.replyTitle') }}</h4>
+            <h4 class="ticket-detail__section-title">
+              {{ t('ticketPage.replyTitle') }}
+            </h4>
             <t-alert
               v-if="isTicketClosed(ticket)"
               theme="info"
@@ -178,7 +234,10 @@ async function confirmClose() {
               :placeholder="t('ticketPage.replyPlaceholder')"
               :autosize="{ minRows: 4, maxRows: 10 }"
             />
-            <TicketAttachmentsField v-model="replyAttachments" :disabled="replying" />
+            <TicketAttachmentsField
+              v-model="replyAttachments"
+              :disabled="replying"
+            />
             <div class="ticket-detail__actions">
               <t-button
                 theme="primary"
@@ -196,7 +255,10 @@ async function confirmClose() {
               >
                 {{ t('ticketPage.close') }}
               </t-button>
-              <t-button variant="outline" @click="router.push('/tickets')">
+              <t-button
+                variant="outline"
+                @click="router.push('/tickets')"
+              >
                 {{ t('ticketPage.backToList') }}
               </t-button>
             </div>
@@ -205,10 +267,16 @@ async function confirmClose() {
       </t-card>
     </template>
 
-    <t-card v-else :bordered="false">
+    <t-card
+      v-else
+      :bordered="false"
+    >
       <div class="ticket-detail__state">
         <p class="ticket-detail__empty">{{ t('ticketPage.notFound') }}</p>
-        <t-button variant="outline" @click="router.push('/tickets')">
+        <t-button
+          variant="outline"
+          @click="router.push('/tickets')"
+        >
           {{ t('ticketPage.backToList') }}
         </t-button>
       </div>

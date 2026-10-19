@@ -13,9 +13,17 @@ function goHome() {
 </script>
 
 <template>
-  <t-card :title="t('blankDemo.title')" :bordered="false" class="blank-demo">
+  <t-card
+    :title="t('blankDemo.title')"
+    :bordered="false"
+    class="blank-demo"
+  >
     <p class="blank-demo__desc">{{ t('blankDemo.desc') }}</p>
-    <t-button theme="primary" @click="goHome">{{ t('common.backHome') }}</t-button>
+    <t-button
+      theme="primary"
+      @click="goHome"
+      >{{ t('common.backHome') }}</t-button
+    >
   </t-card>
 </template>
 

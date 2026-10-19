@@ -28,9 +28,24 @@ export interface UserMenuItem {
  */
 export const userMenuGroups: UserMenuItem[][] = [
   [
-    { key: 'profile', labelKey: 'menu.profile', icon: UserCircleIcon, path: '/profile' },
-    { key: 'security', labelKey: 'menu.security', icon: LockPasswordIcon, path: '/security' },
-    { key: 'tokens', labelKey: 'menu.accessTokens', icon: ApiIcon, path: '/access-tokens' },
+    {
+      key: 'profile',
+      labelKey: 'menu.profile',
+      icon: UserCircleIcon,
+      path: '/profile',
+    },
+    {
+      key: 'security',
+      labelKey: 'menu.security',
+      icon: LockPasswordIcon,
+      path: '/security',
+    },
+    {
+      key: 'tokens',
+      labelKey: 'menu.accessTokens',
+      icon: ApiIcon,
+      path: '/access-tokens',
+    },
     {
       key: 'notifications',
       labelKey: 'menu.notifications',
@@ -41,11 +56,25 @@ export const userMenuGroups: UserMenuItem[][] = [
   [
     { key: 'docs', labelKey: 'layout.userDocs', icon: BookOpen01Icon },
     // 原「获取支持」入口：接到真实的工单系统（提交 / 查看回复 / 关闭）
-    { key: 'tickets', labelKey: 'menu.tickets', icon: CustomerServiceIcon, path: '/tickets' },
+    {
+      key: 'tickets',
+      labelKey: 'menu.tickets',
+      icon: CustomerServiceIcon,
+      path: '/tickets',
+    },
   ],
   [
-    { key: 'switch', labelKey: 'layout.userSwitchAccount', icon: Exchange01Icon },
-    { key: 'logout', labelKey: 'layout.userLogout', icon: Logout01Icon, danger: true },
+    {
+      key: 'switch',
+      labelKey: 'layout.userSwitchAccount',
+      icon: Exchange01Icon,
+    },
+    {
+      key: 'logout',
+      labelKey: 'layout.userLogout',
+      icon: Logout01Icon,
+      danger: true,
+    },
   ],
 ]
 

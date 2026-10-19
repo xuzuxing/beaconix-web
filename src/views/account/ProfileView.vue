@@ -21,7 +21,9 @@ const savingAvatar = ref(false)
 
 const avatarImage = computed(() => userStore.user?.avatarUrl ?? '')
 /** 没有头像时用姓名首字母兜底 */
-const avatarText = computed(() => (userStore.user?.name ?? '').trim().slice(0, 1).toUpperCase())
+const avatarText = computed(() =>
+  (userStore.user?.name ?? '').trim().slice(0, 1).toUpperCase(),
+)
 
 /** 选好头像（随机生成或自己上传）后立刻保存，成功后回写本地用户资料 */
 async function saveAvatar(next: string) {
@@ -51,8 +53,14 @@ const rows = computed(() => {
         ? t('workspace.settings.verified')
         : t('workspace.settings.unverified'),
     },
-    { labelKey: 'workspace.settings.team', value: orgStore.currentOrganization?.name ?? '—' },
-    { labelKey: 'workspace.settings.project', value: orgStore.currentProject?.name ?? '—' },
+    {
+      labelKey: 'workspace.settings.team',
+      value: orgStore.currentOrganization?.name ?? '—',
+    },
+    {
+      labelKey: 'workspace.settings.project',
+      value: orgStore.currentProject?.name ?? '—',
+    },
   ]
 })
 
@@ -70,7 +78,11 @@ async function logout() {
       <h3 class="profile__title">{{ t('workspace.settings.account') }}</h3>
 
       <div class="profile__avatar">
-        <t-avatar size="64px" :image="avatarImage || undefined">{{ avatarText }}</t-avatar>
+        <t-avatar
+          size="64px"
+          :image="avatarImage || undefined"
+          >{{ avatarText }}</t-avatar
+        >
         <div class="profile__avatar-side">
           <t-button
             size="small"
@@ -84,7 +96,11 @@ async function logout() {
         </div>
       </div>
 
-      <div v-for="row in rows" :key="row.labelKey" class="profile__row">
+      <div
+        v-for="row in rows"
+        :key="row.labelKey"
+        class="profile__row"
+      >
         <span class="profile__label">{{ t(row.labelKey) }}</span>
         <span class="profile__value">{{ row.value }}</span>
       </div>
@@ -95,10 +111,19 @@ async function logout() {
       <p class="profile__hint">{{ t('workspace.profile.securityHint') }}</p>
 
       <div class="profile__actions">
-        <t-button theme="primary" variant="outline" size="small" @click="router.push('/security')">
+        <t-button
+          theme="primary"
+          variant="outline"
+          size="small"
+          @click="router.push('/security')"
+        >
           {{ t('workspace.profile.gotoSecurity') }}
         </t-button>
-        <t-button variant="outline" size="small" @click="logout">
+        <t-button
+          variant="outline"
+          size="small"
+          @click="logout"
+        >
           {{ t('layout.userLogout') }}
         </t-button>
       </div>

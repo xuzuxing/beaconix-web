@@ -49,5 +49,15 @@ export function useAdminTenants() {
     }
   }
 
-  return { tenants, filtered, loading, error, keyword, state, togglingId, load, toggle }
+  return {
+    tenants,
+    filtered,
+    loading,
+    error,
+    keyword,
+    state,
+    togglingId,
+    load,
+    toggle,
+  }
 }

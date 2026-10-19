@@ -10,7 +10,13 @@ import TeamCreateDialog from '@/components/team/TeamCreateDialog.vue'
 import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { useTeamPlans } from '@/composables/useTeamPlans'
 import { HOME_PATH } from '@/config'
-import { GridViewIcon, ListViewIcon, PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
+import {
+  GridViewIcon,
+  ListViewIcon,
+  PlusSignIcon,
+  RefreshIcon,
+  Search01Icon,
+} from '@/icons'
 import { useOrganizationStore, useUserStore } from '@/stores'
 
 /**
@@ -59,7 +65,9 @@ const filteredTeams = computed(() => {
     if (scope.value === 'owned' && org.ownerId !== userId) return false
     if (scope.value === 'joined' && org.ownerId === userId) return false
     if (!kw) return true
-    return org.name.toLowerCase().includes(kw) || org.slug.toLowerCase().includes(kw)
+    return (
+      org.name.toLowerCase().includes(kw) || org.slug.toLowerCase().includes(kw)
+    )
   })
 
   return [...list].sort((a, b) =>
@@ -69,7 +77,9 @@ const filteredTeams = computed(() => {
   )
 })
 
-const pageCount = computed(() => Math.max(1, Math.ceil(filteredTeams.value.length / pageSize.value)))
+const pageCount = computed(() =>
+  Math.max(1, Math.ceil(filteredTeams.value.length / pageSize.value)),
+)
 
 const pagedTeams = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
@@ -141,20 +151,36 @@ async function onCreated(org: Organization) {
       >
         <AppIcon :icon="RefreshIcon" />
       </button>
-      <span class="team-select__subtitle">{{ t('workspace.teamSelect.subtitle') }}</span>
+      <span class="team-select__subtitle">{{
+        t('workspace.teamSelect.subtitle')
+      }}</span>
     </div>
 
     <div class="team-select__panel">
       <!-- 工具栏：左侧新建，右侧排序 / 筛选 / 搜索 / 视图切换 -->
       <div class="team-select__toolbar">
-        <t-button theme="primary" size="small" @click="createVisible = true">
+        <t-button
+          theme="primary"
+          size="small"
+          @click="createVisible = true"
+        >
           <template #icon><AppIcon :icon="PlusSignIcon" /></template>
           {{ t('workspace.team.create') }}
         </t-button>
 
         <div class="team-select__operations">
-          <t-select v-model="sort" class="team-select__select" :options="sortOptions" size="small" />
-          <t-select v-model="scope" class="team-select__select" :options="scopeOptions" size="small" />
+          <t-select
+            v-model="sort"
+            class="team-select__select"
+            :options="sortOptions"
+            size="small"
+          />
+          <t-select
+            v-model="scope"
+            class="team-select__select"
+            :options="scopeOptions"
+            size="small"
+          />
 
           <t-input
             v-model="keyword"
@@ -165,7 +191,10 @@ async function onCreated(org: Organization) {
             :aria-label="t('layout.teamSearch')"
           >
             <template #prefix-icon>
-              <AppIcon :icon="Search01Icon" :size="14" />
+              <AppIcon
+                :icon="Search01Icon"
+                :size="14"
+              />
             </template>
           </t-input>
 
@@ -212,7 +241,10 @@ async function onCreated(org: Organization) {
         />
       </div>
 
-      <div v-else class="team-select__state">
+      <div
+        v-else
+        class="team-select__state"
+      >
         <p class="team-select__empty">
           {{
             loading
@@ -246,7 +278,10 @@ async function onCreated(org: Organization) {
       </div>
     </div>
 
-    <TeamCreateDialog v-model:visible="createVisible" @created="onCreated" />
+    <TeamCreateDialog
+      v-model:visible="createVisible"
+      @created="onCreated"
+    />
   </div>
 </template>
 

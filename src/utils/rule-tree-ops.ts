@@ -22,13 +22,20 @@ export function createConditionNode(meta: RuleMeta, field?: RuleField): Conditio
     id: createRuleNodeId('condition'),
     field: target,
     operator: fieldMeta?.default.operator ?? 'eq',
-    value: Array.isArray(fieldMeta?.default.value) ? [...fieldMeta.default.value] : fieldMeta?.default.value,
+    value: Array.isArray(fieldMeta?.default.value)
+      ? [...fieldMeta.default.value]
+      : fieldMeta?.default.value,
   }
 }
 
 /** 新建一个空逻辑组：编辑器会提示"逻辑组至少需要一条规则" */
 export function createLogicNode(operator: 'and' | 'or' = 'and'): LogicNode {
-  return { type: 'logic', id: createRuleNodeId('logic'), operator, children: [] }
+  return {
+    type: 'logic',
+    id: createRuleNodeId('logic'),
+    operator,
+    children: [],
+  }
 }
 
 function sameNodes(before: RuleNode[], after: RuleNode[]): boolean {

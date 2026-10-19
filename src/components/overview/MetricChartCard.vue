@@ -21,13 +21,24 @@ defineProps<{
   <div class="metric-card">
     <div class="metric-card__head">
       <span class="metric-card__title">{{ title }}</span>
-      <t-tooltip v-if="tip" :content="tip" placement="top">
-        <AppIcon class="metric-card__tip" :icon="InformationCircleIcon" />
+      <t-tooltip
+        v-if="tip"
+        :content="tip"
+        placement="top"
+      >
+        <AppIcon
+          class="metric-card__tip"
+          :icon="InformationCircleIcon"
+        />
       </t-tooltip>
     </div>
 
     <div class="metric-card__body">
-      <LineChart :values="values" :labels="labels" :auto-scale="autoScale" />
+      <LineChart
+        :values="values"
+        :labels="labels"
+        :auto-scale="autoScale"
+      />
     </div>
   </div>
 </template>

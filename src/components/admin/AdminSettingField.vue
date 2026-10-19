@@ -28,8 +28,12 @@ const emit = defineEmits<{ 'update:draft': [value: SettingDraft] }>()
 
 const { t } = useI18n()
 
-const textValue = computed(() => (typeof props.draft === 'string' ? props.draft : ''))
-const numberValue = computed(() => (typeof props.draft === 'number' ? props.draft : undefined))
+const textValue = computed(() =>
+  typeof props.draft === 'string' ? props.draft : '',
+)
+const numberValue = computed(() =>
+  typeof props.draft === 'number' ? props.draft : undefined,
+)
 const booleanValue = computed(() => props.draft === true)
 
 /** 候选项：后端给了 options 就把自由输入换成下拉，避免拼错枚举值 */
@@ -43,7 +47,10 @@ const hasOptions = computed(() => selectOptions.value.length > 0)
 
 /** 输入事件的值类型由 TDesign 的泛型决定，这里统一按 unknown 收窄 */
 function onTextChange(value: unknown) {
-  emit('update:draft', typeof value === 'string' ? value : value == null ? '' : String(value))
+  emit(
+    'update:draft',
+    typeof value === 'string' ? value : value == null ? '' : String(value),
+  )
 }
 
 function onNumberChange(value: unknown) {
@@ -65,18 +72,36 @@ function onBooleanChange(value: unknown) {
 </script>
 
 <template>
-  <t-form-item class="admin-setting-field" :class="{ 'admin-setting-field--dirty': dirty }">
+  <t-form-item
+    class="admin-setting-field"
+    :class="{ 'admin-setting-field--dirty': dirty }"
+  >
     <template #label>
       <span class="admin-setting-field__label">
         <span class="admin-setting-field__name">{{ item.name }}</span>
         <span class="admin-setting-field__tags">
-          <t-tag v-if="item.isSecret" size="small" variant="light" theme="warning">
+          <t-tag
+            v-if="item.isSecret"
+            size="small"
+            variant="light"
+            theme="warning"
+          >
             {{ t('adminPage.setting.secret') }}
           </t-tag>
-          <t-tag v-if="!item.isDefault" size="small" variant="light" theme="primary">
+          <t-tag
+            v-if="!item.isDefault"
+            size="small"
+            variant="light"
+            theme="primary"
+          >
             {{ t('adminPage.setting.overridden') }}
           </t-tag>
-          <t-tag v-if="dirty" size="small" variant="light" theme="warning">
+          <t-tag
+            v-if="dirty"
+            size="small"
+            variant="light"
+            theme="warning"
+          >
             {{ t('adminPage.setting.dirtyTag') }}
           </t-tag>
         </span>
@@ -98,7 +123,9 @@ function onBooleanChange(value: unknown) {
         :type="item.isSecret ? 'password' : 'text'"
         :value="textValue"
         :disabled="disabled"
-        :placeholder="item.isSecret ? t('adminPage.setting.secretPlaceholder') : ''"
+        :placeholder="
+          item.isSecret ? t('adminPage.setting.secretPlaceholder') : ''
+        "
         @change="onTextChange"
       />
       <t-input-number
@@ -108,10 +135,21 @@ function onBooleanChange(value: unknown) {
         :disabled="disabled"
         @change="onNumberChange"
       />
-      <div v-else-if="item.valueType === 'BOOLEAN'" class="admin-setting-field__switch">
-        <t-switch :value="booleanValue" :disabled="disabled" @change="onBooleanChange" />
+      <div
+        v-else-if="item.valueType === 'BOOLEAN'"
+        class="admin-setting-field__switch"
+      >
+        <t-switch
+          :value="booleanValue"
+          :disabled="disabled"
+          @change="onBooleanChange"
+        />
         <span class="admin-setting-field__switch-text">
-          {{ booleanValue ? t('adminPage.setting.on') : t('adminPage.setting.off') }}
+          {{
+            booleanValue
+              ? t('adminPage.setting.on')
+              : t('adminPage.setting.off')
+          }}
         </span>
       </div>
       <t-textarea
@@ -123,12 +161,27 @@ function onBooleanChange(value: unknown) {
         @change="onTextChange"
       />
 
-      <p v-if="item.description" class="admin-setting-field__desc">{{ item.description }}</p>
-      <p v-if="item.isSecret" class="admin-setting-field__hint">
+      <p
+        v-if="item.description"
+        class="admin-setting-field__desc"
+      >
+        {{ item.description }}
+      </p>
+      <p
+        v-if="item.isSecret"
+        class="admin-setting-field__hint"
+      >
         {{ t('adminPage.setting.secretHint') }}
       </p>
-      <p v-else-if="!item.isDefault && item.updatedAt" class="admin-setting-field__hint">
-        {{ t('adminPage.setting.updatedHint', { at: formatDateTime(item.updatedAt) }) }}
+      <p
+        v-else-if="!item.isDefault && item.updatedAt"
+        class="admin-setting-field__hint"
+      >
+        {{
+          t('adminPage.setting.updatedHint', {
+            at: formatDateTime(item.updatedAt),
+          })
+        }}
       </p>
       <p class="admin-setting-field__key">{{ item.key }}</p>
     </div>

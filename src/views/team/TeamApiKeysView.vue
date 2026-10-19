@@ -43,7 +43,9 @@ const secretVisible = ref(false)
 const secret = ref('')
 
 function scopeSummary(key: ApiKey) {
-  return key.scopes.map((scope) => t(apiKeyScopeLabelKey(scope))).join(' · ') || '—'
+  return (
+    key.scopes.map((scope) => t(apiKeyScopeLabelKey(scope))).join(' · ') || '—'
+  )
 }
 
 function stateLabel(key: ApiKey) {
@@ -74,7 +76,10 @@ function revoke(key: ApiKey) {
 
 <template>
   <section class="api-keys">
-    <t-alert theme="info" :message="t('access.keyHint')" />
+    <t-alert
+      theme="info"
+      :message="t('access.keyHint')"
+    />
     <HeaderActions>
       <t-tooltip :content="t('workspace.teamSelect.refresh')"
         ><t-button
@@ -86,28 +91,50 @@ function revoke(key: ApiKey) {
           @click="load"
           ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
-      <t-button v-if="canManage" :disabled="!orgId" @click="createVisible = true"
+      <t-button
+        v-if="canManage"
+        :disabled="!orgId"
+        @click="createVisible = true"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('workspace.apiKey.create') }}</t-button
       >
     </HeaderActions>
 
-    <t-alert v-if="!canManage" theme="info" :message="t('workspace.apiKey.noPermission')" />
+    <t-alert
+      v-if="!canManage"
+      theme="info"
+      :message="t('workspace.apiKey.noPermission')"
+    />
 
     <t-card class="api-keys__panel">
       <template #title>{{ t('workspace.apiKey.title') }}</template>
       <template #actions>
-        <span class="api-keys__scope">{{ orgStore.currentOrganization?.name ?? '—' }}</span>
+        <span class="api-keys__scope">{{
+          orgStore.currentOrganization?.name ?? '—'
+        }}</span>
       </template>
 
       <p class="api-keys__subtitle">{{ t('workspace.apiKey.subtitle') }}</p>
 
-      <div v-if="error" class="api-keys__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('workspace.teamSelect.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="api-keys__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('workspace.teamSelect.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !keys.length" class="api-keys__state">
+      <div
+        v-else-if="loading && !keys.length"
+        class="api-keys__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -120,21 +147,36 @@ function revoke(key: ApiKey) {
             <span>{{ t('workspace.apiKey.lastUsed') }}</span>
             <span>{{ t('workspace.apiKey.revoke') }}</span>
           </div>
-          <article v-for="key in keys" :key="key.id" class="api-key-row">
+          <article
+            v-for="key in keys"
+            :key="key.id"
+            class="api-key-row"
+          >
             <div class="api-key-row__identity">
               <span class="api-key-row__name">{{ key.name }}</span>
-              <p class="api-key-row__scopes" :title="scopeSummary(key)">{{ scopeSummary(key) }}</p>
+              <p
+                class="api-key-row__scopes"
+                :title="scopeSummary(key)"
+              >
+                {{ scopeSummary(key) }}
+              </p>
             </div>
 
             <code class="api-key-row__value">{{ apiKeyDisplay(key) }}</code>
 
-            <t-tag size="small" variant="light" :theme="apiKeyStateTheme(apiKeyState(key))">
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="apiKeyStateTheme(apiKeyState(key))"
+            >
               {{ stateLabel(key) }}
             </t-tag>
 
             <span class="api-key-row__used">
               {{
-                key.lastUsedAt ? formatDateTime(key.lastUsedAt) : t('workspace.apiKey.neverUsed')
+                key.lastUsedAt
+                  ? formatDateTime(key.lastUsedAt)
+                  : t('workspace.apiKey.neverUsed')
               }}
             </span>
 
@@ -153,23 +195,41 @@ function revoke(key: ApiKey) {
                   {{ t('workspace.apiKey.revoke') }}
                 </t-button>
               </t-popconfirm>
-              <span v-else class="api-key-row__locked">—</span>
+              <span
+                v-else
+                class="api-key-row__locked"
+                >—</span
+              >
             </div>
           </article>
         </div>
       </template>
 
-      <div v-else class="api-keys__state">
+      <div
+        v-else
+        class="api-keys__state"
+      >
         <p class="api-keys__empty">{{ t('workspace.apiKey.empty') }}</p>
-        <p class="api-keys__empty-hint">{{ t('workspace.apiKey.emptyHint') }}</p>
-        <t-button v-if="canManage" @click="createVisible = true">{{
-          t('workspace.apiKey.create')
-        }}</t-button>
+        <p class="api-keys__empty-hint">
+          {{ t('workspace.apiKey.emptyHint') }}
+        </p>
+        <t-button
+          v-if="canManage"
+          @click="createVisible = true"
+          >{{ t('workspace.apiKey.create') }}</t-button
+        >
       </div>
     </t-card>
 
-    <ApiKeyCreateDialog v-model:visible="createVisible" :org-id="orgId" @created="onCreated" />
-    <ApiKeySecretDialog v-model:visible="secretVisible" :secret="secret" />
+    <ApiKeyCreateDialog
+      v-model:visible="createVisible"
+      :org-id="orgId"
+      @created="onCreated"
+    />
+    <ApiKeySecretDialog
+      v-model:visible="secretVisible"
+      :secret="secret"
+    />
   </section>
 </template>
 

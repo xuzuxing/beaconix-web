@@ -7,7 +7,11 @@ import { enableTwoFactor, setupTwoFactor } from '@/api'
 import type { TwoFactorSetup } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import { Copy01Icon } from '@/icons'
-import { extractOtpauthSecret, isTotpCode, normalizeSecondFactor } from '@/utils/security-presenter'
+import {
+  extractOtpauthSecret,
+  isTotpCode,
+  normalizeSecondFactor,
+} from '@/utils/security-presenter'
 
 /**
  * 开启两步验证：三步走 —— 校验当前密码 → 扫描二维码并输入动态验证码 → 展示恢复码。
@@ -38,7 +42,9 @@ const steps = computed(() => [
 const activeStep = computed(() =>
   step.value === 'password' ? 0 : step.value === 'scan' ? 1 : 2,
 )
-const secret = computed(() => (setup.value ? extractOtpauthSecret(setup.value.otpauthUrl) : ''))
+const secret = computed(() =>
+  setup.value ? extractOtpauthSecret(setup.value.otpauthUrl) : '',
+)
 
 watch(
   visible,
@@ -72,7 +78,8 @@ async function startSetup() {
     setup.value = result
     step.value = 'scan'
   } catch (cause) {
-    if (token === generation) error.value = cause instanceof Error ? cause.message : ''
+    if (token === generation)
+      error.value = cause instanceof Error ? cause.message : ''
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -98,7 +105,8 @@ async function confirmEnable() {
     step.value = 'codes'
     MessagePlugin.success(t('workspace.security.enabled'))
   } catch (cause) {
-    if (token === generation) error.value = cause instanceof Error ? cause.message : ''
+    if (token === generation)
+      error.value = cause instanceof Error ? cause.message : ''
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -149,11 +157,22 @@ function finish() {
       </li>
     </ol>
 
-    <t-alert v-if="error" theme="error" :message="error" class="two-factor-setup__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="two-factor-setup__error"
+    />
 
     <template v-if="step === 'password'">
-      <p class="two-factor-setup__hint">{{ t('workspace.security.setupPasswordHint') }}</p>
-      <t-form label-align="top" :colon="false" :data="{ password }">
+      <p class="two-factor-setup__hint">
+        {{ t('workspace.security.setupPasswordHint') }}
+      </p>
+      <t-form
+        label-align="top"
+        :colon="false"
+        :data="{ password }"
+      >
         <t-form-item :label="t('workspace.security.currentPassword')">
           <t-input
             v-model="password"
@@ -164,15 +183,25 @@ function finish() {
         </t-form-item>
       </t-form>
       <div class="two-factor-setup__actions">
-        <t-button variant="outline" :disabled="submitting" @click="visible = false">
+        <t-button
+          variant="outline"
+          :disabled="submitting"
+          @click="visible = false"
+        >
           {{ t('common.cancel') }}
         </t-button>
-        <t-button :loading="submitting" @click="startSetup">{{ t('common.confirm') }}</t-button>
+        <t-button
+          :loading="submitting"
+          @click="startSetup"
+          >{{ t('common.confirm') }}</t-button
+        >
       </div>
     </template>
 
     <template v-else-if="step === 'scan'">
-      <p class="two-factor-setup__hint">{{ t('workspace.security.scanHint') }}</p>
+      <p class="two-factor-setup__hint">
+        {{ t('workspace.security.scanHint') }}
+      </p>
 
       <div class="two-factor-setup__qr">
         <img
@@ -184,16 +213,29 @@ function finish() {
         />
       </div>
 
-      <div v-if="secret" class="two-factor-setup__secret">
-        <span class="two-factor-setup__secret-label">{{ t('workspace.security.manualSecret') }}</span>
+      <div
+        v-if="secret"
+        class="two-factor-setup__secret"
+      >
+        <span class="two-factor-setup__secret-label">{{
+          t('workspace.security.manualSecret')
+        }}</span>
         <code class="two-factor-setup__secret-value">{{ secret }}</code>
-        <t-button variant="text" size="small" @click="copySecret">
+        <t-button
+          variant="text"
+          size="small"
+          @click="copySecret"
+        >
           <template #icon><AppIcon :icon="Copy01Icon" /></template>
           {{ t('workspace.security.copySecret') }}
         </t-button>
       </div>
 
-      <t-form label-align="top" :colon="false" :data="{ code }">
+      <t-form
+        label-align="top"
+        :colon="false"
+        :data="{ code }"
+      >
         <t-form-item :label="t('workspace.security.enterCode')">
           <t-input
             v-model="code"
@@ -205,20 +247,34 @@ function finish() {
       </t-form>
 
       <div class="two-factor-setup__actions">
-        <t-button variant="outline" :disabled="submitting" @click="visible = false">
+        <t-button
+          variant="outline"
+          :disabled="submitting"
+          @click="visible = false"
+        >
           {{ t('common.cancel') }}
         </t-button>
-        <t-button :loading="submitting" @click="confirmEnable">
+        <t-button
+          :loading="submitting"
+          @click="confirmEnable"
+        >
           {{ t('workspace.security.verifyAndEnable') }}
         </t-button>
       </div>
     </template>
 
     <template v-else>
-      <p class="two-factor-setup__hint">{{ t('workspace.security.recoveryIntro') }}</p>
+      <p class="two-factor-setup__hint">
+        {{ t('workspace.security.recoveryIntro') }}
+      </p>
 
       <ul class="two-factor-setup__codes">
-        <li v-for="item in codes" :key="item"><code>{{ item }}</code></li>
+        <li
+          v-for="item in codes"
+          :key="item"
+        >
+          <code>{{ item }}</code>
+        </li>
       </ul>
 
       <t-alert
@@ -228,11 +284,16 @@ function finish() {
       />
 
       <div class="two-factor-setup__actions">
-        <t-button variant="outline" @click="copyCodes">
+        <t-button
+          variant="outline"
+          @click="copyCodes"
+        >
           <template #icon><AppIcon :icon="Copy01Icon" /></template>
           {{ t('workspace.security.copyAll') }}
         </t-button>
-        <t-button @click="finish">{{ t('workspace.security.savedConfirm') }}</t-button>
+        <t-button @click="finish">{{
+          t('workspace.security.savedConfirm')
+        }}</t-button>
       </div>
     </template>
   </t-dialog>

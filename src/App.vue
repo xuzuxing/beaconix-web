@@ -30,7 +30,10 @@ const globalConfig = computed(() => TDESIGN_LOCALES[appStore.locale])
 
 // 写到 <html theme-mode>，TDesign 的 [theme-mode='dark'] 作用域据此生效
 watchEffect(() => {
-  document.documentElement.setAttribute('theme-mode', appStore.isDark ? 'dark' : 'light')
+  document.documentElement.setAttribute(
+    'theme-mode',
+    appStore.isDark ? 'dark' : 'light',
+  )
 })
 
 // 页面标题随路由、语言与平台配置的站点名变化

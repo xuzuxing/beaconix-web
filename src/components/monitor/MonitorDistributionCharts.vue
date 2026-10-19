@@ -23,13 +23,26 @@ defineOptions({ name: 'MonitorDistributionCharts' })
 
 const { t } = useI18n()
 const theme = useChartTheme()
-const props = defineProps<{ summary: Summary; distribution: Dashboard['distribution'] }>()
-const monitorSummary = computed(() => ({ total: props.summary.monitors.total, probes: props.summary.probes }))
-const monitorTypeDistribution = computed(() => props.distribution.protocols.map(p => ({ nameKey: `dashboard.type.${p.type.toLowerCase()}`, value: p.count })))
+const props = defineProps<{
+  summary: Summary
+  distribution: Dashboard['distribution']
+}>()
+const monitorSummary = computed(() => ({
+  total: props.summary.monitors.total,
+  probes: props.summary.probes,
+}))
+const monitorTypeDistribution = computed(() =>
+  props.distribution.protocols.map((p) => ({
+    nameKey: `dashboard.type.${p.type.toLowerCase()}`,
+    value: p.count,
+  })),
+)
 const probeNodes = computed(() => props.distribution.probes)
 const responseTimeHistogram = computed(() => ({
-  labels: props.distribution.latencyHistogram.buckets.map(b => b.to === null ? `>=${b.from}` : `${b.from}-${b.to}`),
-  counts: props.distribution.latencyHistogram.buckets.map(b => b.count),
+  labels: props.distribution.latencyHistogram.buckets.map((b) =>
+    b.to === null ? `>=${b.from}` : `${b.from}-${b.to}`,
+  ),
+  counts: props.distribution.latencyHistogram.buckets.map((b) => b.count),
 }))
 
 /** 环形图：监控协议占比 */
@@ -73,7 +86,10 @@ const probeOption = computed<ChartOption>(() => {
     yAxis: {
       type: 'category',
       inverse: true,
-      data: probeNodes.value.map((node) => `${node.name} (${node.region})${node.online ? '' : ` - ${t('dashboard.probe.offline')}`}`),
+      data: probeNodes.value.map(
+        (node) =>
+          `${node.name} (${node.region})${node.online ? '' : ` - ${t('dashboard.probe.offline')}`}`,
+      ),
       axisLine: { lineStyle: { color: palette.axisLine } },
       axisTick: { show: false },
       axisLabel: { color: palette.textSecondary, fontSize: 10 },
@@ -110,12 +126,9 @@ const histogramOption = computed<ChartOption>(() => {
   return chartBase(palette, {
     grid: { left: 0, right: 0, top: 24, bottom: 0, containLabel: true },
     tooltip: chartTooltip(palette, 'item'),
-    xAxis: categoryAxis(
-      palette,
-      responseTimeHistogram.value.labels,
-      true,
-      { hideOverlap: true },
-    ),
+    xAxis: categoryAxis(palette, responseTimeHistogram.value.labels, true, {
+      hideOverlap: true,
+    }),
     yAxis: valueAxis(palette),
     series: [
       {
@@ -140,24 +153,40 @@ const histogramOption = computed<ChartOption>(() => {
     <ChartCard
       :title="t('dashboard.distribution.typeTitle')"
       :tip="t('dashboard.distribution.typeTip')"
-      :extra="t('dashboard.distribution.total', { count: monitorSummary.total })"
+      :extra="
+        t('dashboard.distribution.total', { count: monitorSummary.total })
+      "
       height="264px"
     >
-      <EChart v-if="distribution.protocols.length" :option="typeOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+      <EChart
+        v-if="distribution.protocols.length"
+        :option="typeOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
 
     <ChartCard
       :title="t('dashboard.distribution.probeTitle')"
       :tip="t('dashboard.distribution.probeTip')"
-      :extra="t('dashboard.distribution.probeExtra', {
-        online: monitorSummary.probes.online,
-        total: monitorSummary.probes.total,
-      })"
+      :extra="
+        t('dashboard.distribution.probeExtra', {
+          online: monitorSummary.probes.online,
+          total: monitorSummary.probes.total,
+        })
+      "
       height="264px"
     >
-      <EChart v-if="distribution.probes.length" :option="probeOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+      <EChart
+        v-if="distribution.probes.length"
+        :option="probeOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
 
     <ChartCard
@@ -165,8 +194,14 @@ const histogramOption = computed<ChartOption>(() => {
       :tip="t('dashboard.distribution.histogramTip')"
       height="264px"
     >
-      <EChart v-if="distribution.latencyHistogram.buckets.length" :option="histogramOption" />
-      <t-empty v-else :description="t('dashboard.live.empty')" />
+      <EChart
+        v-if="distribution.latencyHistogram.buckets.length"
+        :option="histogramOption"
+      />
+      <t-empty
+        v-else
+        :description="t('dashboard.live.empty')"
+      />
     </ChartCard>
   </div>
 </template>
@@ -176,6 +211,8 @@ const histogramOption = computed<ChartOption>(() => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: @beacon-gap-l;
-  @media (max-width: 1000px) { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 1000px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

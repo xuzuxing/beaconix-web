@@ -12,7 +12,11 @@ defineProps<{
 
 <template>
   <div class="kpi-grid">
-    <article v-for="item in items" :key="item.key" class="kpi">
+    <article
+      v-for="item in items"
+      :key="item.key"
+      class="kpi"
+    >
       <p class="kpi__label">{{ item.label }}</p>
       <p class="kpi__value">{{ item.value }}</p>
       <p class="kpi__hint">{{ item.hint ?? '' }}</p>

@@ -27,7 +27,9 @@ defineOptions({ name: 'PublicStatusPageView' })
 const { t } = useI18n()
 const route = useRoute()
 const appStore = useAppStore()
-const slug = computed(() => (typeof route.params.slug === 'string' ? route.params.slug : ''))
+const slug = computed(() =>
+  typeof route.params.slug === 'string' ? route.params.slug : '',
+)
 const statusPage = ref<PublicStatusPage>()
 const loading = ref(false)
 const error = ref('')
@@ -37,9 +39,13 @@ let generation = 0
 let controller: AbortController | undefined
 
 /** 默认品牌 logo：随明暗主题切换深浅两版（与控制台顶栏同一套处理） */
-const defaultLogoSrc = computed(() => (appStore.isDark ? whiteLogo : defaultLogo))
+const defaultLogoSrc = computed(() =>
+  appStore.isDark ? whiteLogo : defaultLogo,
+)
 const logoSrc = computed(() =>
-  statusPage.value?.logoUrl && !logoFailed.value ? statusPage.value.logoUrl : defaultLogoSrc.value,
+  statusPage.value?.logoUrl && !logoFailed.value
+    ? statusPage.value.logoUrl
+    : defaultLogoSrc.value,
 )
 const footerText = computed(
   () =>
@@ -67,13 +73,19 @@ async function load() {
   }
   loading.value = true
   try {
-    const result = await getPublicStatusPage(slug.value, { signal: controller.signal })
+    const result = await getPublicStatusPage(slug.value, {
+      signal: controller.signal,
+    })
     // 后端尚未返回 monitors[].availability，这里按开关补一份演示数据（不覆盖真实数据）
-    if (token === generation) statusPage.value = withSimulatedAvailability(result)
+    if (token === generation)
+      statusPage.value = withSimulatedAvailability(result)
   } catch (cause) {
     if (token === generation) {
       statusPage.value = undefined
-      error.value = cause instanceof Error ? cause.message : t('statusPage.public.loadFailed')
+      error.value =
+        cause instanceof Error
+          ? cause.message
+          : t('statusPage.public.loadFailed')
     }
   } finally {
     if (token === generation) loading.value = false
@@ -104,23 +116,47 @@ onScopeDispose(() => {
           :alt="t('statusPage.public.brandAlt')"
           @error="logoFailed = true"
         />
-        <span class="public-page__tagline">{{ t('statusPage.public.brandTagline') }}</span>
+        <span class="public-page__tagline">{{
+          t('statusPage.public.brandTagline')
+        }}</span>
       </div>
-      <t-button variant="outline" :loading="loading" :disabled="!slug" @click="load">
+      <t-button
+        variant="outline"
+        :loading="loading"
+        :disabled="!slug"
+        @click="load"
+      >
         <template #icon><AppIcon :icon="RefreshIcon" /></template>
         {{ t('statusPage.refresh') }}
       </t-button>
     </header>
 
-    <div v-if="loading && !statusPage" class="public-page__state">
+    <div
+      v-if="loading && !statusPage"
+      class="public-page__state"
+    >
       <t-loading :text="t('common.loading')" />
     </div>
-    <div v-else-if="error" class="public-page__state">
-      <t-alert theme="error" :message="error" />
+    <div
+      v-else-if="error"
+      class="public-page__state"
+    >
+      <t-alert
+        theme="error"
+        :message="error"
+      />
       <t-button @click="load">{{ t('statusPage.retry') }}</t-button>
     </div>
-    <PublicStatusPagePanel v-else-if="statusPage" :page="statusPage" />
-    <div v-else class="public-page__state">{{ t('statusPage.public.loadFailed') }}</div>
+    <PublicStatusPagePanel
+      v-else-if="statusPage"
+      :page="statusPage"
+    />
+    <div
+      v-else
+      class="public-page__state"
+    >
+      {{ t('statusPage.public.loadFailed') }}
+    </div>
 
     <footer class="public-page__footer">{{ footerText }}</footer>
   </div>

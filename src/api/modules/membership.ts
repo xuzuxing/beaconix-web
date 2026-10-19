@@ -8,7 +8,9 @@ export function listMembers(orgId: string) {
 
 /** 修改成员角色（ADMIN+） */
 export function updateMemberRole(orgId: string, userId: string, role: MembershipRole) {
-  return patch<Membership>(`/organizations/${orgId}/members/${userId}`, { role })
+  return patch<Membership>(`/organizations/${orgId}/members/${userId}`, {
+    role,
+  })
 }
 
 /** 移除成员（ADMIN+） */

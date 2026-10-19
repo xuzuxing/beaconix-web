@@ -3,7 +3,10 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
-import type { NotificationChannel, NotificationChannelType } from '@/api/types/notification'
+import type {
+  NotificationChannel,
+  NotificationChannelType,
+} from '@/api/types/notification'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import ChannelActions from '@/components/channels/ChannelActions.vue'
@@ -62,7 +65,10 @@ function setFilter(key: string, value: string | number) {
     },
   })
 }
-const search = computed({ get: () => queryValue('q'), set: (value) => setFilter('q', value) })
+const search = computed({
+  get: () => queryValue('q'),
+  set: (value) => setFilter('q', value),
+})
 const type = computed({
   get: () =>
     CHANNEL_TYPES.includes(queryValue('type') as NotificationChannelType)
@@ -85,10 +91,18 @@ const sort = computed({
   set: (value) => setFilter('sort', value),
 })
 const pageSize = computed(() =>
-  [10, 20, 50].includes(Number(queryValue('size'))) ? Number(queryValue('size')) : 10,
+  [10, 20, 50].includes(Number(queryValue('size')))
+    ? Number(queryValue('size'))
+    : 10,
 )
 const filtered = computed(() =>
-  selectChannels(channels.value, search.value, type.value, status.value, sort.value),
+  selectChannels(
+    channels.value,
+    search.value,
+    type.value,
+    status.value,
+    sort.value,
+  ),
 )
 const page = computed(() =>
   Math.min(
@@ -97,7 +111,10 @@ const page = computed(() =>
   ),
 )
 const rows = computed(() =>
-  filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
+  filtered.value.slice(
+    (page.value - 1) * pageSize.value,
+    page.value * pageSize.value,
+  ),
 )
 
 // 切换团队时关闭编辑/日志浮层；列表本身由 useChannelList 负责重载
@@ -123,8 +140,16 @@ function summary(channel: NotificationChannel) {
   const summary = channelConfigSummary(channel)
   return summary.startsWith('http') ? maskWebhookUrl(summary) : summary
 }
-function paginate({ current, pageSize: size }: { current: number; pageSize: number }) {
-  void router.replace({ query: { ...route.query, page: String(current), size: String(size) } })
+function paginate({
+  current,
+  pageSize: size,
+}: {
+  current: number
+  pageSize: number
+}) {
+  void router.replace({
+    query: { ...route.query, page: String(current), size: String(size) },
+  })
 }
 </script>
 
@@ -141,7 +166,10 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           @click="load"
           ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
-      <t-button v-if="canManage" :disabled="!orgId" @click="edit()"
+      <t-button
+        v-if="canManage"
+        :disabled="!orgId"
+        @click="edit()"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('channelPage.create') }}</t-button
       >
@@ -150,10 +178,16 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
     <t-card class="channel-page__panel">
       <template #title>{{ t('channelPage.manageTitle') }}</template>
       <template #actions>
-        <span class="channel-page__scope">{{ org.currentOrganization?.name ?? '-' }}</span>
+        <span class="channel-page__scope">{{
+          org.currentOrganization?.name ?? '-'
+        }}</span>
       </template>
 
-      <t-alert v-if="actionError" theme="error" :message="actionError" />
+      <t-alert
+        v-if="actionError"
+        theme="error"
+        :message="actionError"
+      />
       <div class="channel-page__filters">
         <t-input
           v-model="search"
@@ -167,7 +201,10 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           :aria-label="t('channelPage.allTypes')"
           :options="[
             { label: t('channelPage.allTypes'), value: 'all' },
-            ...CHANNEL_TYPES.map((value) => ({ label: t(`channelPage.type.${value}`), value })),
+            ...CHANNEL_TYPES.map((value) => ({
+              label: t(`channelPage.type.${value}`),
+              value,
+            })),
           ]"
         />
         <t-select
@@ -190,14 +227,26 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
         />
       </div>
 
-      <div v-if="error" class="channel-page__empty">
-        <t-alert theme="error" :message="error" />
+      <div
+        v-if="error"
+        class="channel-page__empty"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
         <t-button @click="load">{{ t('channelPage.retry') }}</t-button>
       </div>
-      <div v-else-if="loading" class="channel-page__empty">
+      <div
+        v-else-if="loading"
+        class="channel-page__empty"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
-      <div v-else-if="!orgId" class="channel-page__empty">
+      <div
+        v-else-if="!orgId"
+        class="channel-page__empty"
+      >
         {{ t('channelPage.noOrganization') }}
       </div>
       <template v-else-if="rows.length">
@@ -208,12 +257,21 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
             ><span>{{ t('channelPage.statusLabel') }}</span
             ><span>{{ t('channelPage.actions') }}</span>
           </div>
-          <article v-for="channel in rows" :key="channel.id" class="channel-row">
+          <article
+            v-for="channel in rows"
+            :key="channel.id"
+            class="channel-row"
+          >
             <div class="channel-row__identity">
               <div class="channel-row__name">
                 <span>{{ channel.name }}</span>
               </div>
-              <p class="channel-row__summary" :title="summary(channel)">{{ summary(channel) }}</p>
+              <p
+                class="channel-row__summary"
+                :title="summary(channel)"
+              >
+                {{ summary(channel) }}
+              </p>
             </div>
             <ChannelTypeTag :type="channel.type" />
             <ChannelStatusTag :enabled="channel.enabled" />
@@ -236,12 +294,26 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
           @change="paginate"
         />
       </template>
-      <div v-else class="channel-page__empty">
-        <p>{{ t(channels.length ? 'channelPage.noMatches' : 'channelPage.empty') }}</p>
-        <t-button v-if="channels.length" variant="outline" @click="router.replace({ query: {} })">{{
-          t('channelPage.reset')
-        }}</t-button>
-        <t-button v-else-if="canManage" @click="edit()">{{ t('channelPage.create') }}</t-button>
+      <div
+        v-else
+        class="channel-page__empty"
+      >
+        <p>
+          {{
+            t(channels.length ? 'channelPage.noMatches' : 'channelPage.empty')
+          }}
+        </p>
+        <t-button
+          v-if="channels.length"
+          variant="outline"
+          @click="router.replace({ query: {} })"
+          >{{ t('channelPage.reset') }}</t-button
+        >
+        <t-button
+          v-else-if="canManage"
+          @click="edit()"
+          >{{ t('channelPage.create') }}</t-button
+        >
       </div>
     </t-card>
 
@@ -251,7 +323,11 @@ function paginate({ current, pageSize: size }: { current: number; pageSize: numb
       :channel="editing"
       @saved="load"
     />
-    <ChannelLogsDrawer v-model:visible="logsDrawer" :org-id="orgId" :channel="logsChannel" />
+    <ChannelLogsDrawer
+      v-model:visible="logsDrawer"
+      :org-id="orgId"
+      :channel="logsChannel"
+    />
   </section>
 </template>
 

@@ -48,7 +48,11 @@ export function buildMenu(
   const pushSub = (parentPath: string, sub: MenuItem, subGroup?: string) => {
     const list = submenus.get(parentPath) ?? []
     if (subGroup && subGroups.get(parentPath) !== subGroup) {
-      list.push({ path: `group:${subGroup}`, type: 'group', titleKey: subGroup })
+      list.push({
+        path: `group:${subGroup}`,
+        type: 'group',
+        titleKey: subGroup,
+      })
       subGroups.set(parentPath, subGroup)
     }
     list.push(sub)

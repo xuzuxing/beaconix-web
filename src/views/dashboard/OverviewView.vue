@@ -33,7 +33,9 @@ const metrics = computed(() => [
   {
     key: 'invocations',
     title: t('overview.metrics.invocations'),
-    values: [0.02, 0.03, 0.02, 0.04, 0.03, 0.02, 0.03, 0.02, 0.02, 0.03, 0.02, 0.02],
+    values: [
+      0.02, 0.03, 0.02, 0.04, 0.03, 0.02, 0.03, 0.02, 0.02, 0.03, 0.02, 0.02,
+    ],
     labels: xLabels,
   },
   {
@@ -53,13 +55,22 @@ const metrics = computed(() => [
     <section class="overview__section">
       <div class="overview__section-head">
         <div class="overview__section-titles">
-          <h3 class="overview__section-title">{{ t('overview.metrics.title') }}</h3>
-          <button type="button" class="overview__range">
+          <h3 class="overview__section-title">
+            {{ t('overview.metrics.title') }}
+          </h3>
+          <button
+            type="button"
+            class="overview__range"
+          >
             {{ t('overview.metrics.range') }}
             <AppIcon :icon="ArrowDown01Icon" />
           </button>
         </div>
-        <t-button theme="primary" variant="text" size="small">
+        <t-button
+          theme="primary"
+          variant="text"
+          size="small"
+        >
           {{ t('overview.metrics.more') }}
         </t-button>
       </div>

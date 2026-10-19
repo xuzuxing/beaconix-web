@@ -54,7 +54,9 @@ export function useChannelActions(scope: Ref<string>, done: () => Promise<void>)
         if (token !== generation) return
         MessagePlugin.success(t('channelPage.deleted'))
       } else {
-        await updateNotificationChannel(orgId, channel.id, { enabled: !channel.enabled })
+        await updateNotificationChannel(orgId, channel.id, {
+          enabled: !channel.enabled,
+        })
         if (token !== generation) return
         MessagePlugin.success(
           t(channel.enabled ? 'channelPage.disableDone' : 'channelPage.enableDone'),

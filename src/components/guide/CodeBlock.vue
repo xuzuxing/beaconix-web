@@ -94,14 +94,20 @@ async function copyCode() {
           :style="token.color ? { color: token.color } : undefined"
         >{{ token.text }}</span></code></pre>
 
-    <t-tooltip :content="t('guide.copy')" placement="top">
+    <t-tooltip
+      :content="t('guide.copy')"
+      placement="top"
+    >
       <button
         type="button"
         class="code-block__copy"
         :aria-label="t('guide.copy')"
         @click="copyCode"
       >
-        <AppIcon :icon="copied ? CheckmarkCircle02Icon : Copy01Icon" :size="16" />
+        <AppIcon
+          :icon="copied ? CheckmarkCircle02Icon : Copy01Icon"
+          :size="16"
+        />
       </button>
     </t-tooltip>
   </div>

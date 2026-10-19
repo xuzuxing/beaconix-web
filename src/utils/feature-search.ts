@@ -129,7 +129,10 @@ export function highlightSegments(text: string, keyword: string): HighlightSegme
     const index = haystack.indexOf(lowerNeedle, from)
     if (index < 0) break
     if (index > from) segments.push({ text: text.slice(from, index), match: false })
-    segments.push({ text: text.slice(index, index + needle.length), match: true })
+    segments.push({
+      text: text.slice(index, index + needle.length),
+      match: true,
+    })
     from = index + needle.length
   }
 
@@ -159,7 +162,12 @@ export function filterFeatureEntries(
       if (!haystack.includes(needle)) return matches
     }
 
-    matches.push({ entry, title, category, segments: highlightSegments(title, needle) })
+    matches.push({
+      entry,
+      title,
+      category,
+      segments: highlightSegments(title, needle),
+    })
     return matches
   }, [])
 }

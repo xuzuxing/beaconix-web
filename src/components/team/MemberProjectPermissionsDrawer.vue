@@ -2,9 +2,16 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { MessagePlugin } from 'tdesign-vue-next'
-import { getMemberProjectPermissions, replaceMemberProjectPermissions, listProjects } from '@/api'
+import {
+  getMemberProjectPermissions,
+  replaceMemberProjectPermissions,
+  listProjects,
+} from '@/api'
 import type { Project } from '@/api/types'
-import type { MemberProjectPermissions, ProjectGrant } from '@/api/types/permissions'
+import type {
+  MemberProjectPermissions,
+  ProjectGrant,
+} from '@/api/types/permissions'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { permissionEpoch } from '@/utils/access-context'
 import { ApiError } from '@/utils/request'
@@ -27,20 +34,26 @@ const error = ref('')
 const conflict = ref('')
 const blocked = ref(false)
 let generation = 0
-const allowed = computed(() => permissions.canOrganization(props.orgId, 'manageProjectPermissions'))
+const allowed = computed(() =>
+  permissions.canOrganization(props.orgId, 'manageProjectPermissions'),
+)
 const inherited = computed(() => snapshot.value?.accessMode === 'ALL_PROJECTS')
 const inactive = computed(() =>
   grants.value.some(
     (grant) =>
       !projects.value.some(
-        (project) => project.id === grant.projectId && project.status === 'ACTIVE',
+        (project) =>
+          project.id === grant.projectId && project.status === 'ACTIVE',
       ),
   ),
 )
 const selectorProjects = computed(() => [
   ...projects.value,
   ...(snapshot.value?.projects ?? [])
-    .filter((grant) => !projects.value.some((project) => project.id === grant.projectId))
+    .filter(
+      (grant) =>
+        !projects.value.some((project) => project.id === grant.projectId),
+    )
     .map((grant) => ({
       id: grant.projectId,
       name: grant.projectName,
@@ -60,17 +73,25 @@ const diff = computed(() => {
       (grant) => !before.some((item) => item.projectId === grant.projectId),
     ).length,
     removed: before.filter(
-      (grant) => !grants.value.some((item) => item.projectId === grant.projectId),
+      (grant) =>
+        !grants.value.some((item) => item.projectId === grant.projectId),
     ).length,
     changed: grants.value.filter((grant) =>
-      before.some((item) => item.projectId === grant.projectId && item.assignedRole !== grant.role),
+      before.some(
+        (item) =>
+          item.projectId === grant.projectId &&
+          item.assignedRole !== grant.role,
+      ),
     ).length,
   }
 })
 function draftOf(value: MemberProjectPermissions) {
   return value.projects.map((grant) => ({
     projectId: grant.projectId,
-    role: value.organizationRole === 'VIEWER' ? ('VIEWER' as const) : grant.assignedRole,
+    role:
+      value.organizationRole === 'VIEWER'
+        ? ('VIEWER' as const)
+        : grant.assignedRole,
   }))
 }
 async function load() {
@@ -90,7 +111,8 @@ async function load() {
     grants.value = draftOf(current)
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('access.loadFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('access.loadFailed')
   } finally {
     if (token === generation) loading.value = false
   }
@@ -191,13 +213,28 @@ async function editLatest() {
         <AppIcon :icon="Cancel01Icon" />
       </t-button>
     </template>
-    <t-loading v-if="loading" :text="t('common.loading')" />
-    <t-alert v-if="error" theme="error" :message="error" />
-    <t-alert v-if="conflict" theme="warning" :message="conflict" />
+    <t-loading
+      v-if="loading"
+      :text="t('common.loading')"
+    />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+    />
+    <t-alert
+      v-if="conflict"
+      theme="warning"
+      :message="conflict"
+    />
     <template v-if="snapshot">
       <p v-if="inherited">{{ t('access.allProjects') }}</p>
       <template v-else>
-        <t-alert v-if="inactive" theme="warning" :message="t('access.archivedHint')" />
+        <t-alert
+          v-if="inactive"
+          theme="warning"
+          :message="t('access.archivedHint')"
+        />
         <t-alert
           v-if="snapshot.organizationRole === 'VIEWER'"
           theme="info"
@@ -210,33 +247,49 @@ async function editLatest() {
           :disabled="!allowed || saving || blocked"
           :effective-roles="
             Object.fromEntries(
-              snapshot.projects.map((grant) => [grant.projectId, grant.effectiveRole]),
+              snapshot.projects.map((grant) => [
+                grant.projectId,
+                grant.effectiveRole,
+              ]),
             )
           "
         />
         <p>{{ t('access.changes', diff) }}</p>
-        <div v-if="previousDraft.length" class="grant-diff">
+        <div
+          v-if="previousDraft.length"
+          class="grant-diff"
+        >
           <strong>{{ t('access.draft') }}</strong>
-          <p v-for="grant in previousDraft" :key="grant.projectId">
+          <p
+            v-for="grant in previousDraft"
+            :key="grant.projectId"
+          >
             {{
-              selectorProjects.find((project) => project.id === grant.projectId)?.name ??
-              grant.projectId
+              selectorProjects.find((project) => project.id === grant.projectId)
+                ?.name ?? grant.projectId
             }}
             · {{ t(`access.role.${grant.role}`) }}
           </p>
           <strong>{{ t('access.latest') }}</strong>
         </div>
-        <t-button v-if="blocked" class="grant-command" variant="outline" @click="editLatest">{{
-          t('access.confirmLatest')
-        }}</t-button>
+        <t-button
+          v-if="blocked"
+          class="grant-command"
+          variant="outline"
+          @click="editLatest"
+          >{{ t('access.confirmLatest') }}</t-button
+        >
         <t-popconfirm
           v-else-if="!grants.length && allowed"
           :content="t('access.revokeAll')"
           @confirm="save"
         >
-          <t-button class="grant-command" theme="danger" :loading="saving">{{
-            t('access.save')
-          }}</t-button>
+          <t-button
+            class="grant-command"
+            theme="danger"
+            :loading="saving"
+            >{{ t('access.save') }}</t-button
+          >
         </t-popconfirm>
         <t-button
           v-else
@@ -248,9 +301,13 @@ async function editLatest() {
         >
       </template>
     </template>
-    <t-button v-else-if="!loading" class="grant-command" variant="outline" @click="load">{{
-      t('access.retry')
-    }}</t-button>
+    <t-button
+      v-else-if="!loading"
+      class="grant-command"
+      variant="outline"
+      @click="load"
+      >{{ t('access.retry') }}</t-button
+    >
   </t-drawer>
 </template>
 <style scoped>

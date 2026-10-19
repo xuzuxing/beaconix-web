@@ -30,7 +30,10 @@ const aiTools = [
 </script>
 
 <template>
-  <t-card :bordered="false" class="ai-tools">
+  <t-card
+    :bordered="false"
+    class="ai-tools"
+  >
     <template #title>
       <h3 class="ai-tools__heading">{{ t('overview.ai.title') }}</h3>
     </template>
@@ -45,8 +48,15 @@ const aiTools = [
 
         <div class="ai-tools__footer">
           <div class="ai-tools__actions">
-            <t-button variant="outline" size="small">{{ t('overview.ai.enable') }}</t-button>
-            <t-button variant="outline" size="small">
+            <t-button
+              variant="outline"
+              size="small"
+              >{{ t('overview.ai.enable') }}</t-button
+            >
+            <t-button
+              variant="outline"
+              size="small"
+            >
               {{ t('overview.ai.docs') }}
               <template #suffix>
                 <AppIcon :icon="LinkSquare02Icon" />
@@ -76,7 +86,10 @@ const aiTools = [
 
         <div class="ai-tools__footer">
           <div class="ai-tools__actions">
-            <t-button variant="outline" size="small">
+            <t-button
+              variant="outline"
+              size="small"
+            >
               <template #icon>
                 <AppIcon :icon="AppWindowIcon" />
               </template>

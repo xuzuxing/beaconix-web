@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { HttpAssertionOperator, MonitorConfig, MonitorType } from '@/api/types'
-import { monitorConfigPayload, parseAssertionValue } from '@/utils/monitor-config'
+import type {
+  HttpAssertionOperator,
+  MonitorConfig,
+  MonitorType,
+} from '@/api/types'
+import {
+  monitorConfigPayload,
+  parseAssertionValue,
+} from '@/utils/monitor-config'
 
 /**
  * 协议配置表单：按监控协议渲染各自的 config 字段（对应后端 CreateMonitorDto.config）。
@@ -11,7 +18,10 @@ import { monitorConfigPayload, parseAssertionValue } from '@/utils/monitor-confi
  * - buildConfig() 把字段整理成后端接受的 config（空的可选字段不提交）
  * - isDirty() 用于「编辑时未改动就不提交 config，以保留已保存的凭据」
  */
-const props = defineProps<{ type: MonitorType; config: Record<string, unknown> }>()
+const props = defineProps<{
+  type: MonitorType
+  config: Record<string, unknown>
+}>()
 const { t } = useI18n()
 
 /** 一行 JSON 指针断言；value 以字符串承载，提交时按字面量解析 */
@@ -55,18 +65,28 @@ function restore(draft: Record<string, unknown>) {
     : []
   Object.assign(fields, {
     keyword: text(draft.keyword),
-    keywordMode: draft.keywordMode === 'notContains' ? 'notContains' : 'contains',
-    maxBodyBytes: typeof draft.maxBodyBytes === 'number' ? draft.maxBodyBytes : null,
+    keywordMode:
+      draft.keywordMode === 'notContains' ? 'notContains' : 'contains',
+    maxBodyBytes:
+      typeof draft.maxBodyBytes === 'number' ? draft.maxBodyBytes : null,
     jsonAssertions: assertions.map((row) => ({
       path: text(row.path),
       operator:
-        row.operator === 'notExists' || row.operator === 'eq' || row.operator === 'neq'
+        row.operator === 'notExists' ||
+        row.operator === 'eq' ||
+        row.operator === 'neq'
           ? row.operator
           : 'exists',
-      value: row.value === null || row.value === undefined ? '' : String(row.value),
+      value:
+        row.value === null || row.value === undefined ? '' : String(row.value),
     })),
-    recordType: draft.recordType === 'AAAA' || draft.recordType === 'CNAME' ? draft.recordType : 'A',
-    expectedValues: Array.isArray(draft.expectedValues) ? draft.expectedValues.map(String) : [],
+    recordType:
+      draft.recordType === 'AAAA' || draft.recordType === 'CNAME'
+        ? draft.recordType
+        : 'A',
+    expectedValues: Array.isArray(draft.expectedValues)
+      ? draft.expectedValues.map(String)
+      : [],
     username: text(draft.username),
     password: text(draft.password),
     database: text(draft.database),
@@ -100,7 +120,10 @@ watch(
 
 const operatorOptions = computed(() => [
   { label: t('workspace.monitor.config.operator.exists'), value: 'exists' },
-  { label: t('workspace.monitor.config.operator.notExists'), value: 'notExists' },
+  {
+    label: t('workspace.monitor.config.operator.notExists'),
+    value: 'notExists',
+  },
   { label: t('workspace.monitor.config.operator.eq'), value: 'eq' },
   { label: t('workspace.monitor.config.operator.neq'), value: 'neq' },
 ])
@@ -134,14 +157,18 @@ function buildConfig(): MonitorConfig {
 
 /** 返回错误文案（空串表示通过）；对应后端 config 的 required 约束 */
 function validate(): string {
-  if ((props.type === 'MYSQL' || props.type === 'POSTGRESQL') && (!fields.username.trim() || !fields.database.trim()))
+  if (
+    (props.type === 'MYSQL' || props.type === 'POSTGRESQL') &&
+    (!fields.username.trim() || !fields.database.trim())
+  )
     return t('workspace.monitor.config.required')
   if (props.type === 'DOCKER' && !fields.containerId.trim())
     return t('workspace.monitor.config.required')
   if (
     props.type === 'HTTP' &&
     fields.jsonAssertions.some(
-      (row) => (row.operator === 'eq' || row.operator === 'neq') && !row.value.trim(),
+      (row) =>
+        (row.operator === 'eq' || row.operator === 'neq') && !row.value.trim(),
     )
   )
     return t('workspace.monitor.config.assertionValueRequired')
@@ -152,7 +179,10 @@ defineExpose({ buildConfig, validate, isDirty: () => dirty.value })
 </script>
 
 <template>
-  <p v-if="type === 'TCP' || type === 'PING'" class="config-empty">
+  <p
+    v-if="type === 'TCP' || type === 'PING'"
+    class="config-empty"
+  >
     {{ t('workspace.monitor.config.none') }}
   </p>
 
@@ -164,8 +194,14 @@ defineExpose({ buildConfig, validate, isDirty: () => dirty.value })
         :placeholder="t('workspace.monitor.config.keywordPlaceholder')"
       />
     </t-form-item>
-    <t-form-item v-if="fields.keyword.trim()" :label="t('workspace.monitor.config.keywordMode')">
-      <t-radio-group v-model="fields.keywordMode" variant="default-filled">
+    <t-form-item
+      v-if="fields.keyword.trim()"
+      :label="t('workspace.monitor.config.keywordMode')"
+    >
+      <t-radio-group
+        v-model="fields.keywordMode"
+        variant="default-filled"
+      >
         <t-radio-button value="contains">{{
           t('workspace.monitor.config.modeContains')
         }}</t-radio-button>
@@ -178,7 +214,9 @@ defineExpose({ buildConfig, validate, isDirty: () => dirty.value })
     <div class="config-list">
       <div class="config-list__head">
         <div>
-          <span class="config-list__title">{{ t('workspace.monitor.config.jsonAssertions') }}</span>
+          <span class="config-list__title">{{
+            t('workspace.monitor.config.jsonAssertions')
+          }}</span>
           <small>{{ t('workspace.monitor.config.jsonAssertionsHint') }}</small>
         </div>
         <t-button
@@ -189,36 +227,61 @@ defineExpose({ buildConfig, validate, isDirty: () => dirty.value })
           >{{ t('workspace.monitor.config.addAssertion') }}</t-button
         >
       </div>
-      <p v-if="!fields.jsonAssertions.length" class="config-list__empty">
+      <p
+        v-if="!fields.jsonAssertions.length"
+        class="config-list__empty"
+      >
         {{ t('workspace.monitor.config.jsonAssertionsEmpty') }}
       </p>
-      <div v-for="(row, index) in fields.jsonAssertions" :key="index" class="config-list__row">
+      <div
+        v-for="(row, index) in fields.jsonAssertions"
+        :key="index"
+        class="config-list__row"
+      >
         <t-input
           v-model="row.path"
           :maxlength="256"
           :placeholder="t('workspace.monitor.config.jsonPathPlaceholder')"
         />
-        <t-select v-model="row.operator" :options="operatorOptions" />
+        <t-select
+          v-model="row.operator"
+          :options="operatorOptions"
+        />
         <t-input
           v-if="row.operator === 'eq' || row.operator === 'neq'"
           v-model="row.value"
           :maxlength="1024"
           :placeholder="t('workspace.monitor.config.jsonValuePlaceholder')"
         />
-        <t-button size="small" variant="text" theme="danger" @click="removeAssertion(index)">{{
-          t('common.delete')
-        }}</t-button>
+        <t-button
+          size="small"
+          variant="text"
+          theme="danger"
+          @click="removeAssertion(index)"
+          >{{ t('common.delete') }}</t-button
+        >
       </div>
     </div>
 
-    <t-form-item v-if="hasBodyAssertion" :label="t('workspace.monitor.config.maxBodyBytes')">
-      <t-input-number v-model="fields.maxBodyBytes" :min="1024" :max="1048576" :step="1024" />
+    <t-form-item
+      v-if="hasBodyAssertion"
+      :label="t('workspace.monitor.config.maxBodyBytes')"
+    >
+      <t-input-number
+        v-model="fields.maxBodyBytes"
+        :min="1024"
+        :max="1048576"
+        :step="1024"
+      />
     </t-form-item>
   </template>
 
   <template v-else-if="type === 'DNS'">
     <t-form-item :label="t('workspace.monitor.config.recordType')">
-      <t-select v-model="fields.recordType" :options="recordTypeOptions" />
+      <t-select
+        v-model="fields.recordType"
+        :options="recordTypeOptions"
+      />
     </t-form-item>
     <t-form-item :label="t('workspace.monitor.config.expectedValues')">
       <t-tag-input
@@ -233,79 +296,146 @@ defineExpose({ buildConfig, validate, isDirty: () => dirty.value })
     <div class="config-grid">
       <template v-if="type === 'MYSQL' || type === 'POSTGRESQL'">
         <t-form-item :label="t('workspace.monitor.config.username')">
-          <t-input v-model="fields.username" :maxlength="256" />
+          <t-input
+            v-model="fields.username"
+            :maxlength="256"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.password')">
-          <t-input v-model="fields.password" type="password" :maxlength="4096" />
+          <t-input
+            v-model="fields.password"
+            type="password"
+            :maxlength="4096"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.database')">
-          <t-input v-model="fields.database" :maxlength="256" />
+          <t-input
+            v-model="fields.database"
+            :maxlength="256"
+          />
         </t-form-item>
       </template>
 
       <template v-else-if="type === 'REDIS'">
         <t-form-item :label="t('workspace.monitor.config.username')">
-          <t-input v-model="fields.username" :maxlength="256" />
+          <t-input
+            v-model="fields.username"
+            :maxlength="256"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.password')">
-          <t-input v-model="fields.password" type="password" :maxlength="4096" />
+          <t-input
+            v-model="fields.password"
+            type="password"
+            :maxlength="4096"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.db')">
-          <t-input-number v-model="fields.db" :min="0" :max="15" />
+          <t-input-number
+            v-model="fields.db"
+            :min="0"
+            :max="15"
+          />
         </t-form-item>
       </template>
 
       <template v-else-if="type === 'MONGODB'">
         <t-form-item :label="t('workspace.monitor.config.username')">
-          <t-input v-model="fields.username" :maxlength="256" />
+          <t-input
+            v-model="fields.username"
+            :maxlength="256"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.password')">
-          <t-input v-model="fields.password" type="password" :maxlength="4096" />
+          <t-input
+            v-model="fields.password"
+            type="password"
+            :maxlength="4096"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.database')">
-          <t-input v-model="fields.database" :maxlength="256" />
+          <t-input
+            v-model="fields.database"
+            :maxlength="256"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.authSource')">
-          <t-input v-model="fields.authSource" :maxlength="256" />
+          <t-input
+            v-model="fields.authSource"
+            :maxlength="256"
+          />
         </t-form-item>
       </template>
 
       <template v-else-if="type === 'DOCKER'">
         <t-form-item :label="t('workspace.monitor.config.containerId')">
-          <t-input v-model="fields.containerId" :maxlength="128" />
+          <t-input
+            v-model="fields.containerId"
+            :maxlength="128"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.token')">
-          <t-input v-model="fields.token" type="password" :maxlength="4096" />
+          <t-input
+            v-model="fields.token"
+            type="password"
+            :maxlength="4096"
+          />
         </t-form-item>
       </template>
 
       <template v-else-if="type === 'GRPC'">
         <t-form-item :label="t('workspace.monitor.config.service')">
-          <t-input v-model="fields.service" :maxlength="256" />
+          <t-input
+            v-model="fields.service"
+            :maxlength="256"
+          />
         </t-form-item>
         <t-form-item :label="t('workspace.monitor.config.token')">
-          <t-input v-model="fields.token" type="password" :maxlength="4096" />
+          <t-input
+            v-model="fields.token"
+            type="password"
+            :maxlength="4096"
+          />
         </t-form-item>
       </template>
 
-      <t-form-item v-else-if="type === 'WEBSOCKET'" :label="t('workspace.monitor.config.token')">
-        <t-input v-model="fields.token" type="password" :maxlength="4096" />
+      <t-form-item
+        v-else-if="type === 'WEBSOCKET'"
+        :label="t('workspace.monitor.config.token')"
+      >
+        <t-input
+          v-model="fields.token"
+          type="password"
+          :maxlength="4096"
+        />
       </t-form-item>
 
-      <t-form-item v-if="type !== 'WEBSOCKET'" :label="t('workspace.monitor.config.tls')">
+      <t-form-item
+        v-if="type !== 'WEBSOCKET'"
+        :label="t('workspace.monitor.config.tls')"
+      >
         <t-switch v-model="fields.tls" />
       </t-form-item>
     </div>
 
     <t-form-item :label="t('workspace.monitor.config.tlsCa')">
-      <t-textarea v-model="fields.tlsCa" :autosize="{ minRows: 2, maxRows: 6 }" />
+      <t-textarea
+        v-model="fields.tlsCa"
+        :autosize="{ minRows: 2, maxRows: 6 }"
+      />
     </t-form-item>
     <template v-if="type === 'DOCKER'">
       <t-form-item :label="t('workspace.monitor.config.tlsCert')">
-        <t-textarea v-model="fields.tlsCert" :autosize="{ minRows: 2, maxRows: 6 }" />
+        <t-textarea
+          v-model="fields.tlsCert"
+          :autosize="{ minRows: 2, maxRows: 6 }"
+        />
       </t-form-item>
       <t-form-item :label="t('workspace.monitor.config.tlsKey')">
-        <t-textarea v-model="fields.tlsKey" :autosize="{ minRows: 2, maxRows: 6 }" />
+        <t-textarea
+          v-model="fields.tlsKey"
+          :autosize="{ minRows: 2, maxRows: 6 }"
+        />
       </t-form-item>
     </template>
   </template>

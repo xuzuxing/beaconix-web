@@ -11,7 +11,11 @@ import { useTeamAuditLogs } from '@/composables/useTeamAuditLogs'
 import { RefreshIcon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
 import { formatDateTime } from '@/utils/billing'
-import { AUDIT_ACTIONS, auditActionTheme, shortId } from '@/utils/team-presenter'
+import {
+  AUDIT_ACTIONS,
+  auditActionTheme,
+  shortId,
+} from '@/utils/team-presenter'
 
 /**
  * 团队管理 → 审计日志。
@@ -89,12 +93,18 @@ function paginate(info: { current: number; pageSize: number }) {
       ></t-tooltip>
     </HeaderActions>
 
-    <t-alert v-if="!canManage" theme="info" :message="t('workspace.auditLog.noPermission')" />
+    <t-alert
+      v-if="!canManage"
+      theme="info"
+      :message="t('workspace.auditLog.noPermission')"
+    />
 
     <t-card class="audit-logs__panel">
       <template #title>{{ t('workspace.auditLog.title') }}</template>
       <template #actions>
-        <span class="audit-logs__scope">{{ orgStore.currentOrganization?.name ?? '—' }}</span>
+        <span class="audit-logs__scope">{{
+          orgStore.currentOrganization?.name ?? '—'
+        }}</span>
       </template>
 
       <p class="audit-logs__subtitle">{{ t('workspace.auditLog.subtitle') }}</p>
@@ -134,21 +144,41 @@ function paginate(info: { current: number; pageSize: number }) {
             :aria-label="t('workspace.auditLog.createdAt')"
           />
           <div class="audit-logs__filter-actions">
-            <t-button theme="primary" :loading="loading" @click="applyFilters">
+            <t-button
+              theme="primary"
+              :loading="loading"
+              @click="applyFilters"
+            >
               {{ t('workspace.auditLog.search') }}
             </t-button>
-            <t-button variant="outline" @click="reset">
+            <t-button
+              variant="outline"
+              @click="reset"
+            >
               {{ t('workspace.auditLog.reset') }}
             </t-button>
           </div>
         </div>
 
-        <div v-if="error" class="audit-logs__state">
-          <t-alert theme="error" :message="error" />
-          <t-button variant="outline" @click="load">{{ t('workspace.auditLog.search') }}</t-button>
+        <div
+          v-if="error"
+          class="audit-logs__state"
+        >
+          <t-alert
+            theme="error"
+            :message="error"
+          />
+          <t-button
+            variant="outline"
+            @click="load"
+            >{{ t('workspace.auditLog.search') }}</t-button
+          >
         </div>
 
-        <div v-else-if="loading && !logs.length" class="audit-logs__state">
+        <div
+          v-else-if="loading && !logs.length"
+          class="audit-logs__state"
+        >
           <t-loading :text="t('common.loading')" />
         </div>
 
@@ -161,24 +191,44 @@ function paginate(info: { current: number; pageSize: number }) {
               <span>{{ t('workspace.auditLog.actor') }}</span>
               <span>{{ t('workspace.auditLog.detail') }}</span>
             </div>
-            <article v-for="log in logs" :key="log.id" class="audit-row">
-              <span class="audit-row__time">{{ formatDateTime(log.createdAt) }}</span>
+            <article
+              v-for="log in logs"
+              :key="log.id"
+              class="audit-row"
+            >
+              <span class="audit-row__time">{{
+                formatDateTime(log.createdAt)
+              }}</span>
               <span class="audit-row__action">
-                <t-tag size="small" variant="light" :theme="auditActionTheme(log.action)">
+                <t-tag
+                  size="small"
+                  variant="light"
+                  :theme="auditActionTheme(log.action)"
+                >
                   {{ actionLabel(log.action) }}
                 </t-tag>
               </span>
               <span class="audit-row__entity">
                 <span class="audit-row__entity-name">{{ log.entity }}</span>
-                <span class="audit-row__entity-id" :title="log.entityId">
+                <span
+                  class="audit-row__entity-id"
+                  :title="log.entityId"
+                >
                   {{ shortId(log.entityId) }}
                 </span>
               </span>
-              <span class="audit-row__actor" :title="log.actorId ?? ''">
+              <span
+                class="audit-row__actor"
+                :title="log.actorId ?? ''"
+              >
                 {{ log.actorId ? shortId(log.actorId) : '—' }}
               </span>
               <span class="audit-row__detail">
-                <t-button variant="text" size="small" @click="openDetail(log)">
+                <t-button
+                  variant="text"
+                  size="small"
+                  @click="openDetail(log)"
+                >
                   {{ t('workspace.auditLog.detail') }}
                 </t-button>
               </span>
@@ -195,17 +245,28 @@ function paginate(info: { current: number; pageSize: number }) {
           />
         </template>
 
-        <div v-else class="audit-logs__state">
+        <div
+          v-else
+          class="audit-logs__state"
+        >
           <p class="audit-logs__empty">{{ t('workspace.auditLog.empty') }}</p>
         </div>
       </template>
 
-      <div v-else class="audit-logs__state">
-        <p class="audit-logs__empty">{{ t('workspace.auditLog.noPermission') }}</p>
+      <div
+        v-else
+        class="audit-logs__state"
+      >
+        <p class="audit-logs__empty">
+          {{ t('workspace.auditLog.noPermission') }}
+        </p>
       </div>
     </t-card>
 
-    <AuditLogDetailDrawer v-model:visible="detailVisible" :log="selected" />
+    <AuditLogDetailDrawer
+      v-model:visible="detailVisible"
+      :log="selected"
+    />
   </section>
 </template>
 
@@ -225,10 +286,9 @@ function paginate(info: { current: number; pageSize: number }) {
 
   &__filters {
     display: grid;
-    grid-template-columns: 160px minmax(150px, 1fr) minmax(150px, 1fr) minmax(
-        150px,
-        1fr
-      ) 240px auto;
+    grid-template-columns:
+      160px minmax(150px, 1fr) minmax(150px, 1fr) minmax(150px, 1fr)
+      240px auto;
     gap: 8px;
     margin-bottom: 16px;
   }

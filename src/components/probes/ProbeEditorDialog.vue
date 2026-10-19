@@ -2,13 +2,21 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { useI18n } from 'vue-i18n'
-import { createProbe, createProbeEnrollment, updateProbe } from '@/api/modules/probe'
+import {
+  createProbe,
+  createProbeEnrollment,
+  updateProbe,
+} from '@/api/modules/probe'
 import type { TenantProbe, CreateProbeParams } from '@/api/types/probe'
 import type { ProbeCredential } from './ProbeCredentialDialog.vue'
 import { useProbeActions } from '@/composables/useProbeActions'
 import { permissionEpoch, sessionEpoch } from '@/utils/access-context'
 import { PROBE_PROVIDERS, probeProviderLabelKey } from '@/utils/admin-presenter'
-import { probeFormError, probeInstallCommand, withoutProbeSecret } from '@/utils/probe-presenter'
+import {
+  probeFormError,
+  probeInstallCommand,
+  withoutProbeSecret,
+} from '@/utils/probe-presenter'
 
 const visible = defineModel<boolean>('visible', { required: true })
 const props = defineProps<{ orgId: string; probe?: TenantProbe }>()
@@ -26,7 +34,9 @@ const form = reactive<CreateProbeParams>({
   callbackUrl: '',
   enabled: true,
 })
-const { run, busy, error } = useProbeActions(computed(() => (visible.value ? props.orgId : '')))
+const { run, busy, error } = useProbeActions(
+  computed(() => (visible.value ? props.orgId : '')),
+)
 watch(
   visible,
   (open) => {
@@ -44,7 +54,12 @@ watch(
   { flush: 'sync' },
 )
 watch(
-  () => [props.orgId, props.probe?.id, permissionEpoch.value, sessionEpoch.value],
+  () => [
+    props.orgId,
+    props.probe?.id,
+    permissionEpoch.value,
+    sessionEpoch.value,
+  ],
   () => {
     visible.value = false
   },
@@ -84,7 +99,9 @@ async function save() {
     return
   }
   const result = await run('save', (orgId) =>
-    editing ? updateProbe(orgId, editing, payload) : createProbe(orgId, payload),
+    editing
+      ? updateProbe(orgId, editing, payload)
+      : createProbe(orgId, payload),
   )
   if (!result) return
   const secret = result.secret
@@ -114,12 +131,28 @@ async function save() {
     @confirm="save"
   >
     <div class="probe-editor">
-      <t-radio-group v-if="!probe" v-model="mode" variant="outline">
-        <t-radio-button value="install">{{ t('probePage.install') }}</t-radio-button>
-        <t-radio-button value="manual">{{ t('probePage.manual') }}</t-radio-button>
+      <t-radio-group
+        v-if="!probe"
+        v-model="mode"
+        variant="outline"
+      >
+        <t-radio-button value="install">{{
+          t('probePage.install')
+        }}</t-radio-button>
+        <t-radio-button value="manual">{{
+          t('probePage.manual')
+        }}</t-radio-button>
       </t-radio-group>
-      <t-alert v-if="localError || error" theme="error" :message="localError || error" />
-      <t-form :data="form" label-align="top" :colon="false">
+      <t-alert
+        v-if="localError || error"
+        theme="error"
+        :message="localError || error"
+      />
+      <t-form
+        :data="form"
+        label-align="top"
+        :colon="false"
+      >
         <t-form-item>
           <label class="probe-editor__field">
             <span>{{ t('probePage.name') }}</span>
@@ -135,7 +168,10 @@ async function save() {
             v-model="form.provider"
             :aria-label="t('probePage.provider')"
             :options="
-              PROBE_PROVIDERS.map((value) => ({ value, label: t(probeProviderLabelKey(value)) }))
+              PROBE_PROVIDERS.map((value) => ({
+                value,
+                label: t(probeProviderLabelKey(value)),
+              }))
             "
         /></t-form-item>
         <t-form-item>

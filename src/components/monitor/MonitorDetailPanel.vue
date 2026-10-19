@@ -13,16 +13,30 @@ import { formatMetric } from '@/utils/monitoring-adapter'
 defineOptions({ name: 'MonitorDetailPanel' })
 
 const { t } = useI18n()
-const props = defineProps<{ slowest: Dashboard['slowestMonitors']; events: Dashboard['recentAlerts'] }>()
+const props = defineProps<{
+  slowest: Dashboard['slowestMonitors']
+  events: Dashboard['recentAlerts']
+}>()
 
-const slowMonitors = computed(() => props.slowest.map(s => ({
-  ...s, avgLatency: s.avgLatencyMs, p95: s.p95LatencyMs, uptime: s.uptimePercent, trend: s.sparkline,
-})))
-const alerts = computed(() => props.events.map(e => ({
-  ...e, level: e.status === 'resolved' ? 'recovered' as const : e.level,
-  monitor: e.monitorName, time: e.updatedAt.replace('T', ' ').slice(0, 19),
-  durationMinutes: e.durationSeconds === null ? null : Math.ceil(e.durationSeconds / 60),
-})))
+const slowMonitors = computed(() =>
+  props.slowest.map((s) => ({
+    ...s,
+    avgLatency: s.avgLatencyMs,
+    p95: s.p95LatencyMs,
+    uptime: s.uptimePercent,
+    trend: s.sparkline,
+  })),
+)
+const alerts = computed(() =>
+  props.events.map((e) => ({
+    ...e,
+    level: e.status === 'resolved' ? ('recovered' as const) : e.level,
+    monitor: e.monitorName,
+    time: e.updatedAt.replace('T', ' ').slice(0, 19),
+    durationMinutes:
+      e.durationSeconds === null ? null : Math.ceil(e.durationSeconds / 60),
+  })),
+)
 
 /** 告警级别 → TDesign 标签主题 */
 const LEVEL_THEME = {
@@ -31,7 +45,9 @@ const LEVEL_THEME = {
   recovered: 'success',
 } as const
 
-const maxLatency = computed(() => Math.max(1, ...slowMonitors.value.map((item) => item.avgLatency ?? 0)))
+const maxLatency = computed(() =>
+  Math.max(1, ...slowMonitors.value.map((item) => item.avgLatency ?? 0)),
+)
 </script>
 
 <template>
@@ -42,9 +58,20 @@ const maxLatency = computed(() => Math.max(1, ...slowMonitors.value.map((item) =
       </header>
 
       <div class="detail__rows">
-        <t-empty v-if="!slowMonitors.length" :description="t('dashboard.live.empty')" />
-        <div v-for="(item, index) in slowMonitors" :key="item.id" class="row">
-          <span class="row__rank" :class="{ 'row__rank--top': index < 3 }">{{ index + 1 }}</span>
+        <t-empty
+          v-if="!slowMonitors.length"
+          :description="t('dashboard.live.empty')"
+        />
+        <div
+          v-for="(item, index) in slowMonitors"
+          :key="item.id"
+          class="row"
+        >
+          <span
+            class="row__rank"
+            :class="{ 'row__rank--top': index < 3 }"
+            >{{ index + 1 }}</span
+          >
 
           <span class="row__main">
             <span class="row__name">
@@ -62,23 +89,41 @@ const maxLatency = computed(() => Math.max(1, ...slowMonitors.value.map((item) =
           </span>
 
           <span class="row__metric">
-            <span class="row__metric-label">{{ t('dashboard.slow.avgLatency') }}</span>
-            <span class="row__metric-value" :class="{ 'row__metric-value--slow': (item.avgLatency ?? 0) > 600 }">
+            <span class="row__metric-label">{{
+              t('dashboard.slow.avgLatency')
+            }}</span>
+            <span
+              class="row__metric-value"
+              :class="{
+                'row__metric-value--slow': (item.avgLatency ?? 0) > 600,
+              }"
+            >
               {{ formatMetric(item.avgLatency) }} ms
             </span>
           </span>
 
           <span class="row__metric">
             <span class="row__metric-label">P95</span>
-            <span class="row__metric-value">{{ formatMetric(item.p95) }} ms</span>
+            <span class="row__metric-value"
+              >{{ formatMetric(item.p95) }} ms</span
+            >
           </span>
 
           <span class="row__metric">
-            <span class="row__metric-label">{{ t('dashboard.slow.uptime') }}</span>
-            <span class="row__metric-value">{{ formatMetric(item.uptime, 2) }}%</span>
+            <span class="row__metric-label">{{
+              t('dashboard.slow.uptime')
+            }}</span>
+            <span class="row__metric-value"
+              >{{ formatMetric(item.uptime, 2) }}%</span
+            >
           </span>
 
-          <span class="row__bar" :style="{ width: `${((item.avgLatency ?? 0) / maxLatency) * 100}%` }"></span>
+          <span
+            class="row__bar"
+            :style="{
+              width: `${((item.avgLatency ?? 0) / maxLatency) * 100}%`,
+            }"
+          ></span>
         </div>
       </div>
     </section>
@@ -89,29 +134,69 @@ const maxLatency = computed(() => Math.max(1, ...slowMonitors.value.map((item) =
       </header>
 
       <div class="detail__rows">
-        <t-empty v-if="!alerts.length" :description="t('dashboard.live.empty')" />
-        <div v-for="item in alerts" :key="item.id" class="alert">
+        <t-empty
+          v-if="!alerts.length"
+          :description="t('dashboard.live.empty')"
+        />
+        <div
+          v-for="item in alerts"
+          :key="item.id"
+          class="alert"
+        >
           <span class="alert__time">{{ item.time }}</span>
 
           <span class="alert__body">
             <span class="alert__head">
-              <t-tag :theme="LEVEL_THEME[item.level]" variant="light" size="small">
+              <t-tag
+                :theme="LEVEL_THEME[item.level]"
+                variant="light"
+                size="small"
+              >
                 {{ t(`dashboard.alert.level.${item.level}`) }}
               </t-tag>
               <span class="alert__monitor">{{ item.monitor }}</span>
-              <span v-if="item.durationMinutes !== null" class="alert__duration">
-                {{ t('dashboard.alert.duration', { minutes: item.durationMinutes }) }}
+              <span
+                v-if="item.durationMinutes !== null"
+                class="alert__duration"
+              >
+                {{
+                  t('dashboard.alert.duration', {
+                    minutes: item.durationMinutes,
+                  })
+                }}
               </span>
-              <span v-else class="alert__ongoing">{{ t('dashboard.alert.ongoing') }}</span>
+              <span
+                v-else
+                class="alert__ongoing"
+                >{{ t('dashboard.alert.ongoing') }}</span
+              >
             </span>
-            <span class="alert__message">{{ item.message || item.reason }}<template v-if="item.threshold !== null"> ({{ formatMetric(item.actual, 2) }} / {{ item.threshold }} {{ item.unit }})</template></span>
-            <t-tag v-if="item.suppressedReason" size="small">{{ item.suppressedReason }}</t-tag>
-            <t-tag v-if="item.monitorDeleted" size="small">{{ t('dashboard.live.deleted') }}</t-tag>
+            <span class="alert__message"
+              >{{ item.message || item.reason
+              }}<template v-if="item.threshold !== null">
+                ({{ formatMetric(item.actual, 2) }} / {{ item.threshold }}
+                {{ item.unit }})</template
+              ></span
+            >
+            <t-tag
+              v-if="item.suppressedReason"
+              size="small"
+              >{{ item.suppressedReason }}</t-tag
+            >
+            <t-tag
+              v-if="item.monitorDeleted"
+              size="small"
+              >{{ t('dashboard.live.deleted') }}</t-tag
+            >
             <span class="alert__target">{{ item.target }}</span>
           </span>
 
           <span class="alert__notified">
-            {{ item.notified ? t('dashboard.alert.notified') : t('dashboard.alert.muted') }}
+            {{
+              item.notified
+                ? t('dashboard.alert.notified')
+                : t('dashboard.alert.muted')
+            }}
           </span>
         </div>
       </div>
@@ -125,12 +210,22 @@ const maxLatency = computed(() => Math.max(1, ...slowMonitors.value.map((item) =
   // 慢项列表列多，占更宽
   grid-template-columns: 1.35fr 1fr;
   gap: @beacon-gap-l;
-  @media (max-width: 1200px) { grid-template-columns: minmax(0, 1fr); }
+  @media (max-width: 1200px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
   @media (max-width: 600px) {
-    .row { flex-wrap: wrap; }
-    .row__main { flex-basis: 70%; }
-    .alert { flex-wrap: wrap; }
-    .alert__time { width: 100%; }
+    .row {
+      flex-wrap: wrap;
+    }
+    .row__main {
+      flex-basis: 70%;
+    }
+    .alert {
+      flex-wrap: wrap;
+    }
+    .alert__time {
+      width: 100%;
+    }
   }
 
   &__panel {

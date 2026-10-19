@@ -25,7 +25,12 @@ const title = computed(() => t(`legal.${props.kind}.title`))
 const sections = computed<LegalSection[]>(
   () => (tm(`legal.${props.kind}.sections`) as unknown as LegalSection[]) ?? [],
 )
-const footer = computed(() => t('legal.footer', { year: new Date().getFullYear(), copyright: footerCopyright.value }))
+const footer = computed(() =>
+  t('legal.footer', {
+    year: new Date().getFullYear(),
+    copyright: footerCopyright.value,
+  }),
+)
 
 function goBack() {
   if (window.history.length > 1) {
@@ -40,13 +45,23 @@ function goBack() {
   <div class="legal">
     <header class="legal__bar">
       <div class="legal__brand">
-        <img class="legal__logo" :src="logoSrc" :alt="siteName" />
-        <span class="legal__name">{{ props.kind === 'terms' ? t('legal.terms.title') : t('legal.privacy.title')
-          }}</span>
+        <img
+          class="legal__logo"
+          :src="logoSrc"
+          :alt="siteName"
+        />
+        <span class="legal__name">{{
+          props.kind === 'terms'
+            ? t('legal.terms.title')
+            : t('legal.privacy.title')
+        }}</span>
       </div>
 
       <div class="legal__actions">
-        <t-button variant="text" @click="goBack">
+        <t-button
+          variant="text"
+          @click="goBack"
+        >
           <template #icon>
             <AppIcon :icon="ArrowLeft01Icon" />
           </template>
@@ -60,9 +75,17 @@ function goBack() {
       <h1 class="legal__title">{{ title }}</h1>
       <p class="legal__meta">{{ t('legal.updatedAt') }}</p>
 
-      <section v-for="section in sections" :key="section.heading" class="legal__section">
+      <section
+        v-for="section in sections"
+        :key="section.heading"
+        class="legal__section"
+      >
         <h2 class="legal__heading">{{ section.heading }}</h2>
-        <p v-for="(paragraph, index) in section.paragraphs" :key="index" class="legal__paragraph">
+        <p
+          v-for="(paragraph, index) in section.paragraphs"
+          :key="index"
+          class="legal__paragraph"
+        >
           {{ paragraph }}
         </p>
       </section>

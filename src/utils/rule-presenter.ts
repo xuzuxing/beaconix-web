@@ -42,12 +42,18 @@ export function createRuleNodeId(prefix: 'logic' | 'condition' = 'condition'): s
 }
 
 /** 统计规则条数与逻辑组个数（标题上的「共 N 条规则 / M 个逻辑组」） */
-export function countRuleNodes(node: RuleNode): { conditions: number; logics: number } {
+export function countRuleNodes(node: RuleNode): {
+  conditions: number
+  logics: number
+} {
   if (isConditionNode(node)) return { conditions: 1, logics: 0 }
   return node.children.reduce(
     (acc, child) => {
       const next = countRuleNodes(child)
-      return { conditions: acc.conditions + next.conditions, logics: acc.logics + next.logics }
+      return {
+        conditions: acc.conditions + next.conditions,
+        logics: acc.logics + next.logics,
+      }
     },
     { conditions: 0, logics: 1 },
   )
@@ -109,8 +115,7 @@ export function operatorLabel(operator: RuleOperator, t: RuleTranslator): string
 }
 
 function scalarText(value: unknown, type: RuleValueType, t: RuleTranslator): string {
-  if (typeof value === 'boolean')
-    return t(value ? 'ruleGroup.value.true' : 'ruleGroup.value.false')
+  if (typeof value === 'boolean') return t(value ? 'ruleGroup.value.true' : 'ruleGroup.value.false')
   if (value === undefined || value === null || value === '') return '—'
   if (type === 'boolean')
     return t(String(value) === 'true' ? 'ruleGroup.value.true' : 'ruleGroup.value.false')
@@ -142,12 +147,22 @@ export function formatConditionText(node: ConditionNode, t: RuleTranslator): str
 
 /** 只读视图用的树形文案结构（逻辑组带 operator 标签，叶子是整句文案） */
 export type RuleNodeText =
-  | { kind: 'logic'; id: string; operator: 'and' | 'or'; label: string; children: RuleNodeText[] }
+  | {
+      kind: 'logic'
+      id: string
+      operator: 'and' | 'or'
+      label: string
+      children: RuleNodeText[]
+    }
   | { kind: 'condition'; id: string; text: string }
 
 export function describeRuleTree(node: RuleNode, t: RuleTranslator): RuleNodeText {
   if (isConditionNode(node)) {
-    return { kind: 'condition', id: node.id, text: formatConditionText(node, t) }
+    return {
+      kind: 'condition',
+      id: node.id,
+      text: formatConditionText(node, t),
+    }
   }
   return {
     kind: 'logic',
@@ -191,14 +206,23 @@ export function validateRuleTree(node: RuleNode, meta: RuleMeta | null): RuleTre
     }
     if (isLogicNode(current)) {
       if (current.operator !== 'and' && current.operator !== 'or')
-        issues.push({ id: current.id, messageKey: 'ruleGroup.issue.logicOperator' })
+        issues.push({
+          id: current.id,
+          messageKey: 'ruleGroup.issue.logicOperator',
+        })
       if (current.children.length === 0)
-        issues.push({ id: current.id, messageKey: 'ruleGroup.issue.emptyGroup' })
+        issues.push({
+          id: current.id,
+          messageKey: 'ruleGroup.issue.emptyGroup',
+        })
       current.children.forEach((child) => visit(child, depth + 1))
       return
     }
     if (current.value === undefined || current.value === null || current.value === '') {
-      issues.push({ id: current.id, messageKey: 'ruleGroup.issue.valueRequired' })
+      issues.push({
+        id: current.id,
+        messageKey: 'ruleGroup.issue.valueRequired',
+      })
       return
     }
     if (!meta) return
@@ -223,13 +247,19 @@ export function validateRuleTree(node: RuleNode, meta: RuleMeta | null): RuleTre
       const allowed = meta?.statusClassValues ?? [1, 2, 3, 4, 5]
       const values = normalizeMultiValues(current.value).map(Number)
       if (!values.length || values.some((value) => !allowed.includes(value)))
-        issues.push({ id: current.id, messageKey: 'ruleGroup.issue.statusClass' })
+        issues.push({
+          id: current.id,
+          messageKey: 'ruleGroup.issue.statusClass',
+        })
       return
     }
     const multi = current.operator === 'in' || current.operator === 'not_in'
     const values = multi ? normalizeMultiValues(current.value) : [current.value]
     if (multi && values.length === 0) {
-      issues.push({ id: current.id, messageKey: 'ruleGroup.issue.valueRequired' })
+      issues.push({
+        id: current.id,
+        messageKey: 'ruleGroup.issue.valueRequired',
+      })
       return
     }
     const constraints = fieldMeta.constraints ?? {}
@@ -237,9 +267,15 @@ export function validateRuleTree(node: RuleNode, meta: RuleMeta | null): RuleTre
       if (fieldMeta.valueType === 'number') {
         const value = Number(raw)
         if (!Number.isFinite(value)) {
-          issues.push({ id: current.id, messageKey: 'ruleGroup.issue.valueNumber' })
+          issues.push({
+            id: current.id,
+            messageKey: 'ruleGroup.issue.valueNumber',
+          })
         } else if (constraints.integer && !Number.isInteger(value)) {
-          issues.push({ id: current.id, messageKey: 'ruleGroup.issue.valueInteger' })
+          issues.push({
+            id: current.id,
+            messageKey: 'ruleGroup.issue.valueInteger',
+          })
         } else if (constraints.min !== undefined && value < constraints.min) {
           issues.push({
             id: current.id,
@@ -257,7 +293,10 @@ export function validateRuleTree(node: RuleNode, meta: RuleMeta | null): RuleTre
       }
       if (fieldMeta.valueType === 'boolean') {
         if (typeof raw !== 'boolean')
-          issues.push({ id: current.id, messageKey: 'ruleGroup.issue.valueBoolean' })
+          issues.push({
+            id: current.id,
+            messageKey: 'ruleGroup.issue.valueBoolean',
+          })
         continue
       }
       if (constraints.maxLength !== undefined && String(raw).length > constraints.maxLength)

@@ -13,7 +13,11 @@ import {
   unbindRuleGroup,
 } from '@/api'
 import type { MonitorDetailRange } from '@/api/types/monitor-detail'
-import type { BoundRuleGroup, MonitorRuleBinding, RuleGroup } from '@/api/types/rule'
+import type {
+  BoundRuleGroup,
+  MonitorRuleBinding,
+  RuleGroup,
+} from '@/api/types/rule'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import MonitorActions from '@/components/monitor/MonitorActions.vue'
@@ -75,7 +79,11 @@ async function resolveWorkspace() {
     if (token !== workspaceGeneration) return
     const authority = await permissions.ensureOrganization(item.organizationId)
     const projectAuthority = await permissions.ensureProject(routeProject.value)
-    if (!authority || !projectAuthority || projectAuthority.organizationId !== item.organizationId)
+    if (
+      !authority ||
+      !projectAuthority ||
+      projectAuthority.organizationId !== item.organizationId
+    )
       throw new Error(t('access.unavailable'))
     const [organizations, projects] = await Promise.all([
       listOrganizations(),
@@ -98,7 +106,8 @@ async function resolveWorkspace() {
     void org.loadSubscription().catch(() => {})
   } catch (cause) {
     if (token === workspaceGeneration)
-      workspaceError.value = cause instanceof Error ? cause.message : t('monitorPage.notFound')
+      workspaceError.value =
+        cause instanceof Error ? cause.message : t('monitorPage.notFound')
   } finally {
     if (token === workspaceGeneration) workspaceLoading.value = false
   }
@@ -123,13 +132,21 @@ watch(
   { flush: 'sync' },
 )
 const projectId = computed(() =>
-  ready.value && org.currentProjectId === routeProject.value ? routeProject.value : '',
+  ready.value && org.currentProjectId === routeProject.value
+    ? routeProject.value
+    : '',
 )
 const identity = computed(() => `${projectId.value}/${monitorId.value}`)
 const range = ref<MonitorDetailRange>('24h')
 const tz = ref(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
 const timezones = [
-  ...new Set([tz.value, 'UTC', 'Asia/Shanghai', 'America/New_York', 'Europe/London']),
+  ...new Set([
+    tz.value,
+    'UTC',
+    'Asia/Shanghai',
+    'America/New_York',
+    'Europe/London',
+  ]),
 ]
 const ranges: MonitorDetailRange[] = ['1h', '24h', '7d', '30d']
 const tab = ref('overview')
@@ -145,13 +162,16 @@ const { monitor, insights, loading, error, refresh } = useMonitorDetail(
 )
 /** 标题栏：标题取监控项名称，返回按钮回到列表并保留筛选条件 */
 usePageHeader({ title: () => monitor.value?.name, back })
-const { pending, actionError, act } = useMonitorActions(identity, async (action) => {
-  if (action === 'delete') {
-    await router.replace(back.value)
-    return
-  }
-  await refresh()
-})
+const { pending, actionError, act } = useMonitorActions(
+  identity,
+  async (action) => {
+    if (action === 'delete') {
+      await router.replace(back.value)
+      return
+    }
+    await refresh()
+  },
+)
 watch(
   identity,
   () => {
@@ -178,7 +198,8 @@ onScopeDispose(() => {
   workspaceGeneration++
   workspaceController?.abort()
 })
-const time = (value?: string | null) => formatMonitorTime(value, locale.value, tz.value)
+const time = (value?: string | null) =>
+  formatMonitorTime(value, locale.value, tz.value)
 const metric = (value?: number | null, suffix = '') =>
   value == null ? '-' : `${value.toLocaleString(locale.value)}${suffix}`
 const kpis = computed(() => {
@@ -193,7 +214,10 @@ const kpis = computed(() => {
   ]
 })
 const days = computed(() =>
-  certificateDays(monitor.value?.sslExpiresAt ?? null, insights.value?.asOf ?? Date.now()),
+  certificateDays(
+    monitor.value?.sslExpiresAt ?? null,
+    insights.value?.asOf ?? Date.now(),
+  ),
 )
 // ---------- 检测异常条件（绑定的规则组）----------
 const ruleBindings = ref<MonitorRuleBinding[]>([])
@@ -240,12 +264,18 @@ async function loadRules() {
       canManage.value ? listRuleGroups(organizationId) : Promise.resolve([]),
       listMonitorRuleBindings(project, id),
     ])
-    if (token !== rulesGeneration || project !== projectId.value || id !== monitorId.value) return
+    if (
+      token !== rulesGeneration ||
+      project !== projectId.value ||
+      id !== monitorId.value
+    )
+      return
     ruleGroups.value = groups
     ruleBindings.value = bindings
   } catch (cause) {
     if (token !== rulesGeneration) return
-    rulesError.value = cause instanceof Error ? cause.message : t('ruleGroup.monitor.loadFailed')
+    rulesError.value =
+      cause instanceof Error ? cause.message : t('ruleGroup.monitor.loadFailed')
   } finally {
     if (token === rulesGeneration) rulesLoading.value = false
   }
@@ -272,7 +302,9 @@ async function unbindRule(ruleGroupId: string) {
   }
 }
 function isFullRuleGroup(group: BoundRuleGroup): group is RuleGroup {
-  return typeof group.organizationId === 'string' && group.projectId !== undefined
+  return (
+    typeof group.organizationId === 'string' && group.projectId !== undefined
+  )
 }
 function openRuleEditor(group?: BoundRuleGroup) {
   if (
@@ -305,7 +337,10 @@ const info = computed(() => {
     ['interval', t('monitorPage.seconds', { value: m.interval })],
     ['timeout', `${m.timeout} ms`],
     ['threshold', String(m.failureThreshold)],
-    ['scheduling', t(m.enabled ? 'monitorPage.enabled' : 'monitorPage.disabled')],
+    [
+      'scheduling',
+      t(m.enabled ? 'monitorPage.enabled' : 'monitorPage.disabled'),
+    ],
     ['expected', m.type === 'HTTP' ? String(m.expectedStatus) : '-'],
     ['createdAt', time(m.createdAt)],
     ['modifiedAt', time(m.updatedAt)],
@@ -314,7 +349,9 @@ const info = computed(() => {
           [
             'boundChannels',
             m.notificationChannelIds.length
-              ? t('monitorPage.channels', { count: m.notificationChannelIds.length })
+              ? t('monitorPage.channels', {
+                  count: m.notificationChannelIds.length,
+                })
               : t('monitorPage.organizationFallback'),
           ],
         ]
@@ -329,11 +366,18 @@ const info = computed(() => {
       'availabilityThreshold',
       m.availabilityThreshold === null ? '-' : `${m.availabilityThreshold}%`,
     ],
-    ['availabilityWindow', m.availabilityWindow === null ? '-' : String(m.availabilityWindow)],
+    [
+      'availabilityWindow',
+      m.availabilityWindow === null ? '-' : String(m.availabilityWindow),
+    ],
   ]
 })
 const visibleChecks = computed(
-  () => insights.value?.checks.slice((checkPage.value - 1) * 10, checkPage.value * 10) ?? [],
+  () =>
+    insights.value?.checks.slice(
+      (checkPage.value - 1) * 10,
+      checkPage.value * 10,
+    ) ?? [],
 )
 async function copy() {
   try {
@@ -370,16 +414,31 @@ async function copy() {
       />
     </HeaderActions>
     <HeaderActions to="#layout-header-title-addon">
-      <span v-if="monitor" class="monitor-detail__protocol">{{ monitor.type }}</span>
-    </HeaderActions>
-    <div v-if="workspaceError || error" class="monitor-detail__empty">
-      <t-alert theme="error" :message="workspaceError || error" /><t-button
-        @click="workspaceError ? resolveWorkspace() : refresh()"
-        >{{ t('monitorPage.retry') }}</t-button
+      <span
+        v-if="monitor"
+        class="monitor-detail__protocol"
+        >{{ monitor.type }}</span
       >
+    </HeaderActions>
+    <div
+      v-if="workspaceError || error"
+      class="monitor-detail__empty"
+    >
+      <t-alert
+        theme="error"
+        :message="workspaceError || error"
+      /><t-button @click="workspaceError ? resolveWorkspace() : refresh()">{{
+        t('monitorPage.retry')
+      }}</t-button>
     </div>
-    <div v-else-if="!monitor || !insights" class="monitor-detail__empty">
-      <t-loading v-if="loading || workspaceLoading" :text="t('common.loading')" /><t-empty
+    <div
+      v-else-if="!monitor || !insights"
+      class="monitor-detail__empty"
+    >
+      <t-loading
+        v-if="loading || workspaceLoading"
+        :text="t('common.loading')"
+      /><t-empty
         v-else
         :description="t('monitorPage.notFound')"
       />
@@ -396,7 +455,11 @@ async function copy() {
             ><AppIcon :icon="Copy01Icon" /></t-button
         ></t-tooltip>
       </div>
-      <t-alert v-if="actionError" theme="error" :message="actionError" />
+      <t-alert
+        v-if="actionError"
+        theme="error"
+        :message="actionError"
+      />
       <t-alert
         v-if="monitor.executionEligible === false"
         theme="warning"
@@ -433,7 +496,10 @@ async function copy() {
             ><strong>{{ insights.latest.ongoingCount }}</strong>
           </div>
         </div>
-        <p v-if="insights.latest.lastError" class="monitor-detail__error">
+        <p
+          v-if="insights.latest.lastError"
+          class="monitor-detail__error"
+        >
           {{ insights.latest.lastError }}
         </p>
       </t-card>
@@ -442,10 +508,15 @@ async function copy() {
         <template #title>{{ t('monitorPage.overview') }}</template>
         <template #actions>
           <div class="monitor-detail__toolbar">
-            <t-radio-group v-model="range" variant="default-filled"
-              ><t-radio-button v-for="value in ranges" :key="value" :value="value">{{
-                t(`monitorPage.range${value}`)
-              }}</t-radio-button></t-radio-group
+            <t-radio-group
+              v-model="range"
+              variant="default-filled"
+              ><t-radio-button
+                v-for="value in ranges"
+                :key="value"
+                :value="value"
+                >{{ t(`monitorPage.range${value}`) }}</t-radio-button
+              ></t-radio-group
             >
             <div class="monitor-detail__settings">
               <t-select
@@ -454,9 +525,10 @@ async function copy() {
                 :options="timezones.map((value) => ({ label: value, value }))"
               />
               <label
-                ><t-switch v-model="autoRefresh" size="small" />{{
-                  t('monitorPage.autoRefresh')
-                }}</label
+                ><t-switch
+                  v-model="autoRefresh"
+                  size="small"
+                />{{ t('monitorPage.autoRefresh') }}</label
               >
             </div>
           </div>
@@ -470,7 +542,10 @@ async function copy() {
           :message="t('monitorPage.truncated')"
         />
         <div class="monitor-detail__kpis">
-          <div v-for="item in kpis" :key="item.label">
+          <div
+            v-for="item in kpis"
+            :key="item.label"
+          >
             <span>{{ t(`monitorPage.${item.label}`) }}</span
             ><strong>{{ item.value }}</strong>
           </div>
@@ -484,20 +559,32 @@ async function copy() {
           :label="t(`monitorPage.${value}`)"
         />
       </t-tabs>
-      <t-card v-if="tab === 'overview' || tab === 'configuration'" class="monitor-detail__card">
+      <t-card
+        v-if="tab === 'overview' || tab === 'configuration'"
+        class="monitor-detail__card"
+      >
         <template #title>{{ t('monitorPage.configuration') }}</template>
         <dl class="monitor-detail__info">
-          <div v-for="[key, value] in tab === 'overview' ? info.slice(0, 4) : info" :key="key">
+          <div
+            v-for="[key, value] in tab === 'overview' ? info.slice(0, 4) : info"
+            :key="key"
+          >
             <dt>{{ t(`monitorPage.${key}`) }}</dt>
             <dd>{{ value }}</dd>
           </div>
         </dl>
       </t-card>
 
-      <t-card v-if="tab === 'overview'" class="monitor-detail__card">
+      <t-card
+        v-if="tab === 'overview'"
+        class="monitor-detail__card"
+      >
         <MonitorDetailCharts :insights="insights" />
       </t-card>
-      <t-card v-if="tab === 'overview' || tab === 'events'" class="monitor-detail__card">
+      <t-card
+        v-if="tab === 'overview' || tab === 'events'"
+        class="monitor-detail__card"
+      >
         <template #title>
           <span>{{ t('monitorPage.events') }}</span>
           <span class="monitor-detail__hint">
@@ -518,20 +605,28 @@ async function copy() {
           :message="t('monitorPage.eventsTruncated')"
         />
         <MonitorEvents
-          :events="tab === 'overview' ? insights.events.slice(0, 5) : insights.events"
+          :events="
+            tab === 'overview' ? insights.events.slice(0, 5) : insights.events
+          "
           :as-of="insights.asOf"
           :tz="tz"
         />
       </t-card>
 
-      <t-card v-if="tab === 'checks'" class="monitor-detail__card">
+      <t-card
+        v-if="tab === 'checks'"
+        class="monitor-detail__card"
+      >
         <template #title>{{ t('monitorPage.checks') }}</template>
         <template #actions>
           <span class="monitor-detail__hint">
             {{ t('monitorPage.checkLimit', { count: insights.checksLimit }) }}
           </span>
         </template>
-        <div v-if="visibleChecks.length" class="monitor-detail__table-scroll">
+        <div
+          v-if="visibleChecks.length"
+          class="monitor-detail__table-scroll"
+        >
           <table class="monitor-detail__checks">
             <thead>
               <tr>
@@ -543,7 +638,10 @@ async function copy() {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="check in visibleChecks" :key="check.id">
+              <tr
+                v-for="check in visibleChecks"
+                :key="check.id"
+              >
                 <td>{{ time(check.checkedAt) }}</td>
                 <td>
                   <t-tag
@@ -551,9 +649,15 @@ async function copy() {
                     variant="light"
                     :theme="check.success ? 'success' : 'danger'"
                     >{{
-                      t(check.success ? 'workspace.monitor.ok' : 'workspace.monitor.fail')
+                      t(
+                        check.success
+                          ? 'workspace.monitor.ok'
+                          : 'workspace.monitor.fail',
+                      )
                     }}</t-tag
-                  ><small v-if="check.rescuedByProbe">{{ t('monitorPage.rescuedLabel') }}</small>
+                  ><small v-if="check.rescuedByProbe">{{
+                    t('monitorPage.rescuedLabel')
+                  }}</small>
                 </td>
                 <td>{{ metric(check.latency, ' ms') }}</td>
                 <td>{{ check.statusCode ?? '-' }}</td>
@@ -562,7 +666,10 @@ async function copy() {
             </tbody>
           </table>
         </div>
-        <t-empty v-else :description="t('workspace.monitor.historyEmpty')" />
+        <t-empty
+          v-else
+          :description="t('workspace.monitor.historyEmpty')"
+        />
         <t-pagination
           v-if="insights.checks.length > 10"
           v-model:current="checkPage"
@@ -574,7 +681,10 @@ async function copy() {
       </t-card>
 
       <!-- 检测异常条件：绑定的规则组只读展示，可即时绑定 / 解绑 / 编辑（参考图 1 的展示形态） -->
-      <t-card v-if="tab === 'configuration'" class="monitor-detail__card">
+      <t-card
+        v-if="tab === 'configuration'"
+        class="monitor-detail__card"
+      >
         <template #title>{{ t('ruleGroup.monitor.cardTitle') }}</template>
         <template #actions>
           <div class="monitor-detail__rules-actions">
@@ -586,25 +696,51 @@ async function copy() {
               :aria-label="t('ruleGroup.monitor.bind')"
               @change="(value: string) => bindRule(value)"
             />
-            <t-button v-if="canManage" size="small" variant="outline" @click="openRuleEditor()">{{
-              t('ruleGroup.monitor.addRule')
-            }}</t-button>
+            <t-button
+              v-if="canManage"
+              size="small"
+              variant="outline"
+              @click="openRuleEditor()"
+              >{{ t('ruleGroup.monitor.addRule') }}</t-button
+            >
           </div>
         </template>
-        <t-alert v-if="rulesError" theme="error" :message="rulesError" />
-        <t-loading v-else-if="rulesLoading" size="small" :text="t('common.loading')" />
-        <div v-else-if="boundGroups.length" class="monitor-detail__rules">
-          <article v-for="group in boundGroups" :key="group.id" class="monitor-detail__rule">
+        <t-alert
+          v-if="rulesError"
+          theme="error"
+          :message="rulesError"
+        />
+        <t-loading
+          v-else-if="rulesLoading"
+          size="small"
+          :text="t('common.loading')"
+        />
+        <div
+          v-else-if="boundGroups.length"
+          class="monitor-detail__rules"
+        >
+          <article
+            v-for="group in boundGroups"
+            :key="group.id"
+            class="monitor-detail__rule"
+          >
             <div class="monitor-detail__rule-head">
               <span class="monitor-detail__rule-name">{{ group.name }}</span>
-              <t-tag size="small" variant="outline">{{
-                group.projectId
-                  ? t('ruleGroup.monitor.scopeProject')
-                  : t('ruleGroup.monitor.scopeOrg')
-              }}</t-tag>
-              <t-tag v-if="!group.enabled" size="small" variant="light">{{
-                t('ruleGroup.monitor.disabled')
-              }}</t-tag>
+              <t-tag
+                size="small"
+                variant="outline"
+                >{{
+                  group.projectId
+                    ? t('ruleGroup.monitor.scopeProject')
+                    : t('ruleGroup.monitor.scopeOrg')
+                }}</t-tag
+              >
+              <t-tag
+                v-if="!group.enabled"
+                size="small"
+                variant="light"
+                >{{ t('ruleGroup.monitor.disabled') }}</t-tag
+              >
               <t-button
                 v-if="canManage"
                 size="small"
@@ -621,17 +757,36 @@ async function copy() {
                 >{{ t('ruleGroup.monitor.unbind') }}</t-button
               >
             </div>
-            <RuleTreeView v-if="group.tree" :tree="group.tree" />
+            <RuleTreeView
+              v-if="group.tree"
+              :tree="group.tree"
+            />
           </article>
         </div>
-        <p v-else class="monitor-detail__rules-empty">{{ t('ruleGroup.monitor.empty') }}</p>
+        <p
+          v-else
+          class="monitor-detail__rules-empty"
+        >
+          {{ t('ruleGroup.monitor.empty') }}
+        </p>
       </t-card>
-      <t-card v-if="tab === 'configuration'" class="monitor-detail__card">
+      <t-card
+        v-if="tab === 'configuration'"
+        class="monitor-detail__card"
+      >
         <template #title>{{ t('monitorPage.ssl') }}</template>
         <dl class="monitor-detail__info">
           <div>
             <dt>{{ t('monitorPage.sslEnabled') }}</dt>
-            <dd>{{ t(monitor.checkSsl ? 'monitorPage.enabled' : 'monitorPage.disabled') }}</dd>
+            <dd>
+              {{
+                t(
+                  monitor.checkSsl
+                    ? 'monitorPage.enabled'
+                    : 'monitorPage.disabled',
+                )
+              }}
+            </dd>
           </div>
           <template v-if="monitor.checkSsl">
             <div>
@@ -720,7 +875,10 @@ async function copy() {
   }
   &__status {
     display: grid;
-    grid-template-columns: 110px minmax(160px, 1.5fr) repeat(3, minmax(80px, 1fr));
+    grid-template-columns: 110px minmax(160px, 1.5fr) repeat(
+        3,
+        minmax(80px, 1fr)
+      );
     gap: 16px;
     // 卡片已提供白底与边框，这里只留状态色条
     padding-left: 12px;

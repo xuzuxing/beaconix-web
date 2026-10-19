@@ -44,7 +44,12 @@ const entries = computed(() => [Database01Icon, Folder01Icon, CloudIcon])
   >
     <div class="env-card__head">
       <span class="env-card__name">{{ env.name }}</span>
-      <button type="button" class="env-card__more" :aria-label="t('layout.profile')" @click.stop>
+      <button
+        type="button"
+        class="env-card__more"
+        :aria-label="t('layout.profile')"
+        @click.stop
+      >
         <AppIcon :icon="MoreHorizontalIcon" />
       </button>
     </div>
@@ -60,7 +65,11 @@ const entries = computed(() => [Database01Icon, Folder01Icon, CloudIcon])
       </li>
       <li class="env-card__row">
         <span class="env-card__tag">{{ t('env.fixedTerm') }}</span>
-        <span v-if="env.tagKey" class="env-card__tag">{{ t(env.tagKey) }}</span>
+        <span
+          v-if="env.tagKey"
+          class="env-card__tag"
+          >{{ t(env.tagKey) }}</span
+        >
       </li>
     </ul>
 
@@ -80,8 +89,14 @@ const entries = computed(() => [Database01Icon, Folder01Icon, CloudIcon])
       <span class="env-card__source">{{ t('env.source') }}</span>
     </div>
 
-    <span v-if="selected" class="env-card__check">
-      <AppIcon :icon="CheckmarkCircle02Icon" :size="18" />
+    <span
+      v-if="selected"
+      class="env-card__check"
+    >
+      <AppIcon
+        :icon="CheckmarkCircle02Icon"
+        :size="18"
+      />
     </span>
   </div>
 </template>

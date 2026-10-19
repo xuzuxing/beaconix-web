@@ -21,26 +21,53 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <ol v-if="entries.length" class="ticket-timeline">
-    <li v-for="entry in entries" :key="entry.id" class="ticket-timeline__item">
+  <ol
+    v-if="entries.length"
+    class="ticket-timeline"
+  >
+    <li
+      v-for="entry in entries"
+      :key="entry.id"
+      class="ticket-timeline__item"
+    >
       <div class="ticket-timeline__head">
-        <t-tag size="small" variant="light" :theme="ticketTimelineKindTheme(entry.kind)">
+        <t-tag
+          size="small"
+          variant="light"
+          :theme="ticketTimelineKindTheme(entry.kind)"
+        >
           {{ t(`ticketPage.timelineKind.${entry.kind}`) }}
         </t-tag>
-        <t-tag v-if="entry.internal" size="small" variant="outline" theme="warning">
+        <t-tag
+          v-if="entry.internal"
+          size="small"
+          variant="outline"
+          theme="warning"
+        >
           {{ t('ticketPage.internalNote') }}
         </t-tag>
-        <span v-if="entry.status" class="ticket-timeline__status">
+        <span
+          v-if="entry.status"
+          class="ticket-timeline__status"
+        >
           {{ t(ticketStatusLabelKey(entry.status)) }}
         </span>
         <span class="ticket-timeline__author">
           {{ ticketUserLabel(entry.author) || t('ticketPage.systemAuthor') }}
         </span>
-        <time v-if="entry.createdAt" class="ticket-timeline__time">
+        <time
+          v-if="entry.createdAt"
+          class="ticket-timeline__time"
+        >
           {{ formatDateTime(entry.createdAt) }}
         </time>
       </div>
-      <p v-if="entry.body" class="ticket-timeline__body">{{ entry.body }}</p>
+      <p
+        v-if="entry.body"
+        class="ticket-timeline__body"
+      >
+        {{ entry.body }}
+      </p>
       <TicketAttachmentList
         v-if="entry.attachments.length"
         class="ticket-timeline__attachments"
@@ -49,7 +76,12 @@ const { t } = useI18n()
       />
     </li>
   </ol>
-  <p v-else class="ticket-timeline__empty">{{ t('ticketPage.timelineEmpty') }}</p>
+  <p
+    v-else
+    class="ticket-timeline__empty"
+  >
+    {{ t('ticketPage.timelineEmpty') }}
+  </p>
 </template>
 
 <style scoped lang="less">

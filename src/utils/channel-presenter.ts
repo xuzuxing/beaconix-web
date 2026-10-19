@@ -1,7 +1,4 @@
-import type {
-  NotificationChannel,
-  NotificationChannelType,
-} from '../api/types/notification'
+import type { NotificationChannel, NotificationChannelType } from '../api/types/notification'
 
 /** 支持的渠道类型（顺序即下拉与概览的展示顺序） */
 export const CHANNEL_TYPES: NotificationChannelType[] = [
@@ -43,7 +40,9 @@ export function readConfigStringList(
   key: string,
 ): string[] {
   const value = config?.[key]
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : []
 }
 
 /** 把 textarea 里的多行/逗号分隔文本解析成字符串数组 */
@@ -117,5 +116,10 @@ export function summarizeChannels(rows: NotificationChannel[]) {
     byType[row.type] = (byType[row.type] ?? 0) + 1
     if (row.enabled) enabled++
   })
-  return { total: rows.length, enabled, disabled: rows.length - enabled, byType }
+  return {
+    total: rows.length,
+    enabled,
+    disabled: rows.length - enabled,
+    byType,
+  }
 }

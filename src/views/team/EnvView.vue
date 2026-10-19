@@ -37,7 +37,10 @@ const statusOptions = computed(() => {
   return [
     { label: `${t('env.filterAll')} (${envList.length})`, value: 'all' },
     { label: `${t('layout.envStatusActive')} (${active})`, value: 'active' },
-    { label: `${t('layout.envStatusInactive')} (${envList.length - active})`, value: 'inactive' },
+    {
+      label: `${t('layout.envStatusInactive')} (${envList.length - active})`,
+      value: 'inactive',
+    },
   ]
 })
 
@@ -48,7 +51,9 @@ const filteredEnvs = computed(() => {
     if (status.value === 'active' && !env.active) return false
     if (status.value === 'inactive' && env.active) return false
     if (!kw) return true
-    return env.name.toLowerCase().includes(kw) || env.id.toLowerCase().includes(kw)
+    return (
+      env.name.toLowerCase().includes(kw) || env.id.toLowerCase().includes(kw)
+    )
   })
 
   return [...list].sort((a, b) =>
@@ -80,7 +85,11 @@ function chooseEnv(id: string) {
     <!-- 页头：标题 + 刷新 + 副标题（整页自带，不依赖主布局标题栏） -->
     <div class="env__header">
       <h2 class="env__title">{{ t('env.title') }}</h2>
-      <button type="button" class="env__refresh" :aria-label="t('env.refresh')">
+      <button
+        type="button"
+        class="env__refresh"
+        :aria-label="t('env.refresh')"
+      >
         <AppIcon :icon="RefreshIcon" />
       </button>
       <span class="env__subtitle">{{ t('env.subtitle') }}</span>
@@ -89,12 +98,30 @@ function chooseEnv(id: string) {
     <div class="env__panel">
       <!-- 工具栏：左侧新建，右侧排序 / 筛选 / 搜索 / 视图切换 -->
       <div class="env__toolbar">
-        <t-button theme="primary" size="small">{{ t('env.create') }}</t-button>
+        <t-button
+          theme="primary"
+          size="small"
+          >{{ t('env.create') }}</t-button
+        >
 
         <div class="env__operations">
-          <t-select v-model="sort" class="env__select" :options="sortOptions" size="small" />
-          <t-select v-model="status" class="env__select" :options="statusOptions" size="small" />
-          <t-button variant="outline" size="small">{{ t('env.filter') }}</t-button>
+          <t-select
+            v-model="sort"
+            class="env__select"
+            :options="sortOptions"
+            size="small"
+          />
+          <t-select
+            v-model="status"
+            class="env__select"
+            :options="statusOptions"
+            size="small"
+          />
+          <t-button
+            variant="outline"
+            size="small"
+            >{{ t('env.filter') }}</t-button
+          >
 
           <t-input
             v-model="keyword"
@@ -104,7 +131,10 @@ function chooseEnv(id: string) {
             :placeholder="t('env.searchPlaceholder')"
           >
             <template #prefix-icon>
-              <AppIcon :icon="Search01Icon" :size="14" />
+              <AppIcon
+                :icon="Search01Icon"
+                :size="14"
+              />
             </template>
           </t-input>
 
@@ -132,7 +162,11 @@ function chooseEnv(id: string) {
       </div>
 
       <!-- 环境列表：点击卡片切换当前环境并进入概览 -->
-      <div v-if="pagedEnvs.length" class="env__list" :class="`env__list--${viewMode}`">
+      <div
+        v-if="pagedEnvs.length"
+        class="env__list"
+        :class="`env__list--${viewMode}`"
+      >
         <EnvCard
           v-for="env in pagedEnvs"
           :key="env.id"
@@ -142,11 +176,18 @@ function chooseEnv(id: string) {
           @select="chooseEnv(env.id)"
         />
       </div>
-      <div v-else class="env__empty">{{ t('env.empty') }}</div>
+      <div
+        v-else
+        class="env__empty"
+      >
+        {{ t('env.empty') }}
+      </div>
 
       <!-- 分页 -->
       <div class="env__footer">
-        <span class="env__total">{{ t('env.total', { total: filteredEnvs.length }) }}</span>
+        <span class="env__total">{{
+          t('env.total', { total: filteredEnvs.length })
+        }}</span>
         <t-pagination
           v-model="currentPage"
           v-model:page-size="pageSize"

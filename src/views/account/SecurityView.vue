@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { MessagePlugin } from 'tdesign-vue-next'
-import { computed, onActivated, onDeactivated, onMounted, ref, watch } from 'vue'
+import {
+  computed,
+  onActivated,
+  onDeactivated,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -13,7 +20,10 @@ import { useSecurity } from '@/composables/useSecurity'
 import { RefreshIcon } from '@/icons'
 import { useOrganizationStore, useUserStore } from '@/stores'
 import { formatDateTime } from '@/utils/billing'
-import { isRecoveryCodesLow, recoveryCodesTheme } from '@/utils/security-presenter'
+import {
+  isRecoveryCodesLow,
+  recoveryCodesTheme,
+} from '@/utils/security-presenter'
 
 /**
  * 安全：修改登录密码 + 两步验证（开启 / 重置恢复码 / 关闭）。
@@ -86,7 +96,11 @@ async function onDisabled() {
       <p class="security__hint">{{ t('workspace.security.passwordHint') }}</p>
 
       <div>
-        <t-button variant="outline" size="small" @click="passwordVisible = true">
+        <t-button
+          variant="outline"
+          size="small"
+          @click="passwordVisible = true"
+        >
           {{ t('workspace.security.passwordAction') }}
         </t-button>
       </div>
@@ -95,7 +109,12 @@ async function onDisabled() {
     <section class="security__panel">
       <div class="security__head">
         <h3 class="security__title">{{ t('workspace.security.twoFactor') }}</h3>
-        <t-tag v-if="status" size="small" variant="light" :theme="enabled ? 'success' : 'default'">
+        <t-tag
+          v-if="status"
+          size="small"
+          variant="light"
+          :theme="enabled ? 'success' : 'default'"
+        >
           {{
             enabled
               ? t('workspace.security.twoFactorEnabledTag')
@@ -116,14 +135,27 @@ async function onDisabled() {
         </t-tooltip>
       </div>
 
-      <div v-if="error" class="security__state">
-        <t-alert theme="error" :message="t('workspace.security.loadFailed')" />
-        <t-button variant="outline" size="small" @click="load">
+      <div
+        v-if="error"
+        class="security__state"
+      >
+        <t-alert
+          theme="error"
+          :message="t('workspace.security.loadFailed')"
+        />
+        <t-button
+          variant="outline"
+          size="small"
+          @click="load"
+        >
           {{ t('workspace.security.refresh') }}
         </t-button>
       </div>
 
-      <div v-else-if="loading && !status" class="security__state">
+      <div
+        v-else-if="loading && !status"
+        class="security__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -136,27 +168,59 @@ async function onDisabled() {
           }}
         </p>
 
-        <div v-if="enabled" class="security__meta">
-          <span v-if="status?.enabledAt" class="security__meta-item">
-            {{ t('workspace.security.enabledAt', { time: formatDateTime(status.enabledAt) }) }}
+        <div
+          v-if="enabled"
+          class="security__meta"
+        >
+          <span
+            v-if="status?.enabledAt"
+            class="security__meta-item"
+          >
+            {{
+              t('workspace.security.enabledAt', {
+                time: formatDateTime(status.enabledAt),
+              })
+            }}
           </span>
-          <t-tag size="small" variant="light" :theme="recoveryCodesTheme(remaining)">
-            {{ t('workspace.security.recoveryRemaining', { count: remaining }) }}
+          <t-tag
+            size="small"
+            variant="light"
+            :theme="recoveryCodesTheme(remaining)"
+          >
+            {{
+              t('workspace.security.recoveryRemaining', { count: remaining })
+            }}
           </t-tag>
-          <span v-if="isRecoveryCodesLow(remaining)" class="security__warn">
+          <span
+            v-if="isRecoveryCodesLow(remaining)"
+            class="security__warn"
+          >
             {{ t('workspace.security.recoveryLow') }}
           </span>
         </div>
 
         <div class="security__actions">
-          <t-button v-if="!enabled" size="small" @click="setupVisible = true">
+          <t-button
+            v-if="!enabled"
+            size="small"
+            @click="setupVisible = true"
+          >
             {{ t('workspace.security.twoFactorAction') }}
           </t-button>
           <template v-else>
-            <t-button variant="outline" size="small" @click="openVerify('regenerate')">
+            <t-button
+              variant="outline"
+              size="small"
+              @click="openVerify('regenerate')"
+            >
               {{ t('workspace.security.regenerateCodes') }}
             </t-button>
-            <t-button variant="outline" size="small" theme="danger" @click="openVerify('disable')">
+            <t-button
+              variant="outline"
+              size="small"
+              theme="danger"
+              @click="openVerify('disable')"
+            >
               {{ t('workspace.security.disable') }}
             </t-button>
           </template>
@@ -166,27 +230,41 @@ async function onDisabled() {
 
     <section class="security__panel">
       <div class="security__head">
-        <h3 class="security__title">{{ t('workspace.security.accessTokensTitle') }}</h3>
+        <h3 class="security__title">
+          {{ t('workspace.security.accessTokensTitle') }}
+        </h3>
       </div>
 
-      <p class="security__hint">{{ t('workspace.security.accessTokensHint') }}</p>
+      <p class="security__hint">
+        {{ t('workspace.security.accessTokensHint') }}
+      </p>
 
       <div>
-        <t-button variant="outline" size="small" @click="router.push(accessTokensPath)">
+        <t-button
+          variant="outline"
+          size="small"
+          @click="router.push(accessTokensPath)"
+        >
           {{ t('workspace.security.gotoAccessTokens') }}
         </t-button>
       </div>
     </section>
 
     <ChangePasswordDialog v-model:visible="passwordVisible" />
-    <TwoFactorSetupDialog v-model:visible="setupVisible" @enabled="load" />
+    <TwoFactorSetupDialog
+      v-model:visible="setupVisible"
+      @enabled="load"
+    />
     <TwoFactorVerifyDialog
       v-model:visible="verifyVisible"
       :mode="verifyMode"
       @regenerated="onRegenerated"
       @disabled="onDisabled"
     />
-    <RecoveryCodesDialog v-model:visible="codesVisible" :codes="recoveryCodes" />
+    <RecoveryCodesDialog
+      v-model:visible="codesVisible"
+      :codes="recoveryCodes"
+    />
   </div>
 </template>
 

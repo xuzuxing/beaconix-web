@@ -35,7 +35,10 @@ const error = ref('')
 let generation = 0
 
 const scopeOptions = computed(() =>
-  PAT_SCOPES.map((scope) => ({ label: t(patScopeLabelKey(scope)), value: scope })),
+  PAT_SCOPES.map((scope) => ({
+    label: t(patScopeLabelKey(scope)),
+    value: scope,
+  })),
 )
 const defaultExpiry = computed(() => formatDateTime(patDefaultExpiry()))
 
@@ -69,7 +72,9 @@ async function submit() {
     const result = await createPersonalAccessToken({
       name: form.name.trim(),
       scopes: [...form.scopes],
-      ...(form.expiry === 'custom' ? { expiresAt: dayjs(form.expiresAt).toISOString() } : {}),
+      ...(form.expiry === 'custom'
+        ? { expiresAt: dayjs(form.expiresAt).toISOString() }
+        : {}),
     })
     if (token !== generation) return
     MessagePlugin.success(t('workspace.pat.created'))
@@ -77,7 +82,8 @@ async function submit() {
     emit('created', result.token ?? '')
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('workspace.pat.createFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('workspace.pat.createFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -94,9 +100,18 @@ async function submit() {
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="pat-create__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="pat-create__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+    >
       <t-form-item :label="t('workspace.pat.name')">
         <t-input
           v-model="form.name"
@@ -105,17 +120,30 @@ async function submit() {
         />
       </t-form-item>
 
-      <t-form-item :label="t('workspace.pat.scopes')" :help="t('workspace.pat.scopesHint')">
-        <t-checkbox-group v-model="form.scopes" :options="scopeOptions" />
+      <t-form-item
+        :label="t('workspace.pat.scopes')"
+        :help="t('workspace.pat.scopesHint')"
+      >
+        <t-checkbox-group
+          v-model="form.scopes"
+          :options="scopeOptions"
+        />
       </t-form-item>
 
       <t-form-item :label="t('workspace.pat.expiresAt')">
         <div class="pat-create__expiry">
           <t-radio-group v-model="form.expiry">
-            <t-radio value="default">{{ t('workspace.pat.expiresDefault') }}</t-radio>
-            <t-radio value="custom">{{ t('workspace.pat.expiresCustom') }}</t-radio>
+            <t-radio value="default">{{
+              t('workspace.pat.expiresDefault')
+            }}</t-radio>
+            <t-radio value="custom">{{
+              t('workspace.pat.expiresCustom')
+            }}</t-radio>
           </t-radio-group>
-          <p v-if="form.expiry === 'default'" class="pat-create__hint">
+          <p
+            v-if="form.expiry === 'default'"
+            class="pat-create__hint"
+          >
             {{ t('workspace.pat.expiresDefaultHint', { time: defaultExpiry }) }}
           </p>
           <t-date-picker

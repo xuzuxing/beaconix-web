@@ -6,7 +6,11 @@ import { createRuleGroup, updateRuleGroup } from '@/api'
 import type { RuleGroup, RuleNode } from '@/api/types/rule'
 import RuleTreeEditor from '@/components/rules/RuleTreeEditor.vue'
 import { useRuleMeta } from '@/composables/useRuleMeta'
-import { cloneRuleTree, defaultRuleTree, validateRuleTree } from '@/utils/rule-presenter'
+import {
+  cloneRuleTree,
+  defaultRuleTree,
+  validateRuleTree,
+} from '@/utils/rule-presenter'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { permissionEpoch } from '@/utils/access-context'
 
@@ -32,8 +36,12 @@ const { t } = useI18n()
 const permissions = usePermissionsStore()
 const canOrganization = computed(() => permissions.canOrganization(props.orgId))
 const canSave = computed(() => {
-  const projectId = props.group?.projectId ?? (form.scope === 'project' ? props.projectId : null)
-  return projectId ? permissions.canProject(projectId, 'rule.manage') : canOrganization.value
+  const projectId =
+    props.group?.projectId ??
+    (form.scope === 'project' ? props.projectId : null)
+  return projectId
+    ? permissions.canProject(projectId, 'rule.manage')
+    : canOrganization.value
 })
 const { meta, error: metaError, load: loadMeta } = useRuleMeta()
 const submitting = ref(false)
@@ -58,13 +66,21 @@ watch(
     const group = props.group
     form.name = group?.name ?? ''
     form.description = group?.description ?? ''
-    form.scope = group ? (group.projectId ? 'project' : 'org') : props.projectId ? 'project' : 'org'
+    form.scope = group
+      ? group.projectId
+        ? 'project'
+        : 'org'
+      : props.projectId
+        ? 'project'
+        : 'org'
     form.enabled = group?.enabled ?? true
     if (group && !group.tree) {
       visible.value = false
       return
     }
-    form.tree = group?.tree ? cloneRuleTree(group.tree) : defaultRuleTree(props.monitorType)
+    form.tree = group?.tree
+      ? cloneRuleTree(group.tree)
+      : defaultRuleTree(props.monitorType)
   },
   { flush: 'sync' },
 )
@@ -80,7 +96,9 @@ watch(
 const editing = computed(() => Boolean(props.group?.id))
 const issues = computed(() => validateRuleTree(form.tree, meta.value))
 const scopeOptions = computed(() => [
-  ...(canOrganization.value ? [{ label: t('ruleGroup.editor.scopeOrg'), value: 'org' }] : []),
+  ...(canOrganization.value
+    ? [{ label: t('ruleGroup.editor.scopeOrg'), value: 'org' }]
+    : []),
   { label: t('ruleGroup.editor.scopeProject'), value: 'project' },
 ])
 
@@ -89,7 +107,12 @@ function resetTemplate() {
 }
 
 async function save() {
-  if (submitting.value || !canSave.value || (form.scope === 'org' && !canOrganization.value)) return
+  if (
+    submitting.value ||
+    !canSave.value ||
+    (form.scope === 'org' && !canOrganization.value)
+  )
+    return
   error.value = ''
   const name = form.name.trim()
   if (!name) {
@@ -110,7 +133,8 @@ async function save() {
   const description = form.description.trim()
   submitting.value = true
   try {
-    const project = group?.projectId ?? (form.scope === 'project' ? props.projectId : null)
+    const project =
+      group?.projectId ?? (form.scope === 'project' ? props.projectId : null)
     if (project) await permissions.ensureProject(project, true)
     else await permissions.ensureOrganization(orgId, true)
     if (token !== generation || !visible.value || !canSave.value) return
@@ -124,18 +148,25 @@ async function save() {
       : await createRuleGroup(orgId, {
           name,
           ...(description ? { description } : {}),
-          ...(form.scope === 'project' && props.projectId ? { projectId: props.projectId } : {}),
+          ...(form.scope === 'project' && props.projectId
+            ? { projectId: props.projectId }
+            : {}),
           tree: form.tree,
         })
     if (token !== generation || orgId !== props.orgId) return
     MessagePlugin.success(
-      t(editing.value ? 'ruleGroup.editor.updated' : 'ruleGroup.editor.created'),
+      t(
+        editing.value ? 'ruleGroup.editor.updated' : 'ruleGroup.editor.created',
+      ),
     )
     visible.value = false
     emit('saved', result)
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('ruleGroup.editor.saveFailed')
+      error.value =
+        cause instanceof Error
+          ? cause.message
+          : t('ruleGroup.editor.saveFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -145,7 +176,9 @@ async function save() {
 <template>
   <t-dialog
     v-model:visible="visible"
-    :header="t(editing ? 'ruleGroup.editor.editTitle' : 'ruleGroup.editor.createTitle')"
+    :header="
+      t(editing ? 'ruleGroup.editor.editTitle' : 'ruleGroup.editor.createTitle')
+    "
     width="min(960px, calc(100vw - 32px))"
     :confirm-btn="{
       content: t('common.confirm'),
@@ -156,14 +189,23 @@ async function save() {
     :close-on-overlay-click="!submitting"
     @confirm="save"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="rule-group-editor__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="rule-group-editor__error"
+    />
     <t-alert
       v-else-if="metaError && !meta"
       theme="error"
       :message="metaError"
       class="rule-group-editor__error"
     />
-    <t-form :data="form" label-align="top" :colon="false">
+    <t-form
+      :data="form"
+      label-align="top"
+      :colon="false"
+    >
       <div class="rule-group-editor__grid">
         <t-form-item :label="t('ruleGroup.editor.name')"
           ><t-input
@@ -172,7 +214,11 @@ async function save() {
             :placeholder="t('ruleGroup.editor.namePlaceholder')"
         /></t-form-item>
         <t-form-item :label="t('ruleGroup.editor.scope')">
-          <t-select v-if="!editing" v-model="form.scope" :options="scopeOptions" />
+          <t-select
+            v-if="!editing"
+            v-model="form.scope"
+            :options="scopeOptions"
+          />
           <t-input
             v-else
             readonly
@@ -191,19 +237,32 @@ async function save() {
           :autosize="{ minRows: 2, maxRows: 4 }"
           :placeholder="t('ruleGroup.editor.descriptionPlaceholder')"
       /></t-form-item>
-      <t-form-item v-if="editing" :label="t('ruleGroup.editor.enabled')"
+      <t-form-item
+        v-if="editing"
+        :label="t('ruleGroup.editor.enabled')"
         ><t-switch v-model="form.enabled"
       /></t-form-item>
     </t-form>
     <div class="rule-group-editor__section">
       <div class="rule-group-editor__section-head">
-        <span class="rule-group-editor__section-title">{{ t('ruleGroup.editor.treeTitle') }}</span>
-        <t-button size="small" variant="outline" :disabled="!meta" @click="resetTemplate">{{
-          t('ruleGroup.editor.resetTemplate')
-        }}</t-button>
+        <span class="rule-group-editor__section-title">{{
+          t('ruleGroup.editor.treeTitle')
+        }}</span>
+        <t-button
+          size="small"
+          variant="outline"
+          :disabled="!meta"
+          @click="resetTemplate"
+          >{{ t('ruleGroup.editor.resetTemplate') }}</t-button
+        >
       </div>
-      <p class="rule-group-editor__hint">{{ t('ruleGroup.editor.treeHint') }}</p>
-      <RuleTreeEditor v-model="form.tree" :meta="meta" />
+      <p class="rule-group-editor__hint">
+        {{ t('ruleGroup.editor.treeHint') }}
+      </p>
+      <RuleTreeEditor
+        v-model="form.tree"
+        :meta="meta"
+      />
     </div>
   </t-dialog>
 </template>

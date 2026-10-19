@@ -34,14 +34,21 @@ const { siteName, logoSrc } = useBrand()
 const status = computed(() => {
   const value = preview.value?.status
   const expiresAt = preview.value?.expiresAt
-  if (value === 'PENDING' && expiresAt && Date.parse(expiresAt) <= Date.now()) return 'EXPIRED'
+  if (value === 'PENDING' && expiresAt && Date.parse(expiresAt) <= Date.now())
+    return 'EXPIRED'
   return value
 })
 
-const statusText = computed(() => (status.value ? t(`access.statusName.${status.value}`) : ''))
+const statusText = computed(() =>
+  status.value ? t(`access.statusName.${status.value}`) : '',
+)
 
 const statusTheme = computed(() =>
-  status.value === 'ACCEPTED' ? 'success' : status.value === 'PENDING' ? 'warning' : 'default',
+  status.value === 'ACCEPTED'
+    ? 'success'
+    : status.value === 'PENDING'
+      ? 'warning'
+      : 'default',
 )
 
 /** 待处理且需要登录：给出唯一的下一步动作 */
@@ -50,7 +57,9 @@ const actionable = computed(
 )
 
 /** 无 logo 的组织用名称首字母占位 */
-const initial = computed(() => preview.value?.organizationName.trim().charAt(0).toUpperCase() ?? '')
+const initial = computed(
+  () => preview.value?.organizationName.trim().charAt(0).toUpperCase() ?? '',
+)
 
 const scopeText = computed(() => {
   const value = preview.value
@@ -91,20 +100,40 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="invitation-page" :class="{ 'invitation-page--dark': appStore.isDark }">
+  <main
+    class="invitation-page"
+    :class="{ 'invitation-page--dark': appStore.isDark }"
+  >
     <section class="invitation-card">
-      <img class="invitation-card__brand" :src="logoSrc" :alt="siteName" />
+      <img
+        class="invitation-card__brand"
+        :src="logoSrc"
+        :alt="siteName"
+      />
 
       <template v-if="preview">
         <div class="invitation-card__avatar">
-          <t-avatar v-if="preview.organizationLogoUrl" :image="preview.organizationLogoUrl" size="64px" />
-          <t-avatar v-else class="invitation-card__initial" size="64px">{{ initial }}</t-avatar>
+          <t-avatar
+            v-if="preview.organizationLogoUrl"
+            :image="preview.organizationLogoUrl"
+            size="64px"
+          />
+          <t-avatar
+            v-else
+            class="invitation-card__initial"
+            size="64px"
+            >{{ initial }}</t-avatar
+          >
         </div>
 
-        <p class="invitation-card__eyebrow">{{ t('access.invitation.eyebrow') }}</p>
+        <p class="invitation-card__eyebrow">
+          {{ t('access.invitation.eyebrow') }}
+        </p>
         <h1 class="invitation-card__title">{{ preview.organizationName }}</h1>
         <p class="invitation-card__subtitle">
-          {{ t('access.invitation.invitedBy', { inviter: preview.inviterName }) }}
+          {{
+            t('access.invitation.invitedBy', { inviter: preview.inviterName })
+          }}
         </p>
 
         <dl class="invitation-card__facts">
@@ -120,28 +149,55 @@ onMounted(async () => {
             <dt>{{ t('access.invitation.expiresAt') }}</dt>
             <dd>
               {{ expires.date }}
-              <span v-if="expires.time" class="invitation-card__time">{{ expires.time }}</span>
+              <span
+                v-if="expires.time"
+                class="invitation-card__time"
+                >{{ expires.time }}</span
+              >
             </dd>
           </div>
         </dl>
 
         <div class="invitation-card__status">
-          <t-tag :theme="statusTheme" variant="light">{{ statusText }}</t-tag>
+          <t-tag
+            :theme="statusTheme"
+            variant="light"
+            >{{ statusText }}</t-tag
+          >
         </div>
 
-        <t-button v-if="actionable" class="invitation-card__action" block size="large" theme="primary" @click="goLogin">
+        <t-button
+          v-if="actionable"
+          class="invitation-card__action"
+          block
+          size="large"
+          theme="primary"
+          @click="goLogin"
+        >
           {{ t('access.invitation.loginToContinue') }}
         </t-button>
-        <p v-else class="invitation-card__hint">{{ hintText }}</p>
+        <p
+          v-else
+          class="invitation-card__hint"
+        >
+          {{ hintText }}
+        </p>
 
         <p class="invitation-card__meta">
           {{ t('access.invitation.meta', { slug: preview.organizationSlug }) }}
         </p>
       </template>
 
-      <t-alert v-else-if="failed" theme="warning" :message="t('access.invitationUnavailable')" />
+      <t-alert
+        v-else-if="failed"
+        theme="warning"
+        :message="t('access.invitationUnavailable')"
+      />
 
-      <div v-else class="invitation-card__state">
+      <div
+        v-else
+        class="invitation-card__state"
+      >
         <t-loading v-if="loading" />
       </div>
     </section>
@@ -158,13 +214,19 @@ onMounted(async () => {
   font-family: @beacon-font-family;
   // 顶部一抹品牌色光晕；底色单独声明，装饰层失效也不会丢背景
   background-color: @beacon-bg-page;
-  background-image: radial-gradient(80% 40% at 50% 0%, var(--td-brand-color-2) 0%, transparent 70%);
+  background-image: radial-gradient(
+    80% 40% at 50% 0%,
+    var(--td-brand-color-2) 0%,
+    transparent 70%
+  );
 
   // 暗色下品牌色阶本身就很蓝，用 color-mix 稀释后再叠，避免顶部整片发蓝
   &--dark {
-    background-image: radial-gradient(80% 30% at 50% 0%,
-        color-mix(in srgb, var(--td-brand-color-7) 20%, transparent) 0%,
-        transparent 72%);
+    background-image: radial-gradient(
+      80% 30% at 50% 0%,
+      color-mix(in srgb, var(--td-brand-color-7) 20%, transparent) 0%,
+      transparent 72%
+    );
   }
 }
 

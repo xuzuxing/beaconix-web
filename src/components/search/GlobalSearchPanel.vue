@@ -39,14 +39,22 @@ const { t } = useI18n()
 const isSearching = computed(() => props.keyword.trim().length > 0)
 
 /** 参考实现的背景图是内联 style，这里同样用变量绑定，避免打包路径问题 */
-const panelStyle = computed(() => ({ backgroundImage: `url(${panelBackground})` }))
+const panelStyle = computed(() => ({
+  backgroundImage: `url(${panelBackground})`,
+}))
 </script>
 
 <template>
-  <div class="search-panel" :style="panelStyle">
+  <div
+    class="search-panel"
+    :style="panelStyle"
+  >
     <div class="search-panel__main">
       <template v-if="isSearching">
-        <section v-if="matches.length" class="search-panel__section">
+        <section
+          v-if="matches.length"
+          class="search-panel__section"
+        >
           <div class="search-panel__head">
             <span class="search-panel__title">
               {{ t('layout.searchFeatureTitle') }} ({{ matches.length }})
@@ -64,29 +72,49 @@ const panelStyle = computed(() => ({ backgroundImage: `url(${panelBackground})` 
                 @click="emit('select', match.entry)"
               >
                 <span class="search-card__icon">
-                  <AppIcon v-if="match.entry.icon" :icon="match.entry.icon" />
+                  <AppIcon
+                    v-if="match.entry.icon"
+                    :icon="match.entry.icon"
+                  />
                 </span>
 
                 <span class="search-card__body">
                   <span class="search-card__title">
-                    <template v-for="(segment, segmentIndex) in match.segments" :key="segmentIndex">
+                    <template
+                      v-for="(segment, segmentIndex) in match.segments"
+                      :key="segmentIndex"
+                    >
                       <mark v-if="segment.match">{{ segment.text }}</mark>
                       <template v-else>{{ segment.text }}</template>
                     </template>
                   </span>
-                  <span v-if="match.category" class="search-card__desc">{{ match.category }}</span>
+                  <span
+                    v-if="match.category"
+                    class="search-card__desc"
+                    >{{ match.category }}</span
+                  >
                 </span>
               </button>
             </div>
           </div>
         </section>
 
-        <p v-else class="search-panel__empty">{{ t('layout.searchEmpty') }}</p>
+        <p
+          v-else
+          class="search-panel__empty"
+        >
+          {{ t('layout.searchEmpty') }}
+        </p>
       </template>
 
-      <section v-else class="search-panel__section">
+      <section
+        v-else
+        class="search-panel__section"
+      >
         <div class="search-panel__head">
-          <span class="search-panel__title">{{ t('layout.searchHistory') }}</span>
+          <span class="search-panel__title">{{
+            t('layout.searchHistory')
+          }}</span>
           <button
             v-if="history.length"
             type="button"
@@ -97,21 +125,33 @@ const panelStyle = computed(() => ({ backgroundImage: `url(${panelBackground})` 
           </button>
         </div>
 
-        <ul v-if="history.length" class="search-history">
-          <li v-for="(word, index) in history" :key="word">
+        <ul
+          v-if="history.length"
+          class="search-history"
+        >
+          <li
+            v-for="(word, index) in history"
+            :key="word"
+          >
             <button
               type="button"
               class="search-history__item"
               :class="{ 'is-active': index === activeIndex }"
               @click="emit('selectHistory', word)"
             >
-              <AppIcon class="search-history__icon" :icon="Clock01Icon" />
+              <AppIcon
+                class="search-history__icon"
+                :icon="Clock01Icon"
+              />
               <span class="search-history__text">{{ word }}</span>
             </button>
           </li>
         </ul>
 
-        <p v-else class="search-history__empty">
+        <p
+          v-else
+          class="search-history__empty"
+        >
           <AppIcon :icon="Clock01Icon" />
           {{ t('layout.searchHistoryEmpty') }}
         </p>

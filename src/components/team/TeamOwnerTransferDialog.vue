@@ -16,7 +16,11 @@ import { memberIdentity } from '@/utils/team-presenter'
 defineOptions({ name: 'TeamOwnerTransferDialog' })
 
 const visible = defineModel<boolean>('visible', { required: true })
-const props = defineProps<{ orgId: string; members: Membership[]; ownerId: string }>()
+const props = defineProps<{
+  orgId: string
+  members: Membership[]
+  ownerId: string
+}>()
 const emit = defineEmits<{ transferred: [] }>()
 const { t } = useI18n()
 const permissions = usePermissionsStore()
@@ -38,7 +42,8 @@ const options = computed(() =>
 )
 
 const targetName = computed(
-  () => options.value.find((option) => option.value === target.value)?.label ?? '',
+  () =>
+    options.value.find((option) => option.value === target.value)?.label ?? '',
 )
 
 watch(
@@ -81,7 +86,10 @@ async function submit() {
     emit('transferred')
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('workspace.team.transferFailed')
+      error.value =
+        cause instanceof Error
+          ? cause.message
+          : t('workspace.team.transferFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -103,30 +111,60 @@ watch(
     :footer="false"
     :close-on-overlay-click="!submitting"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="transfer__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="transfer__error"
+    />
     <p class="transfer__hint">{{ t('workspace.team.transferHint') }}</p>
 
-    <p v-if="!options.length" class="transfer__empty">{{ t('workspace.team.transferEmpty') }}</p>
+    <p
+      v-if="!options.length"
+      class="transfer__empty"
+    >
+      {{ t('workspace.team.transferEmpty') }}
+    </p>
     <template v-else>
-      <t-form label-align="top" :colon="false" :data="{ target }">
+      <t-form
+        label-align="top"
+        :colon="false"
+        :data="{ target }"
+      >
         <t-form-item :label="t('workspace.team.transferTarget')">
-          <t-select v-model="target" :options="options" :disabled="submitting" />
+          <t-select
+            v-model="target"
+            :options="options"
+            :disabled="submitting"
+          />
         </t-form-item>
       </t-form>
 
       <div class="transfer__actions">
-        <t-button variant="outline" @click="visible = false">{{ t('common.cancel') }}</t-button>
+        <t-button
+          variant="outline"
+          @click="visible = false"
+          >{{ t('common.cancel') }}</t-button
+        >
         <t-popconfirm
           v-if="target"
           theme="warning"
           :content="t('workspace.team.transferConfirm', { name: targetName })"
           @confirm="submit"
         >
-          <t-button theme="primary" :loading="submitting">
+          <t-button
+            theme="primary"
+            :loading="submitting"
+          >
             {{ t('workspace.team.transfer') }}
           </t-button>
         </t-popconfirm>
-        <t-button v-else theme="primary" disabled>{{ t('workspace.team.transfer') }}</t-button>
+        <t-button
+          v-else
+          theme="primary"
+          disabled
+          >{{ t('workspace.team.transfer') }}</t-button
+        >
       </div>
     </template>
   </t-dialog>

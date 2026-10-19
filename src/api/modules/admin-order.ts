@@ -14,11 +14,7 @@ import { get, post } from '@/utils/request'
 
 /** 全平台订单列表（分页 + 可选筛选） */
 export function listAdminOrders(params?: AdminOrderQuery, config?: AxiosRequestConfig) {
-  return get<AdminOrderPage>(
-    '/admin/orders',
-    params as Record<string, unknown> | undefined,
-    config,
-  )
+  return get<AdminOrderPage>('/admin/orders', params as Record<string, unknown> | undefined, config)
 }
 
 /** 订单详情 */

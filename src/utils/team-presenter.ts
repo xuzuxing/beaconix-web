@@ -46,7 +46,12 @@ export function memberIdentity(member: Membership): MemberIdentity {
   const name = member.user?.name?.trim() ?? ''
   const email = member.user?.email?.trim() ?? ''
   if (name) {
-    return { name, email, initial: name.slice(0, 1).toUpperCase(), fallback: false }
+    return {
+      name,
+      email,
+      initial: name.slice(0, 1).toUpperCase(),
+      fallback: false,
+    }
   }
   const fallbackId = member.userId || member.id
   return {
@@ -94,7 +99,11 @@ export function selectMembers(
  */
 export function memberPermissions(
   member: Membership,
-  options: { currentUserId?: string; canManage: boolean; canGrantAdmin?: boolean },
+  options: {
+    currentUserId?: string
+    canManage: boolean
+    canGrantAdmin?: boolean
+  },
 ) {
   const isSelf = Boolean(options.currentUserId) && member.userId === options.currentUserId
   const isOwner = member.role === 'OWNER'

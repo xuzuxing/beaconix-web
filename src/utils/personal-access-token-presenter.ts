@@ -1,4 +1,7 @@
-import type { PersonalAccessToken, PersonalAccessTokenScope } from '@/api/types/personal-access-token'
+import type {
+  PersonalAccessToken,
+  PersonalAccessTokenScope,
+} from '@/api/types/personal-access-token'
 
 /**
  * 个人访问令牌的展现层纯函数：状态判定、范围与过期时间的表单校验、i18n key 映射。

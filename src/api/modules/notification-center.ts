@@ -57,7 +57,10 @@ export async function consumeNotificationStream(
 ) {
   const base = (import.meta.env?.VITE_API_BASE_URL ?? '/api').replace(/\/$/, '')
   const response = await fetch(`${base}/notifications/stream`, {
-    headers: { Authorization: `Bearer ${accessToken}`, Accept: 'text/event-stream' },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'text/event-stream',
+    },
     signal,
   })
   if (!response.ok || !response.body) throw new Error('Notification stream unavailable')

@@ -21,11 +21,24 @@ export function createMonitor(projectId: string, data: CreateMonitorParams) {
 }
 
 export function getMonitor(projectId: string, id: string, config?: AxiosRequestConfig) {
-  return get<Monitor>(`/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(id)}`, undefined, config)
+  return get<Monitor>(
+    `/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(id)}`,
+    undefined,
+    config,
+  )
 }
 
-export function getMonitorInsights(projectId: string, id: string, params: { range: MonitorDetailRange; tz: string }, config?: AxiosRequestConfig) {
-  return get<MonitorInsights>(`/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(id)}/insights`, params, config)
+export function getMonitorInsights(
+  projectId: string,
+  id: string,
+  params: { range: MonitorDetailRange; tz: string },
+  config?: AxiosRequestConfig,
+) {
+  return get<MonitorInsights>(
+    `/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(id)}/insights`,
+    params,
+    config,
+  )
 }
 
 export function updateMonitor(projectId: string, id: string, data: UpdateMonitorParams) {

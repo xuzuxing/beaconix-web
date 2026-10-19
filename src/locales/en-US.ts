@@ -210,7 +210,7 @@ export default {
         {
           heading: '11. Governing Law and Dispute Resolution',
           paragraphs: [
-            'The formation, performance, and interpretation of the Terms are governed by the laws of the People\'s Republic of China.',
+            "The formation, performance, and interpretation of the Terms are governed by the laws of the People's Republic of China.",
             'Any dispute arising from the Terms shall be resolved through friendly negotiation. If negotiation fails, either party may bring a lawsuit before a competent court where we are located.',
           ],
         },
@@ -249,7 +249,7 @@ export default {
         {
           heading: '4. Storage and Security',
           paragraphs: [
-            'Your information is stored on servers located in the People\'s Republic of China, and only for the shortest period necessary to fulfill the processing purposes.',
+            "Your information is stored on servers located in the People's Republic of China, and only for the shortest period necessary to fulfill the processing purposes.",
             'We use encryption, access control, auditing, and other reasonable security measures to protect your information. However, no security measure can be absolutely secure.',
           ],
         },

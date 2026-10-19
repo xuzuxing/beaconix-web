@@ -100,7 +100,8 @@ function tabHasSections(tab: SettingTab) {
 watch(
   tabs,
   (next) => {
-    if (!next.some((tab) => tab.key === activeTab.value)) activeTab.value = next[0]?.key ?? ''
+    if (!next.some((tab) => tab.key === activeTab.value))
+      activeTab.value = next[0]?.key ?? ''
   },
   { immediate: true },
 )
@@ -111,7 +112,9 @@ async function save(group: string) {
 
   if (result.invalid) {
     MessagePlugin.error(
-      t(`adminPage.setting.invalid.${result.invalid.reason}`, { key: result.invalid.key }),
+      t(`adminPage.setting.invalid.${result.invalid.reason}`, {
+        key: result.invalid.key,
+      }),
     )
     return
   }
@@ -123,12 +126,17 @@ async function save(group: string) {
     // 逐项提交、失败即停：已经写成功的项保留，明确告诉用户进度
     if (result.saved > 0) {
       MessagePlugin.warning(
-        t('adminPage.setting.savePartial', { saved: result.saved, total: result.total }),
+        t('adminPage.setting.savePartial', {
+          saved: result.saved,
+          total: result.total,
+        }),
       )
     }
     return
   }
-  MessagePlugin.success(t('adminPage.setting.saveSuccess', { count: result.saved }))
+  MessagePlugin.success(
+    t('adminPage.setting.saveSuccess', { count: result.saved }),
+  )
 }
 
 onMounted(() => {
@@ -159,7 +167,10 @@ onMounted(() => {
       :message="t('adminPage.common.noPermission')"
     />
 
-    <t-card v-else class="admin-settings__panel">
+    <t-card
+      v-else
+      class="admin-settings__panel"
+    >
       <template #title>{{ t('adminPage.setting.title') }}</template>
       <template #actions>
         <span class="admin-settings__summary">
@@ -167,34 +178,64 @@ onMounted(() => {
         </span>
       </template>
 
-      <p class="admin-settings__subtitle">{{ t('adminPage.setting.subtitle') }}</p>
+      <p class="admin-settings__subtitle">
+        {{ t('adminPage.setting.subtitle') }}
+      </p>
 
-      <div v-if="error" class="admin-settings__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('adminPage.common.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="admin-settings__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('adminPage.common.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !settings.length" class="admin-settings__state">
+      <div
+        v-else-if="loading && !settings.length"
+        class="admin-settings__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
-      <div v-else-if="!tabs.length" class="admin-settings__state">
+      <div
+        v-else-if="!tabs.length"
+        class="admin-settings__state"
+      >
         <p class="admin-settings__empty">{{ t('adminPage.setting.empty') }}</p>
       </div>
 
-      <t-tabs v-else v-model="activeTab" class="admin-settings__tabs">
+      <t-tabs
+        v-else
+        v-model="activeTab"
+        class="admin-settings__tabs"
+      >
         <t-tab-panel
           v-for="tab in tabs"
           :key="tab.key"
           :value="tab.key"
           :label="groupLabel(tab.key)"
         >
-          <p v-if="groupHint(tab.key)" class="admin-settings__group-hint">
+          <p
+            v-if="groupHint(tab.key)"
+            class="admin-settings__group-hint"
+          >
             {{ groupHint(tab.key) }}
           </p>
 
-          <div v-if="!tab.items.length" class="admin-settings__state">
-            <p class="admin-settings__empty">{{ t('adminPage.setting.groupEmpty') }}</p>
+          <div
+            v-if="!tab.items.length"
+            class="admin-settings__state"
+          >
+            <p class="admin-settings__empty">
+              {{ t('adminPage.setting.groupEmpty') }}
+            </p>
           </div>
 
           <template v-else>
@@ -204,10 +245,21 @@ onMounted(() => {
               :label-width="labelWidth"
               :colon="false"
             >
-              <template v-for="section in tab.sections" :key="section.key || '__default'">
-                <div v-if="tabHasSections(tab) && section.key" class="admin-settings__section">
-                  <h3 class="admin-settings__section-title">{{ sectionLabel(section.key) }}</h3>
-                  <p v-if="sectionHint(section.key)" class="admin-settings__section-hint">
+              <template
+                v-for="section in tab.sections"
+                :key="section.key || '__default'"
+              >
+                <div
+                  v-if="tabHasSections(tab) && section.key"
+                  class="admin-settings__section"
+                >
+                  <h3 class="admin-settings__section-title">
+                    {{ sectionLabel(section.key) }}
+                  </h3>
+                  <p
+                    v-if="sectionHint(section.key)"
+                    class="admin-settings__section-hint"
+                  >
                     {{ sectionHint(section.key) }}
                   </p>
                 </div>
@@ -222,7 +274,6 @@ onMounted(() => {
                 />
               </template>
             </t-form>
-
 
             <div class="admin-settings__actions">
               <t-button
@@ -243,7 +294,9 @@ onMounted(() => {
               <span class="admin-settings__dirty-count">
                 {{
                   dirtyCount(tab.key)
-                    ? t('adminPage.setting.dirty', { count: dirtyCount(tab.key) })
+                    ? t('adminPage.setting.dirty', {
+                        count: dirtyCount(tab.key),
+                      })
                     : t('adminPage.setting.clean')
                 }}
               </span>

@@ -22,7 +22,13 @@ export function selectMonitors(
   sort: MonitorSort,
 ) {
   const query = search.trim().toLocaleLowerCase()
-  const rank: Record<MonitorStatus, number> = { DOWN: 0, DEGRADED: 1, UNKNOWN: 2, UP: 3, PAUSED: 4 }
+  const rank: Record<MonitorStatus, number> = {
+    DOWN: 0,
+    DEGRADED: 1,
+    UNKNOWN: 2,
+    UP: 3,
+    PAUSED: 4,
+  }
   return rows
     .filter(
       (row) =>
@@ -43,7 +49,14 @@ export function selectMonitors(
     })
 }
 export function summarizeMonitors(rows: Monitor[]) {
-  const result = { total: rows.length, UP: 0, DOWN: 0, DEGRADED: 0, PAUSED: 0, UNKNOWN: 0 }
+  const result = {
+    total: rows.length,
+    UP: 0,
+    DOWN: 0,
+    DEGRADED: 0,
+    PAUSED: 0,
+    UNKNOWN: 0,
+  }
   rows.forEach((row) => {
     result[monitorStatus(row)]++
   })

@@ -82,10 +82,14 @@ function isFaceDraft(item: UploadedObject | undefined): boolean {
 }
 
 /** 确认时上传随机头像，或正在上传自己的图片，都算「忙」 */
-const busy = computed(() => committing.value || Boolean(uploader.value?.uploading))
+const busy = computed(
+  () => committing.value || Boolean(uploader.value?.uploading),
+)
 
 /** 选中随机头像时提示「确认后上传」（格式说明由上传组件自带，避免重复） */
-const hint = computed(() => (chosen.value ? t('workspace.avatar.pendingHint') : ''))
+const hint = computed(() =>
+  chosen.value ? t('workspace.avatar.pendingHint') : '',
+)
 
 function buildCandidates() {
   candidates.value = Array.from({ length: props.count }, () => {
@@ -101,7 +105,9 @@ watch(
     generation++
     committing.value = false
     if (!value) return
-    picked.value = url.value ? [uploadedFromUrl(url.value, props.directory)] : []
+    picked.value = url.value
+      ? [uploadedFromUrl(url.value, props.directory)]
+      : []
     buildCandidates()
   },
   { immediate: true },
@@ -183,8 +189,15 @@ function finish(next: string) {
       <!-- 左侧：随机头像候选 -->
       <section class="avatar-picker__random">
         <div class="avatar-picker__head">
-          <span class="avatar-picker__title">{{ t('workspace.avatar.candidates') }}</span>
-          <t-button size="small" variant="text" :disabled="busy" @click="buildCandidates">
+          <span class="avatar-picker__title">{{
+            t('workspace.avatar.candidates')
+          }}</span>
+          <t-button
+            size="small"
+            variant="text"
+            :disabled="busy"
+            @click="buildCandidates"
+          >
             {{ t('workspace.avatar.shuffle') }}
           </t-button>
         </div>
@@ -201,14 +214,19 @@ function finish(next: string) {
             :aria-pressed="chosen?.key === candidate.key"
             @click="pick(candidate)"
           >
-            <img :src="candidate.preview" alt="" />
+            <img
+              :src="candidate.preview"
+              alt=""
+            />
           </button>
         </div>
       </section>
 
       <!-- 右侧：上传组件既是预览也是上传入口（选中的随机图直接显示在这里） -->
       <section class="avatar-picker__upload">
-        <span class="avatar-picker__title">{{ t('workspace.avatar.upload') }}</span>
+        <span class="avatar-picker__title">{{
+          t('workspace.avatar.upload')
+        }}</span>
 
         <ImageUploader
           ref="uploader"
@@ -218,7 +236,12 @@ function finish(next: string) {
           single
           :disabled="committing"
         />
-        <p v-if="hint" class="avatar-picker__hint">{{ hint }}</p>
+        <p
+          v-if="hint"
+          class="avatar-picker__hint"
+        >
+          {{ hint }}
+        </p>
       </section>
     </div>
   </t-dialog>

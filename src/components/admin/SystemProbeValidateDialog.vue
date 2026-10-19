@@ -11,7 +11,10 @@ import { formatDateTime } from '@/utils/billing'
 defineOptions({ name: 'SystemProbeValidateDialog' })
 
 const visible = defineModel<boolean>('visible', { required: true })
-defineProps<{ challenge: ProbeValidationChallenge | null; probeName?: string }>()
+defineProps<{
+  challenge: ProbeValidationChallenge | null
+  probeName?: string
+}>()
 const { t } = useI18n()
 </script>
 
@@ -20,10 +23,15 @@ const { t } = useI18n()
     v-model:visible="visible"
     :header="t('adminPage.probe.validateTitle')"
     width="min(520px, calc(100vw - 32px))"
-    :footer="false"
   >
-    <div v-if="challenge" class="probe-validate">
-      <t-alert theme="info" :message="t('adminPage.probe.validateDesc')" />
+    <div
+      v-if="challenge"
+      class="probe-validate"
+    >
+      <t-alert
+        theme="info"
+        :message="t('adminPage.probe.validateDesc')"
+      />
 
       <dl class="probe-validate__info">
         <div v-if="probeName">
@@ -44,6 +52,15 @@ const { t } = useI18n()
         </div>
       </dl>
     </div>
+
+    <template #footer>
+      <t-button
+        theme="primary"
+        @click="visible = false"
+      >
+        {{ t('adminPage.common.close') }}
+      </t-button>
+    </template>
   </t-dialog>
 </template>
 

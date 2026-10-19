@@ -86,5 +86,15 @@ export function useTicketDetail(ticketId: Ref<string>) {
 
   watch(ticketId, () => void load(), { immediate: true })
 
-  return { ticket, timeline, loading, error, replying, closing, load, reply, close }
+  return {
+    ticket,
+    timeline,
+    loading,
+    error,
+    replying,
+    closing,
+    load,
+    reply,
+    close,
+  }
 }

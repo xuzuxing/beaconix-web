@@ -19,7 +19,9 @@ const options = computed(() =>
 
 /** 当前语言名，形如「中文 ⌄」 */
 const currentLabel = computed(
-  () => LOCALE_OPTIONS.find((item) => item.value === appStore.locale)?.label ?? appStore.locale,
+  () =>
+    LOCALE_OPTIONS.find((item) => item.value === appStore.locale)?.label ??
+    appStore.locale,
 )
 
 function handleSelect(data: { value?: string | number }) {
@@ -28,10 +30,21 @@ function handleSelect(data: { value?: string | number }) {
 </script>
 
 <template>
-  <t-dropdown trigger="click" :options="options" @click="handleSelect">
-    <button type="button" class="language-switcher" :aria-label="t('app.language')">
+  <t-dropdown
+    trigger="click"
+    :options="options"
+    @click="handleSelect"
+  >
+    <button
+      type="button"
+      class="language-switcher"
+      :aria-label="t('app.language')"
+    >
       {{ currentLabel }}
-      <AppIcon class="language-switcher__caret" :icon="ArrowDown01Icon" />
+      <AppIcon
+        class="language-switcher__caret"
+        :icon="ArrowDown01Icon"
+      />
     </button>
   </t-dropdown>
 </template>

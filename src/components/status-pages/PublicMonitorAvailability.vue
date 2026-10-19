@@ -39,7 +39,8 @@ const hasCells = computed(
 /** 右上角：演示数据标注 + 最低可用率位置 */
 const extraText = computed(() => {
   const parts: string[] = []
-  if (props.availability.simulated) parts.push(t('statusPage.public.heatmap.simulated'))
+  if (props.availability.simulated)
+    parts.push(t('statusPage.public.heatmap.simulated'))
   const worst = props.availability.worst
   if (worst) {
     parts.push(
@@ -75,7 +76,9 @@ const option = computed<ChartOption>(() => {
     },
     xAxis: {
       type: 'category',
-      data: props.availability.hours.map((hour) => String(hour).padStart(2, '0')),
+      data: props.availability.hours.map((hour) =>
+        String(hour).padStart(2, '0'),
+      ),
       splitArea: { show: false },
       axisLine: { lineStyle: { color: palette.axisLine } },
       axisTick: { show: false },
@@ -127,13 +130,21 @@ const option = computed<ChartOption>(() => {
 <template>
   <ChartCard
     class="public-heatmap"
-    :title="t('statusPage.public.heatmap.title', { days: availability.days.length })"
+    :title="
+      t('statusPage.public.heatmap.title', { days: availability.days.length })
+    "
     :tip="tipText"
     :extra="extraText"
     height="150px"
   >
-    <EChart v-if="hasCells" :option="option" />
-    <div v-else class="public-heatmap__empty">
+    <EChart
+      v-if="hasCells"
+      :option="option"
+    />
+    <div
+      v-else
+      class="public-heatmap__empty"
+    >
       {{ t('statusPage.public.heatmap.empty') }}
     </div>
   </ChartCard>

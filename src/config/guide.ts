@@ -86,9 +86,24 @@ const { fileID } = await beacon.uploadFile({
 console.log('文件 ID:', fileID)`
 
 const INSTALL_TABS: GuideCodeTab[] = [
-  { key: 'npm', label: 'npm', code: 'npm i @beacon/node-sdk dotenv', language: 'bash' },
-  { key: 'yarn', label: 'yarn', code: 'yarn add @beacon/node-sdk dotenv', language: 'bash' },
-  { key: 'pnpm', label: 'pnpm', code: 'pnpm add @beacon/node-sdk dotenv', language: 'bash' },
+  {
+    key: 'npm',
+    label: 'npm',
+    code: 'npm i @beacon/node-sdk dotenv',
+    language: 'bash',
+  },
+  {
+    key: 'yarn',
+    label: 'yarn',
+    code: 'yarn add @beacon/node-sdk dotenv',
+    language: 'bash',
+  },
+  {
+    key: 'pnpm',
+    label: 'pnpm',
+    code: 'pnpm add @beacon/node-sdk dotenv',
+    language: 'bash',
+  },
 ]
 
 export const guideCategories: GuideCategory[] = [
@@ -141,7 +156,14 @@ App({
               {
                 key: 'usage',
                 titleKey: 'guide.step.usage',
-                codeTabs: [{ key: 'db', label: '数据库', code: BEACON_QUERY, language: 'js' }],
+                codeTabs: [
+                  {
+                    key: 'db',
+                    label: '数据库',
+                    code: BEACON_QUERY,
+                    language: 'js',
+                  },
+                ],
               },
             ],
           },
@@ -161,7 +183,12 @@ App({
                 titleKey: 'guide.step.install',
                 descKey: 'guide.desc.frontendInstall',
                 codeTabs: [
-                  { key: 'npm', label: 'npm', code: 'npm i @beacon/web-sdk', language: 'bash' },
+                  {
+                    key: 'npm',
+                    label: 'npm',
+                    code: 'npm i @beacon/web-sdk',
+                    language: 'bash',
+                  },
                   {
                     key: 'pnpm',
                     label: 'pnpm',
@@ -193,7 +220,12 @@ createApp(App).mount('#app')`,
                 key: 'usage',
                 titleKey: 'guide.step.usage',
                 codeTabs: [
-                  { key: 'storage', label: '云存储', code: BEACON_STORAGE, language: 'js' },
+                  {
+                    key: 'storage',
+                    label: '云存储',
+                    code: BEACON_STORAGE,
+                    language: 'js',
+                  },
                 ],
               },
             ],
@@ -220,17 +252,42 @@ createApp(App).mount('#app')`,
                 titleKey: 'guide.step.init',
                 descKey: 'guide.desc.nodeInit',
                 codeTabs: [
-                  { key: 'util', label: './utils/beacon.js', code: BEACON_INIT, language: 'js' },
-                  { key: 'env', label: '.env', code: BEACON_ENV, language: 'text' },
+                  {
+                    key: 'util',
+                    label: './utils/beacon.js',
+                    code: BEACON_INIT,
+                    language: 'js',
+                  },
+                  {
+                    key: 'env',
+                    label: '.env',
+                    code: BEACON_ENV,
+                    language: 'text',
+                  },
                 ],
               },
               {
                 key: 'usage',
                 titleKey: 'guide.step.usage',
                 codeTabs: [
-                  { key: 'db', label: 'PostgreSQL 数据库', code: BEACON_QUERY, language: 'js' },
-                  { key: 'function', label: '云函数', code: BEACON_FUNCTION, language: 'js' },
-                  { key: 'storage', label: '云存储', code: BEACON_STORAGE, language: 'js' },
+                  {
+                    key: 'db',
+                    label: 'PostgreSQL 数据库',
+                    code: BEACON_QUERY,
+                    language: 'js',
+                  },
+                  {
+                    key: 'function',
+                    label: '云函数',
+                    code: BEACON_FUNCTION,
+                    language: 'js',
+                  },
+                  {
+                    key: 'storage',
+                    label: '云存储',
+                    code: BEACON_STORAGE,
+                    language: 'js',
+                  },
                 ],
               },
             ],
@@ -276,7 +333,14 @@ beacon.init({ env: 'beacon-prod' })`,
               {
                 key: 'usage',
                 titleKey: 'guide.step.usage',
-                codeTabs: [{ key: 'db', label: '数据库', code: BEACON_QUERY, language: 'js' }],
+                codeTabs: [
+                  {
+                    key: 'db',
+                    label: '数据库',
+                    code: BEACON_QUERY,
+                    language: 'js',
+                  },
+                ],
               },
             ],
           },

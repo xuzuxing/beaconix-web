@@ -4,7 +4,10 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { disableTwoFactor, regenerateRecoveryCodes } from '@/api'
-import { isSecondFactorCode, normalizeSecondFactor } from '@/utils/security-presenter'
+import {
+  isSecondFactorCode,
+  normalizeSecondFactor,
+} from '@/utils/security-presenter'
 
 /**
  * 两步验证的敏感操作确认弹窗：
@@ -35,7 +38,9 @@ const hintKey = computed(() =>
     ? 'workspace.security.disableHint'
     : 'workspace.security.regenerateHint',
 )
-const confirmTheme = computed(() => (props.mode === 'disable' ? 'danger' : 'primary'))
+const confirmTheme = computed(() =>
+  props.mode === 'disable' ? 'danger' : 'primary',
+)
 
 watch(
   visible,
@@ -82,7 +87,8 @@ async function submit() {
       emit('regenerated', result.recoveryCodes ?? [])
     }
   } catch (cause) {
-    if (token === generation) error.value = cause instanceof Error ? cause.message : ''
+    if (token === generation)
+      error.value = cause instanceof Error ? cause.message : ''
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -94,16 +100,29 @@ async function submit() {
     v-model:visible="visible"
     :header="t(titleKey)"
     width="min(520px, calc(100vw - 32px))"
-    :confirm-btn="{ content: t('common.confirm'), theme: confirmTheme, loading: submitting }"
+    :confirm-btn="{
+      content: t('common.confirm'),
+      theme: confirmTheme,
+      loading: submitting,
+    }"
     :cancel-btn="t('common.cancel')"
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="two-factor-verify__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="two-factor-verify__error"
+    />
 
     <p class="two-factor-verify__hint">{{ t(hintKey) }}</p>
 
-    <t-form label-align="top" :colon="false" :data="{ password, code }">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="{ password, code }"
+    >
       <t-form-item :label="t('workspace.security.currentPassword')">
         <t-input
           v-model="password"

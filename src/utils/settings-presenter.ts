@@ -16,15 +16,10 @@ export type SettingDraft = string | number | boolean | null
 
 /** 草稿无法转成提交值的原因，由页面翻译成提示文案 */
 export type SettingDraftError =
-  | 'notString'
-  | 'notNumber'
-  | 'notBoolean'
-  | 'emptyJson'
-  | 'invalidJson'
+  'notString' | 'notNumber' | 'notBoolean' | 'emptyJson' | 'invalidJson'
 
 export type SettingDraftParse =
-  | { ok: true; value: SettingValue }
-  | { ok: false; reason: SettingDraftError }
+  { ok: true; value: SettingValue } | { ok: false; reason: SettingDraftError }
 
 /** 一个 tab 内的二级分组：`key` 为空串表示未声明 section 的项（直接挂在 tab 顶层） */
 export interface SettingSection {
@@ -148,7 +143,10 @@ function buildSections(items: AdminSetting[]): SettingSection[] {
     if (list) list.push(item)
     else bySection.set(key, [item])
   })
-  return Array.from(bySection, ([key, sectionItems]) => ({ key, items: sectionItems }))
+  return Array.from(bySection, ([key, sectionItems]) => ({
+    key,
+    items: sectionItems,
+  }))
 }
 
 /** 拆成 tab：空分组也保留，便于提示该分组还没建配置项 */

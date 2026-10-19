@@ -36,7 +36,9 @@ const tr: RuleTranslator = (key, params) => t(key, params ?? {})
 
 const rootLogic = computed(() => (isLogicNode(tree.value) ? tree.value : null))
 const counts = computed(() => countRuleNodes(tree.value))
-const issues = computed<RuleTreeIssue[]>(() => validateRuleTree(tree.value, props.meta))
+const issues = computed<RuleTreeIssue[]>(() =>
+  validateRuleTree(tree.value, props.meta),
+)
 const logicOptions = computed(() => [
   { label: tr('ruleGroup.logic.and'), value: 'and' },
   { label: tr('ruleGroup.logic.or'), value: 'or' },
@@ -51,13 +53,18 @@ function requireMeta(): RuleMeta {
   return props.meta
 }
 function addCondition(parentId: string) {
-  tree.value = appendRuleChild(tree.value, parentId, createConditionNode(requireMeta()))
+  tree.value = appendRuleChild(
+    tree.value,
+    parentId,
+    createConditionNode(requireMeta()),
+  )
 }
 function addLogicGroup(parentId: string) {
   tree.value = appendRuleChild(tree.value, parentId, createLogicNode())
 }
 function setRootOperator(operator: 'and' | 'or') {
-  if (rootLogic.value) tree.value = updateLogicOperator(tree.value, rootLogic.value.id, operator)
+  if (rootLogic.value)
+    tree.value = updateLogicOperator(tree.value, rootLogic.value.id, operator)
 }
 
 provide(RULE_EDITOR_KEY, {
@@ -79,7 +86,10 @@ provide(RULE_EDITOR_KEY, {
 
 <template>
   <div class="rule-editor">
-    <t-alert theme="warning" :message="t('ruleGroup.editorHint')" />
+    <t-alert
+      theme="warning"
+      :message="t('ruleGroup.editorHint')"
+    />
     <div class="rule-editor__head">
       <div>
         <span class="rule-editor__title">{{ t('ruleGroup.rootGroup') }}</span>
@@ -87,7 +97,10 @@ provide(RULE_EDITOR_KEY, {
       </div>
       <div class="rule-editor__actions">
         <span class="rule-editor__count">{{
-          t('ruleGroup.rulesCount', { rules: counts.conditions, groups: counts.logics })
+          t('ruleGroup.rulesCount', {
+            rules: counts.conditions,
+            groups: counts.logics,
+          })
         }}</span>
         <t-select
           v-if="rootLogic"
@@ -98,18 +111,44 @@ provide(RULE_EDITOR_KEY, {
         />
       </div>
     </div>
-    <p v-if="!meta" class="rule-editor__empty">{{ t('ruleGroup.metaLoading') }}</p>
-    <div v-else class="rule-editor__body">
+    <p
+      v-if="!meta"
+      class="rule-editor__empty"
+    >
+      {{ t('ruleGroup.metaLoading') }}
+    </p>
+    <div
+      v-else
+      class="rule-editor__body"
+    >
       <template v-if="rootLogic">
-        <template v-for="child in rootLogic.children" :key="child.id">
-          <RuleLogicGroup v-if="child.type === 'logic'" :node="child" :depth="1" />
-          <RuleConditionRow v-else :node="child" :index="ruleIndex(child.id)" removable />
+        <template
+          v-for="child in rootLogic.children"
+          :key="child.id"
+        >
+          <RuleLogicGroup
+            v-if="child.type === 'logic'"
+            :node="child"
+            :depth="1"
+          />
+          <RuleConditionRow
+            v-else
+            :node="child"
+            :index="ruleIndex(child.id)"
+            removable
+          />
         </template>
-        <p v-if="!rootLogic.children.length" class="rule-editor__empty">
+        <p
+          v-if="!rootLogic.children.length"
+          class="rule-editor__empty"
+        >
           {{ t('ruleGroup.emptyGroup') }}
         </p>
       </template>
-      <RuleConditionRow v-else :node="tree as ConditionNode" />
+      <RuleConditionRow
+        v-else
+        :node="tree as ConditionNode"
+      />
     </div>
     <div class="rule-editor__footer">
       <t-button
@@ -126,8 +165,14 @@ provide(RULE_EDITOR_KEY, {
         >{{ t('ruleGroup.addLogicGroup') }}</t-button
       >
     </div>
-    <ul v-if="issues.length" class="rule-editor__issues">
-      <li v-for="(issue, index) in issues" :key="`${issue.id}-${issue.messageKey}-${index}`">
+    <ul
+      v-if="issues.length"
+      class="rule-editor__issues"
+    >
+      <li
+        v-for="(issue, index) in issues"
+        :key="`${issue.id}-${issue.messageKey}-${index}`"
+      >
         {{ t(issue.messageKey, issue.params ?? {}) }}
       </li>
     </ul>

@@ -17,7 +17,11 @@ function goHome() {
     <div class="not-found">
       <p class="not-found__code">404</p>
       <p class="not-found__desc">{{ t('notFound.desc') }}</p>
-      <t-button theme="primary" @click="goHome">{{ t('common.backHome') }}</t-button>
+      <t-button
+        theme="primary"
+        @click="goHome"
+        >{{ t('common.backHome') }}</t-button
+      >
     </div>
   </t-card>
 </template>

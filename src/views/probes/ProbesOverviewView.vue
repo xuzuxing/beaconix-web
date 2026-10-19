@@ -14,17 +14,21 @@ defineOptions({ name: 'ProbesOverviewView' })
 const { t } = useI18n()
 const org = useOrganizationStore()
 const { canManage } = useOrganizationRole()
-const { probes, loading, error, load } = useProbeList(computed(() => org.currentOrganizationId))
+const { probes, loading, error, load } = useProbeList(
+  computed(() => org.currentOrganizationId),
+)
 const stats = computed(() => [
   { key: 'total', value: probes.value.length, query: {} },
   {
     key: 'online',
-    value: probes.value.filter((p) => p.enabled && p.status === 'ONLINE').length,
+    value: probes.value.filter((p) => p.enabled && p.status === 'ONLINE')
+      .length,
     query: { status: 'ONLINE' },
   },
   {
     key: 'offline',
-    value: probes.value.filter((p) => p.enabled && p.status === 'OFFLINE').length,
+    value: probes.value.filter((p) => p.enabled && p.status === 'OFFLINE')
+      .length,
     query: { status: 'OFFLINE' },
   },
   {
@@ -40,7 +44,9 @@ const resultCount = computed(() =>
   probes.value.reduce((sum, probe) => sum + (probe.resultCount ?? 0), 0),
 )
 const recent = computed(() =>
-  [...probes.value].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 8),
+  [...probes.value]
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+    .slice(0, 8),
 )
 const providers = computed(() =>
   PROBE_PROVIDERS.map((provider) => ({
@@ -63,11 +69,21 @@ const providers = computed(() =>
           @click="load"
           ><AppIcon :icon="RefreshIcon" /></t-button></t-tooltip
     ></HeaderActions>
-    <t-alert v-if="!canManage" theme="info" :message="t('probePage.noPermission')" />
-    <t-alert v-else-if="error" theme="error" :message="error"
+    <t-alert
+      v-if="!canManage"
+      theme="info"
+      :message="t('probePage.noPermission')"
+    />
+    <t-alert
+      v-else-if="error"
+      theme="error"
+      :message="error"
       ><t-button @click="load">{{ t('probePage.retry') }}</t-button></t-alert
     >
-    <div v-else-if="loading" class="probe-overview__state">
+    <div
+      v-else-if="loading"
+      class="probe-overview__state"
+    >
       <t-loading :text="t('common.loading')" />
     </div>
     <template v-else>
@@ -106,15 +122,25 @@ const providers = computed(() =>
             <span>{{ t(probeProviderLabelKey(item.provider)) }}</span
             ><strong>{{ item.count }}</strong>
             <t-progress
-              :percentage="probes.length ? Math.round((item.count / probes.length) * 100) : 0"
+              :percentage="
+                probes.length
+                  ? Math.round((item.count / probes.length) * 100)
+                  : 0
+              "
               :label="false"
             />
           </RouterLink>
         </section>
         <section>
           <h3>{{ t('probePage.recent') }}</h3>
-          <div v-if="!recent.length" class="probe-overview__state">
-            <AppIcon :icon="ServerIcon" :size="32" />{{ t('probePage.empty') }}
+          <div
+            v-if="!recent.length"
+            class="probe-overview__state"
+          >
+            <AppIcon
+              :icon="ServerIcon"
+              :size="32"
+            />{{ t('probePage.empty') }}
           </div>
           <RouterLink
             v-for="probe in recent"

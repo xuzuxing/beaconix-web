@@ -6,7 +6,12 @@ import { useI18n } from 'vue-i18n'
 import type { Organization } from '@/api/types'
 import type { Plan } from '@/api/types/billing'
 import AppIcon from '@/components/AppIcon.vue'
-import { CheckmarkCircle02Icon, Settings01Icon, TeamWorkIcon, UserIcon } from '@/icons'
+import {
+  CheckmarkCircle02Icon,
+  Settings01Icon,
+  TeamWorkIcon,
+  UserIcon,
+} from '@/icons'
 import { formatDateTime, planTagTheme, planTier } from '@/utils/billing'
 
 /**
@@ -34,7 +39,9 @@ const emit = defineEmits<{ select: []; manage: []; members: [] }>()
 const { t } = useI18n()
 const permissions = usePermissionsStore()
 
-const planLabel = computed(() => props.plan?.name ?? t('usage.package.freePlan'))
+const planLabel = computed(
+  () => props.plan?.name ?? t('usage.package.freePlan'),
+)
 </script>
 
 <template>
@@ -47,9 +54,17 @@ const planLabel = computed(() => props.plan?.name ?? t('usage.package.freePlan')
     @keydown.enter="emit('select')"
   >
     <div class="team-card__head">
-      <AppIcon class="team-card__icon" :icon="TeamWorkIcon" :size="18" />
+      <AppIcon
+        class="team-card__icon"
+        :icon="TeamWorkIcon"
+        :size="18"
+      />
       <span class="team-card__name">{{ org.name }}</span>
-      <span v-if="selected" class="team-card__current">{{ t('workspace.team.current') }}</span>
+      <span
+        v-if="selected"
+        class="team-card__current"
+        >{{ t('workspace.team.current') }}</span
+      >
       <t-tag
         v-if="plan"
         class="team-card__plan beacon-plan-badge"
@@ -69,12 +84,17 @@ const planLabel = computed(() => props.plan?.name ?? t('usage.package.freePlan')
       </li>
       <li class="team-card__row">
         <span class="team-card__label">{{ t('layout.teamCreatedAt') }}</span>
-        <span class="team-card__value">{{ formatDateTime(org.createdAt) }}</span>
+        <span class="team-card__value">{{
+          formatDateTime(org.createdAt)
+        }}</span>
       </li>
     </ul>
 
     <div class="team-card__foot">
-      <div v-if="permissions.canOrganization(org.id)" class="team-card__entries">
+      <div
+        v-if="permissions.canOrganization(org.id)"
+        class="team-card__entries"
+      >
         <button
           type="button"
           class="team-card__entry"
@@ -96,12 +116,24 @@ const planLabel = computed(() => props.plan?.name ?? t('usage.package.freePlan')
       </div>
 
       <span class="team-card__source">
-        {{ t(owned ? 'workspace.teamSelect.filterOwned' : 'workspace.teamSelect.filterJoined') }}
+        {{
+          t(
+            owned
+              ? 'workspace.teamSelect.filterOwned'
+              : 'workspace.teamSelect.filterJoined',
+          )
+        }}
       </span>
     </div>
 
-    <span v-if="selected" class="team-card__check">
-      <AppIcon :icon="CheckmarkCircle02Icon" :size="18" />
+    <span
+      v-if="selected"
+      class="team-card__check"
+    >
+      <AppIcon
+        :icon="CheckmarkCircle02Icon"
+        :size="18"
+      />
     </span>
   </div>
 </template>

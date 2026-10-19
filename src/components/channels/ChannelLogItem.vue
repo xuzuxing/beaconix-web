@@ -15,18 +15,43 @@ const expanded = ref(false)
 <template>
   <article class="channel-log">
     <div class="channel-log__head">
-      <t-tag :theme="log.status === 'SUCCESS' ? 'success' : 'danger'" size="small" variant="light">
+      <t-tag
+        :theme="log.status === 'SUCCESS' ? 'success' : 'danger'"
+        size="small"
+        variant="light"
+      >
         {{ t(`channelPage.delivery.${log.status}`) }}
       </t-tag>
-      <time class="channel-log__time">{{ formatMonitorTime(log.createdAt, locale) }}</time>
-      <span v-if="log.monitorName" class="channel-log__monitor">{{ log.monitorName }}</span>
+      <time class="channel-log__time">{{
+        formatMonitorTime(log.createdAt, locale)
+      }}</time>
+      <span
+        v-if="log.monitorName"
+        class="channel-log__monitor"
+        >{{ log.monitorName }}</span
+      >
     </div>
-    <p v-if="log.error" class="channel-log__error">{{ log.error }}</p>
-    <button type="button" class="channel-log__toggle" @click="expanded = !expanded">
-      <AppIcon :icon="ChevronsDownUpIcon" :size="14" />
+    <p
+      v-if="log.error"
+      class="channel-log__error"
+    >
+      {{ log.error }}
+    </p>
+    <button
+      type="button"
+      class="channel-log__toggle"
+      @click="expanded = !expanded"
+    >
+      <AppIcon
+        :icon="ChevronsDownUpIcon"
+        :size="14"
+      />
       {{ t('channelPage.rawPayload') }}
     </button>
-    <pre v-if="expanded" class="channel-log__raw">{{ JSON.stringify(log, null, 2) }}</pre>
+    <pre
+      v-if="expanded"
+      class="channel-log__raw"
+      >{{ JSON.stringify(log, null, 2) }}</pre>
   </article>
 </template>
 

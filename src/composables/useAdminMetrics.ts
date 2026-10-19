@@ -1,7 +1,11 @@
 import { ref } from 'vue'
 
 import { getAdminMetricsOverview, getAdminSchedulerHealth, getAdminTenantMetrics } from '@/api'
-import type { AdminMetricsOverview, AdminSchedulerHealth, AdminTenantMetric } from '@/api/types/admin'
+import type {
+  AdminMetricsOverview,
+  AdminSchedulerHealth,
+  AdminTenantMetric,
+} from '@/api/types/admin'
 
 /**
  * 平台指标快照（仅 SUPER_ADMIN）。

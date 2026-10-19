@@ -35,7 +35,9 @@ let generation = 0
 
 /** 只有对话框打开时才加载可选监控项：避免页面一进入就发起跨项目请求 */
 const monitorScope = computed(() =>
-  visible.value && permissions.canOrganization(props.orgId) ? props.orgId : undefined,
+  visible.value && permissions.canOrganization(props.orgId)
+    ? props.orgId
+    : undefined,
 )
 const {
   monitors,
@@ -61,7 +63,9 @@ const form = reactive({
 })
 
 /** 编辑态下展示当前公开地址，便于确认分享链接 */
-const publicUrl = computed(() => (props.page?.slug ? publicStatusPageUrl(props.page.slug) : ''))
+const publicUrl = computed(() =>
+  props.page?.slug ? publicStatusPageUrl(props.page.slug) : '',
+)
 const templateName = computed(() =>
   props.template ? t(`statusPage.template.${props.template.id}.name`) : '',
 )
@@ -113,7 +117,12 @@ async function save() {
   submitting.value = true
   try {
     await permissions.ensureOrganization(orgId, true)
-    if (token !== generation || !visible.value || !permissions.canOrganization(orgId)) return
+    if (
+      token !== generation ||
+      !visible.value ||
+      !permissions.canOrganization(orgId)
+    )
+      return
     const payload = {
       title: form.title.trim(),
       slug: form.slug.trim(),
@@ -127,12 +136,15 @@ async function save() {
       ? await updateStatusPage(orgId, editing, payload)
       : await createStatusPage(orgId, payload)
     if (token !== generation) return
-    MessagePlugin.success(t(editing ? 'statusPage.updated' : 'statusPage.created'))
+    MessagePlugin.success(
+      t(editing ? 'statusPage.updated' : 'statusPage.created'),
+    )
     visible.value = false
     emit('saved', result)
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('statusPage.saveFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('statusPage.saveFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -149,7 +161,12 @@ async function save() {
     :close-on-overlay-click="!submitting"
     @confirm="save"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="editor-error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="editor-error"
+    />
     <t-alert
       v-if="!page && templateName"
       theme="info"
@@ -157,7 +174,11 @@ async function save() {
       class="editor-error"
     />
 
-    <t-form :data="form" label-align="top" :colon="false">
+    <t-form
+      :data="form"
+      label-align="top"
+      :colon="false"
+    >
       <t-form-item :label="t('statusPage.titleLabel')"
         ><t-input
           v-model="form.title"
@@ -192,9 +213,12 @@ async function save() {
           <p class="editor-monitors__hint">
             <template v-if="monitorsError">
               {{ monitorsError }}
-              <t-button variant="text" size="small" @click="reloadMonitors">{{
-                t('statusPage.retry')
-              }}</t-button>
+              <t-button
+                variant="text"
+                size="small"
+                @click="reloadMonitors"
+                >{{ t('statusPage.retry') }}</t-button
+              >
             </template>
             <template v-else>{{ t('statusPage.monitorsHint') }}</template>
           </p>
@@ -203,13 +227,22 @@ async function save() {
 
       <t-form-item :label="t('statusPage.displayLabel')">
         <div class="editor-switches">
-          <t-checkbox v-model="form.showUptime">{{ t('statusPage.showUptime') }}</t-checkbox>
-          <t-checkbox v-model="form.showLatency">{{ t('statusPage.showLatency') }}</t-checkbox>
-          <t-checkbox v-model="form.enabled">{{ t('statusPage.enabledLabel') }}</t-checkbox>
+          <t-checkbox v-model="form.showUptime">{{
+            t('statusPage.showUptime')
+          }}</t-checkbox>
+          <t-checkbox v-model="form.showLatency">{{
+            t('statusPage.showLatency')
+          }}</t-checkbox>
+          <t-checkbox v-model="form.enabled">{{
+            t('statusPage.enabledLabel')
+          }}</t-checkbox>
         </div>
       </t-form-item>
 
-      <t-form-item v-if="publicUrl" :label="t('statusPage.publicUrl')">
+      <t-form-item
+        v-if="publicUrl"
+        :label="t('statusPage.publicUrl')"
+      >
         <span class="editor-url">{{ publicUrl }}</span>
       </t-form-item>
     </t-form>

@@ -25,7 +25,12 @@ export interface StatusPageTemplate {
 export const STATUS_PAGE_TEMPLATES: StatusPageTemplate[] = [
   { id: 'standard', showLatency: false, showUptime: true, recommended: true },
   { id: 'minimal', showLatency: false, showUptime: false, recommended: false },
-  { id: 'performance', showLatency: true, showUptime: true, recommended: false },
+  {
+    id: 'performance',
+    showLatency: true,
+    showUptime: true,
+    recommended: false,
+  },
 ]
 
 export function findStatusPageTemplate(id: unknown): StatusPageTemplate | undefined {
@@ -91,7 +96,9 @@ export function selectStatusPages(
     .filter(
       (row) =>
         (!query ||
-          `${row.title} ${row.slug} ${row.description ?? ''}`.toLocaleLowerCase().includes(query)) &&
+          `${row.title} ${row.slug} ${row.description ?? ''}`
+            .toLocaleLowerCase()
+            .includes(query)) &&
         (status === 'all' || row.enabled === (status === 'enabled')),
     )
     .sort((a, b) => {

@@ -14,17 +14,28 @@ import { monitorStatusTone } from '@/utils/status-page-presenter'
  */
 defineOptions({ name: 'PublicStatusBadge' })
 
-const props = withDefaults(defineProps<{ status: MonitorStatus; size?: 'default' | 'large' }>(), {
-  size: 'default',
-})
+const props = withDefaults(
+  defineProps<{ status: MonitorStatus; size?: 'default' | 'large' }>(),
+  {
+    size: 'default',
+  },
+)
 const { t } = useI18n()
 const tone = computed(() => monitorStatusTone(props.status))
 </script>
 
 <template>
-  <span class="status-badge" :class="[`status-badge--${tone}`, `status-badge--${size}`]">
-    <span class="status-badge__dot" aria-hidden="true" />
-    <span class="status-badge__text">{{ t(`workspace.monitor.status.${status}`) }}</span>
+  <span
+    class="status-badge"
+    :class="[`status-badge--${tone}`, `status-badge--${size}`]"
+  >
+    <span
+      class="status-badge__dot"
+      aria-hidden="true"
+    />
+    <span class="status-badge__text">{{
+      t(`workspace.monitor.status.${status}`)
+    }}</span>
   </span>
 </template>
 

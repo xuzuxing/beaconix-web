@@ -53,8 +53,15 @@ watch(orgId, load, { immediate: true })
 <template>
   <div class="usage">
     <div class="usage__bar">
-      <span class="usage__scope">{{ orgStore.currentOrganization?.name ?? '—' }}</span>
-      <t-button variant="outline" size="small" :loading="loading" @click="load">
+      <span class="usage__scope">{{
+        orgStore.currentOrganization?.name ?? '—'
+      }}</span>
+      <t-button
+        variant="outline"
+        size="small"
+        :loading="loading"
+        @click="load"
+      >
         {{ t('usage.refresh') }}
       </t-button>
     </div>
@@ -68,7 +75,10 @@ watch(orgId, load, { immediate: true })
       @upgrade="upgradeVisible = true"
     />
 
-    <QuotaUsageCard :quota="quota" :loading="loading" />
+    <QuotaUsageCard
+      :quota="quota"
+      :loading="loading"
+    />
 
     <UpgradePlanDialog
       v-model:visible="upgradeVisible"

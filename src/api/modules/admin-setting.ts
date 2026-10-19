@@ -1,5 +1,9 @@
 import type { AdminSetting, SettingValue, UpdateAdminSettingParams } from '../types/admin'
-import { mockGetAdminSetting, mockListAdminSettings, mockUpdateAdminSetting } from '../mock/admin-settings'
+import {
+  mockGetAdminSetting,
+  mockListAdminSettings,
+  mockUpdateAdminSetting,
+} from '../mock/admin-settings'
 import { get, patch } from '@/utils/request'
 
 /**

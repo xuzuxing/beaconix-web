@@ -23,7 +23,10 @@ const org = useOrganizationStore()
 const orgId = computed(() => org.currentOrganizationId)
 
 function useTemplate(id: string) {
-  void router.push({ name: 'status-pages', query: { template: id, create: '1' } })
+  void router.push({
+    name: 'status-pages',
+    query: { template: id, create: '1' },
+  })
 }
 </script>
 
@@ -32,24 +35,43 @@ function useTemplate(id: string) {
     <t-card class="status-templates__card">
       <template #title>{{ t('statusPage.templatesTitle') }}</template>
       <template #actions>
-        <span class="status-templates__scope">{{ org.currentOrganization?.name ?? '-' }}</span>
+        <span class="status-templates__scope">{{
+          org.currentOrganization?.name ?? '-'
+        }}</span>
       </template>
 
-      <t-alert theme="info" :message="t('statusPage.templatesHint')" class="status-templates__notice" />
+      <t-alert
+        theme="info"
+        :message="t('statusPage.templatesHint')"
+        class="status-templates__notice"
+      />
 
       <ul class="status-templates__list">
-        <li v-for="template in STATUS_PAGE_TEMPLATES" :key="template.id" class="template-card">
+        <li
+          v-for="template in STATUS_PAGE_TEMPLATES"
+          :key="template.id"
+          class="template-card"
+        >
           <div class="template-card__head">
             <span class="template-card__name">
               {{ t(`statusPage.template.${template.id}.name`) }}
             </span>
-            <t-tag v-if="template.recommended" theme="primary" variant="light" size="small">
-              <template #icon><AppIcon :icon="CheckmarkCircle02Icon" /></template>
+            <t-tag
+              v-if="template.recommended"
+              theme="primary"
+              variant="light"
+              size="small"
+            >
+              <template #icon
+                ><AppIcon :icon="CheckmarkCircle02Icon"
+              /></template>
               {{ t('statusPage.template.recommended') }}
             </t-tag>
           </div>
 
-          <p class="template-card__desc">{{ t(`statusPage.template.${template.id}.desc`) }}</p>
+          <p class="template-card__desc">
+            {{ t(`statusPage.template.${template.id}.desc`) }}
+          </p>
 
           <div class="template-card__fields">
             <StatusPageFieldTags
@@ -58,14 +80,20 @@ function useTemplate(id: string) {
             />
           </div>
 
-          <t-button :disabled="!orgId" @click="useTemplate(template.id)">
+          <t-button
+            :disabled="!orgId"
+            @click="useTemplate(template.id)"
+          >
             <template #icon><AppIcon :icon="PlusSignIcon" /></template>
             {{ t('statusPage.template.use') }}
           </t-button>
         </li>
       </ul>
 
-      <p v-if="!orgId" class="status-templates__empty">
+      <p
+        v-if="!orgId"
+        class="status-templates__empty"
+      >
         {{ t('statusPage.noOrganization') }}
       </p>
     </t-card>

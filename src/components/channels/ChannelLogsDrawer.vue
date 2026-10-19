@@ -57,7 +57,8 @@ async function load() {
     total.value = result.meta?.total ?? result.data.length
   } catch (cause) {
     if (token === generation) {
-      error.value = cause instanceof Error ? cause.message : t('channelPage.logsFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('channelPage.logsFailed')
       logs.value = []
       total.value = 0
     }
@@ -95,18 +96,35 @@ function paginate(info: { current: number }) {
 </script>
 
 <template>
-  <t-drawer v-model:visible="visible" size="520px" :footer="false">
+  <t-drawer
+    v-model:visible="visible"
+    size="520px"
+    :footer="false"
+  >
     <template #header>
       <div class="channel-logs__head">
-        <span class="channel-logs__title">{{ t('channelPage.logsTitle') }}</span>
-        <ChannelTypeTag v-if="channel" :type="channel.type" />
+        <span class="channel-logs__title">{{
+          t('channelPage.logsTitle')
+        }}</span>
+        <ChannelTypeTag
+          v-if="channel"
+          :type="channel.type"
+        />
         <span class="channel-logs__name">{{ channel?.name }}</span>
       </div>
     </template>
     <div class="channel-logs">
       <div class="channel-logs__filters">
-        <t-radio-group v-model="status" variant="default-filled" size="small">
-          <t-radio-button v-for="option in statusOptions" :key="option.value" :value="option.value">
+        <t-radio-group
+          v-model="status"
+          variant="default-filled"
+          size="small"
+        >
+          <t-radio-button
+            v-for="option in statusOptions"
+            :key="option.value"
+            :value="option.value"
+          >
             {{ option.label }}
           </t-radio-button>
         </t-radio-group>
@@ -118,15 +136,29 @@ function paginate(info: { current: number }) {
             :loading="loading"
             :aria-label="t('channelPage.refresh')"
             @click="load"
-            ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
+            ><template #icon
+              ><AppIcon :icon="RefreshIcon" /></template></t-button
         ></t-tooltip>
       </div>
 
-      <div v-if="error" class="channel-logs__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('channelPage.retry') }}</t-button>
+      <div
+        v-if="error"
+        class="channel-logs__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('channelPage.retry') }}</t-button
+        >
       </div>
-      <div v-else-if="loading && !logs.length" class="channel-logs__state">
+      <div
+        v-else-if="loading && !logs.length"
+        class="channel-logs__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
       <template v-else-if="logs.length">
@@ -143,7 +175,12 @@ function paginate(info: { current: number }) {
           @change="paginate"
         />
       </template>
-      <p v-else class="channel-logs__empty">{{ t('channelPage.logsEmpty') }}</p>
+      <p
+        v-else
+        class="channel-logs__empty"
+      >
+        {{ t('channelPage.logsEmpty') }}
+      </p>
     </div>
   </t-drawer>
 </template>

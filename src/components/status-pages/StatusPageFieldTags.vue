@@ -13,10 +13,19 @@ const fields = computed(() => [
 
 <template>
   <span class="status-field-tags">
-    <t-tag v-for="field in fields" :key="field" theme="primary" variant="light" size="small">
+    <t-tag
+      v-for="field in fields"
+      :key="field"
+      theme="primary"
+      variant="light"
+      size="small"
+    >
       {{ t(`statusPage.field.${field}`) }}
     </t-tag>
-    <span v-if="!fields.length" class="status-field-tags__empty">
+    <span
+      v-if="!fields.length"
+      class="status-field-tags__empty"
+    >
       {{ t('statusPage.field.statusOnly') }}
     </span>
   </span>

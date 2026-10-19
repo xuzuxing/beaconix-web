@@ -6,7 +6,11 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <t-tag :theme="enabled ? 'success' : 'default'" size="small" variant="light">
+  <t-tag
+    :theme="enabled ? 'success' : 'default'"
+    size="small"
+    variant="light"
+  >
     {{ t(enabled ? 'channelPage.enabled' : 'channelPage.disabled') }}
   </t-tag>
 </template>

@@ -103,7 +103,10 @@ function paginate(info: { current: number; pageSize: number }) {
           <template #icon><AppIcon :icon="RefreshIcon" /></template>
         </t-button>
       </t-tooltip>
-      <t-button theme="primary" @click="createVisible = true">
+      <t-button
+        theme="primary"
+        @click="createVisible = true"
+      >
         <template #icon><AppIcon :icon="PlusSignIcon" /></template>
         {{ t('ticketPage.newTicket') }}
       </t-button>
@@ -112,7 +115,9 @@ function paginate(info: { current: number; pageSize: number }) {
     <t-card class="my-tickets__panel">
       <template #title>{{ t('ticketPage.listTitle') }}</template>
       <template #actions>
-        <span class="my-tickets__total">{{ t('ticketPage.total') }} {{ total }}</span>
+        <span class="my-tickets__total"
+          >{{ t('ticketPage.total') }} {{ total }}</span
+        >
       </template>
 
       <p class="my-tickets__subtitle">{{ t('ticketPage.listSubtitle') }}</p>
@@ -133,15 +138,32 @@ function paginate(info: { current: number; pageSize: number }) {
           :aria-label="t('ticketPage.category')"
           @change="applyFilters"
         />
-        <t-button variant="outline" @click="reset">{{ t('ticketPage.filterReset') }}</t-button>
+        <t-button
+          variant="outline"
+          @click="reset"
+          >{{ t('ticketPage.filterReset') }}</t-button
+        >
       </div>
 
-      <div v-if="error" class="my-tickets__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('ticketPage.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="my-tickets__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('ticketPage.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !tickets.length" class="my-tickets__state">
+      <div
+        v-else-if="loading && !tickets.length"
+        class="my-tickets__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -156,27 +178,53 @@ function paginate(info: { current: number; pageSize: number }) {
             <span>{{ t('ticketPage.updatedAt') }}</span>
             <span>{{ t('ticketPage.actions') }}</span>
           </div>
-          <article v-for="ticket in tickets" :key="ticket.id" class="ticket-row">
-            <span class="ticket-row__number">{{ ticketNumberLabel(ticket.number) }}</span>
+          <article
+            v-for="ticket in tickets"
+            :key="ticket.id"
+            class="ticket-row"
+          >
+            <span class="ticket-row__number">{{
+              ticketNumberLabel(ticket.number)
+            }}</span>
             <span class="ticket-row__subject">
-              <button type="button" class="ticket-row__link" @click="openTicket(ticket)">
+              <button
+                type="button"
+                class="ticket-row__link"
+                @click="openTicket(ticket)"
+              >
                 {{ ticket.subject }}
               </button>
             </span>
-            <span class="ticket-row__muted">{{ ticketCategoryLabel(ticket) || '—' }}</span>
+            <span class="ticket-row__muted">{{
+              ticketCategoryLabel(ticket) || '—'
+            }}</span>
             <span>
-              <t-tag size="small" variant="light" :theme="ticketPriorityTheme(ticket.priority)">
+              <t-tag
+                size="small"
+                variant="light"
+                :theme="ticketPriorityTheme(ticket.priority)"
+              >
                 {{ t(ticketPriorityLabelKey(ticket.priority)) }}
               </t-tag>
             </span>
             <span>
-              <t-tag size="small" variant="light" :theme="ticketStatusTheme(ticket.status)">
+              <t-tag
+                size="small"
+                variant="light"
+                :theme="ticketStatusTheme(ticket.status)"
+              >
                 {{ t(ticketStatusLabelKey(ticket.status)) }}
               </t-tag>
             </span>
-            <span class="ticket-row__muted">{{ formatDateTime(ticket.updatedAt) }}</span>
+            <span class="ticket-row__muted">{{
+              formatDateTime(ticket.updatedAt)
+            }}</span>
             <span class="ticket-row__actions">
-              <t-button variant="text" size="small" @click="openTicket(ticket)">
+              <t-button
+                variant="text"
+                size="small"
+                @click="openTicket(ticket)"
+              >
                 {{ t('ticketPage.view') }}
               </t-button>
             </span>
@@ -193,9 +241,15 @@ function paginate(info: { current: number; pageSize: number }) {
         />
       </template>
 
-      <div v-else class="my-tickets__state">
+      <div
+        v-else
+        class="my-tickets__state"
+      >
         <p class="my-tickets__empty">{{ t('ticketPage.empty') }}</p>
-        <t-button theme="primary" @click="createVisible = true">
+        <t-button
+          theme="primary"
+          @click="createVisible = true"
+        >
           {{ t('ticketPage.newTicket') }}
         </t-button>
       </div>

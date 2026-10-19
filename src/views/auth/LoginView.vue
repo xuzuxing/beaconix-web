@@ -20,7 +20,12 @@ import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 import { HOME_PATH } from '@/config'
 import { useBrand } from '@/composables/useBrand'
-import { LockPasswordIcon, Mail01Icon, SecurityCheckIcon, UserIcon } from '@/icons'
+import {
+  LockPasswordIcon,
+  Mail01Icon,
+  SecurityCheckIcon,
+  UserIcon,
+} from '@/icons'
 import { useAppStore, useUserStore } from '@/stores'
 
 /**
@@ -76,18 +81,24 @@ const errors = reactive({
 const twoFactorStage = computed(() => Boolean(challengeId.value))
 
 const title = computed(() =>
-  twoFactorStage.value ? t('login.title.twoFactor') : t(`login.title.${mode.value}`),
+  twoFactorStage.value
+    ? t('login.title.twoFactor')
+    : t(`login.title.${mode.value}`),
 )
 
 const subtitle = computed(() =>
-  twoFactorStage.value ? t('login.subtitle.twoFactor') : t(`login.subtitle.${mode.value}`),
+  twoFactorStage.value
+    ? t('login.subtitle.twoFactor')
+    : t(`login.subtitle.${mode.value}`),
 )
 
 const submitText = computed(() => {
   if (twoFactorStage.value) return t('login.action.verifyTwoFactor')
   if (mode.value === 'login') return t('login.action.login')
   if (mode.value === 'register') {
-    return codeStage.value ? t('login.action.verify') : t('login.action.register')
+    return codeStage.value
+      ? t('login.action.verify')
+      : t('login.action.register')
   }
   return codeStage.value ? t('login.action.reset') : t('login.action.sendCode')
 })
@@ -95,7 +106,8 @@ const submitText = computed(() => {
 /** 第二步顶部提示：验证码发到了哪个邮箱 */
 const stageHint = computed(() => {
   if (twoFactorStage.value || !codeStage.value) return ''
-  const key = mode.value === 'register' ? 'login.hint.verifySent' : 'login.hint.resetSent'
+  const key =
+    mode.value === 'register' ? 'login.hint.verifySent' : 'login.hint.resetSent'
   return t(key, { email: form.email.trim() })
 })
 
@@ -268,7 +280,11 @@ async function onSubmit() {
 
     if (mode.value === 'register') {
       if (!codeStage.value) {
-        await registerApi({ email, password: form.password, name: form.name.trim() })
+        await registerApi({
+          email,
+          password: form.password,
+          name: form.name.trim(),
+        })
         MessagePlugin.success(t('login.message.registerSuccess'))
         codeStage.value = true
         return
@@ -288,7 +304,11 @@ async function onSubmit() {
       return
     }
 
-    await resetPasswordApi({ email, code: form.code.trim(), newPassword: form.newPassword })
+    await resetPasswordApi({
+      email,
+      code: form.code.trim(),
+      newPassword: form.newPassword,
+    })
     MessagePlugin.success(t('login.message.resetSuccess'))
     resetFlow('login')
   } catch {
@@ -304,158 +324,345 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="auth-page" :class="{ 'auth-page--dark': appStore.isDark }">
+  <div
+    class="auth-page"
+    :class="{ 'auth-page--dark': appStore.isDark }"
+  >
     <div class="auth-page__main">
-      <div class="auth-page__bg" aria-hidden="true">
-        <img class="auth-page__bg-image" :src="loginBackground" alt="" />
+      <div
+        class="auth-page__bg"
+        aria-hidden="true"
+      >
+        <img
+          class="auth-page__bg-image"
+          :src="loginBackground"
+          alt=""
+        />
       </div>
 
       <AppMaintenanceBanner />
 
       <header class="auth-page__brand">
-        <img class="auth-page__brand-logo" :src="logoSrc" :alt="siteName" />
+        <img
+          class="auth-page__brand-logo"
+          :src="logoSrc"
+          :alt="siteName"
+        />
         <LanguageSwitcher />
       </header>
 
       <div class="auth-page__card-wrap">
         <div class="auth-page__card">
-
           <h1 class="auth-card__title">{{ title }}</h1>
           <p class="auth-card__subtitle">{{ subtitle }}</p>
 
-          <p v-if="stageHint" class="auth-card__hint">
-            <AppIcon :icon="Mail01Icon" :size="14" />
+          <p
+            v-if="stageHint"
+            class="auth-card__hint"
+          >
+            <AppIcon
+              :icon="Mail01Icon"
+              :size="14"
+            />
             {{ stageHint }}
           </p>
 
-          <form class="auth-form" novalidate @submit.prevent="onSubmit">
-            <div v-if="showName" class="auth-field">
-              <label class="auth-field__label" for="name">{{ t('login.field.name') }}</label>
-              <t-input id="name" v-model="form.name" size="large" autocomplete="name"
-                :status="errors.name ? 'error' : 'default'" :placeholder="t('login.placeholder.name')"
-                @input="errors.name = ''">
+          <form
+            class="auth-form"
+            novalidate
+            @submit.prevent="onSubmit"
+          >
+            <div
+              v-if="showName"
+              class="auth-field"
+            >
+              <label
+                class="auth-field__label"
+                for="name"
+                >{{ t('login.field.name') }}</label
+              >
+              <t-input
+                id="name"
+                v-model="form.name"
+                size="large"
+                autocomplete="name"
+                :status="errors.name ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.name')"
+                @input="errors.name = ''"
+              >
                 <template #prefix-icon>
                   <AppIcon :icon="UserIcon" />
                 </template>
               </t-input>
-              <p v-if="errors.name" class="auth-field__error">{{ errors.name }}</p>
+              <p
+                v-if="errors.name"
+                class="auth-field__error"
+              >
+                {{ errors.name }}
+              </p>
             </div>
 
-            <div v-if="showEmail" class="auth-field">
-              <label class="auth-field__label" for="email">{{ t('login.field.email') }}</label>
-              <t-input id="email" v-model="form.email" size="large" inputmode="email" autocomplete="email"
-                :status="errors.email ? 'error' : 'default'" :placeholder="t('login.placeholder.email')"
-                @input="errors.email = ''">
+            <div
+              v-if="showEmail"
+              class="auth-field"
+            >
+              <label
+                class="auth-field__label"
+                for="email"
+                >{{ t('login.field.email') }}</label
+              >
+              <t-input
+                id="email"
+                v-model="form.email"
+                size="large"
+                inputmode="email"
+                autocomplete="email"
+                :status="errors.email ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.email')"
+                @input="errors.email = ''"
+              >
                 <template #prefix-icon>
                   <AppIcon :icon="Mail01Icon" />
                 </template>
               </t-input>
-              <p v-if="errors.email" class="auth-field__error">{{ errors.email }}</p>
+              <p
+                v-if="errors.email"
+                class="auth-field__error"
+              >
+                {{ errors.email }}
+              </p>
             </div>
 
-            <div v-if="showPassword" class="auth-field">
-              <label class="auth-field__label" for="password">{{
-                t('login.field.password')
-                }}</label>
-              <t-input id="password" v-model="form.password" size="large" type="password"
-                :autocomplete="mode === 'register' ? 'new-password' : 'current-password'"
-                :status="errors.password ? 'error' : 'default'" :placeholder="t('login.placeholder.password')"
-                @input="errors.password = ''">
+            <div
+              v-if="showPassword"
+              class="auth-field"
+            >
+              <label
+                class="auth-field__label"
+                for="password"
+                >{{ t('login.field.password') }}</label
+              >
+              <t-input
+                id="password"
+                v-model="form.password"
+                size="large"
+                type="password"
+                :autocomplete="
+                  mode === 'register' ? 'new-password' : 'current-password'
+                "
+                :status="errors.password ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.password')"
+                @input="errors.password = ''"
+              >
                 <template #prefix-icon>
                   <AppIcon :icon="LockPasswordIcon" />
                 </template>
               </t-input>
-              <p v-if="errors.password" class="auth-field__error">{{ errors.password }}</p>
+              <p
+                v-if="errors.password"
+                class="auth-field__error"
+              >
+                {{ errors.password }}
+              </p>
             </div>
 
-            <div v-if="showConfirm" class="auth-field">
-              <label class="auth-field__label" for="confirm-password">
+            <div
+              v-if="showConfirm"
+              class="auth-field"
+            >
+              <label
+                class="auth-field__label"
+                for="confirm-password"
+              >
                 {{ t('login.field.confirmPassword') }}
               </label>
-              <t-input id="confirm-password" v-model="form.confirmPassword" size="large" type="password"
-                autocomplete="new-password" :status="errors.confirmPassword ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.confirmPassword')" @input="errors.confirmPassword = ''">
+              <t-input
+                id="confirm-password"
+                v-model="form.confirmPassword"
+                size="large"
+                type="password"
+                autocomplete="new-password"
+                :status="errors.confirmPassword ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.confirmPassword')"
+                @input="errors.confirmPassword = ''"
+              >
                 <template #prefix-icon>
                   <AppIcon :icon="LockPasswordIcon" />
                 </template>
               </t-input>
-              <p v-if="errors.confirmPassword" class="auth-field__error">
+              <p
+                v-if="errors.confirmPassword"
+                class="auth-field__error"
+              >
                 {{ errors.confirmPassword }}
               </p>
             </div>
 
-            <div v-if="showCode" class="auth-field">
-              <label class="auth-field__label" for="code">{{ t('login.field.code') }}</label>
-              <t-input id="code" v-model="form.code" size="large" inputmode="numeric" maxlength="6"
-                :status="errors.code ? 'error' : 'default'" :placeholder="t('login.placeholder.code')"
-                @input="errors.code = ''" />
-              <p v-if="errors.code" class="auth-field__error">{{ errors.code }}</p>
+            <div
+              v-if="showCode"
+              class="auth-field"
+            >
+              <label
+                class="auth-field__label"
+                for="code"
+                >{{ t('login.field.code') }}</label
+              >
+              <t-input
+                id="code"
+                v-model="form.code"
+                size="large"
+                inputmode="numeric"
+                maxlength="6"
+                :status="errors.code ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.code')"
+                @input="errors.code = ''"
+              />
+              <p
+                v-if="errors.code"
+                class="auth-field__error"
+              >
+                {{ errors.code }}
+              </p>
             </div>
 
             <!-- 两步验证：输入身份验证器动态码或恢复码 -->
-            <div v-if="showTwoFactorCode" class="auth-field">
-              <label class="auth-field__label" for="two-factor-code">
+            <div
+              v-if="showTwoFactorCode"
+              class="auth-field"
+            >
+              <label
+                class="auth-field__label"
+                for="two-factor-code"
+              >
                 {{ t('login.field.twoFactorCode') }}
               </label>
-              <t-input id="two-factor-code" v-model="form.twoFactorCode" size="large" inputmode="numeric"
-                autocomplete="one-time-code" maxlength="32" :status="errors.twoFactorCode ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.twoFactorCode')" @input="errors.twoFactorCode = ''">
+              <t-input
+                id="two-factor-code"
+                v-model="form.twoFactorCode"
+                size="large"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="32"
+                :status="errors.twoFactorCode ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.twoFactorCode')"
+                @input="errors.twoFactorCode = ''"
+              >
                 <template #prefix-icon>
                   <AppIcon :icon="SecurityCheckIcon" />
                 </template>
               </t-input>
-              <p v-if="errors.twoFactorCode" class="auth-field__error">
+              <p
+                v-if="errors.twoFactorCode"
+                class="auth-field__error"
+              >
                 {{ errors.twoFactorCode }}
               </p>
             </div>
 
-            <div v-if="showNewPassword" class="auth-field">
-              <label class="auth-field__label" for="new-password">
+            <div
+              v-if="showNewPassword"
+              class="auth-field"
+            >
+              <label
+                class="auth-field__label"
+                for="new-password"
+              >
                 {{ t('login.field.newPassword') }}
               </label>
-              <t-input id="new-password" v-model="form.newPassword" size="large" type="password"
-                autocomplete="new-password" :status="errors.newPassword ? 'error' : 'default'"
-                :placeholder="t('login.placeholder.newPassword')" @input="errors.newPassword = ''">
+              <t-input
+                id="new-password"
+                v-model="form.newPassword"
+                size="large"
+                type="password"
+                autocomplete="new-password"
+                :status="errors.newPassword ? 'error' : 'default'"
+                :placeholder="t('login.placeholder.newPassword')"
+                @input="errors.newPassword = ''"
+              >
                 <template #prefix-icon>
                   <AppIcon :icon="LockPasswordIcon" />
                 </template>
               </t-input>
-              <p v-if="errors.newPassword" class="auth-field__error">{{ errors.newPassword }}</p>
+              <p
+                v-if="errors.newPassword"
+                class="auth-field__error"
+              >
+                {{ errors.newPassword }}
+              </p>
             </div>
 
-            <t-button class="auth-submit" block size="large" theme="primary" type="submit" :loading="submitting">
+            <t-button
+              class="auth-submit"
+              block
+              size="large"
+              theme="primary"
+              type="submit"
+              :loading="submitting"
+            >
               {{ submitText }}
             </t-button>
 
             <!-- 第二步 / 两步验证：重发验证码（2FA 无重发）与返回登录 -->
-            <div v-if="codeStage || twoFactorStage" class="auth-card__footer">
-              <button v-if="codeStage" type="button" class="auth-link" :disabled="submitting" @click="onResend">
+            <div
+              v-if="codeStage || twoFactorStage"
+              class="auth-card__footer"
+            >
+              <button
+                v-if="codeStage"
+                type="button"
+                class="auth-link"
+                :disabled="submitting"
+                @click="onResend"
+              >
                 {{ t('login.action.resend') }}
               </button>
-              <button type="button" class="auth-link" @click="resetFlow('login')">
+              <button
+                type="button"
+                class="auth-link"
+                @click="resetFlow('login')"
+              >
                 {{ t('login.link.toLogin') }}
               </button>
             </div>
           </form>
 
-          <div v-if="!codeStage && !twoFactorStage" class="auth-card__footer">
+          <div
+            v-if="!codeStage && !twoFactorStage"
+            class="auth-card__footer"
+          >
             <template v-if="mode === 'login'">
-              <button type="button" class="auth-link" @click="resetFlow('register')">
+              <button
+                type="button"
+                class="auth-link"
+                @click="resetFlow('register')"
+              >
                 {{ t('login.link.toRegister') }}
               </button>
-              <button type="button" class="auth-link" @click="resetFlow('forgot')">
+              <button
+                type="button"
+                class="auth-link"
+                @click="resetFlow('forgot')"
+              >
                 {{ t('login.link.toForgot') }}
               </button>
             </template>
 
             <template v-else-if="mode === 'register'">
-              <button type="button" class="auth-link" @click="resetFlow('login')">
+              <button
+                type="button"
+                class="auth-link"
+                @click="resetFlow('login')"
+              >
                 {{ t('login.link.hasAccount') }}
               </button>
             </template>
 
             <template v-else>
-              <button type="button" class="auth-link" @click="resetFlow('login')">
+              <button
+                type="button"
+                class="auth-link"
+                @click="resetFlow('login')"
+              >
                 {{ t('login.link.toLogin') }}
               </button>
             </template>
@@ -465,7 +672,9 @@ async function onSubmit() {
             {{ t('login.link.agreement') }}
             <router-link to="/terms">{{ t('login.link.terms') }}</router-link>
             <span class="auth-card__sep">·</span>
-            <router-link to="/privacy">{{ t('login.link.privacy') }}</router-link>
+            <router-link to="/privacy">{{
+              t('login.link.privacy')
+            }}</router-link>
           </p>
         </div>
       </div>

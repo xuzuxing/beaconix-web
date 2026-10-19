@@ -23,7 +23,9 @@ const props = withDefaults(
 /** 刻度档位：把 Y 轴上限抬到其中一个档位，避免出现 192.8 这类刻度 */
 const NICE_STEPS = [1, 1.2, 1.6, 2, 2.5, 3, 4, 5, 6, 8, 10]
 const { t } = useI18n()
-const finite = computed(() => props.values.filter((v): v is number => v !== null && Number.isFinite(v)))
+const finite = computed(() =>
+  props.values.filter((v): v is number => v !== null && Number.isFinite(v)),
+)
 
 function niceCeil(value: number): number {
   const magnitude = 10 ** Math.floor(Math.log10(value))
@@ -47,7 +49,10 @@ const min = computed(() => {
   if (!props.autoScale) {
     return 0
   }
-  const span = Math.max(max.value - (finite.value.length ? Math.min(...finite.value) : 0), 1e-6)
+  const span = Math.max(
+    max.value - (finite.value.length ? Math.min(...finite.value) : 0),
+    1e-6,
+  )
   const step = niceStep(span / (props.tickCount - 1))
   return Number((max.value - step * (props.tickCount - 1)).toFixed(6))
 })
@@ -64,17 +69,27 @@ const ticks = computed(() =>
 )
 
 /** Keep full date/offset labels in tooltips while limiting compact axis ticks. */
-const labelStep = computed(() => Math.max(1, Math.ceil(props.labels.length / 4)))
-const multipleDates = computed(() => new Set(props.labels.map(label => label.slice(0, 5))).size > 1)
-const axisLabel = (label: string) => multipleDates.value ? label.slice(0, 5) : label.slice(6, 11)
+const labelStep = computed(() =>
+  Math.max(1, Math.ceil(props.labels.length / 4)),
+)
+const multipleDates = computed(
+  () => new Set(props.labels.map((label) => label.slice(0, 5))).size > 1,
+)
+const axisLabel = (label: string) =>
+  multipleDates.value ? label.slice(0, 5) : label.slice(6, 11)
 
 function isLabelVisible(index: number) {
   return index % labelStep.value === 0
 }
 
 const linePath = computed(() => {
-  return finiteSegments(props.values, min.value, max.value).map(segment =>
-    segment.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ')).join(' ')
+  return finiteSegments(props.values, min.value, max.value)
+    .map((segment) =>
+      segment
+        .map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+        .join(' '),
+    )
+    .join(' ')
 })
 
 function formatValue(value: number) {
@@ -83,15 +98,29 @@ function formatValue(value: number) {
 </script>
 
 <template>
-  <t-empty v-if="!finite.length" :description="t('dashboard.live.empty')" />
-  <div v-else class="line-chart">
+  <t-empty
+    v-if="!finite.length"
+    :description="t('dashboard.live.empty')"
+  />
+  <div
+    v-else
+    class="line-chart"
+  >
     <div class="line-chart__axis-y">
-      <span v-for="tick in ticks" :key="tick.y">{{ formatValue(tick.value) }}</span>
+      <span
+        v-for="tick in ticks"
+        :key="tick.y"
+        >{{ formatValue(tick.value) }}</span
+      >
     </div>
 
     <div class="line-chart__main">
       <div class="line-chart__plot">
-        <svg class="line-chart__svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg
+          class="line-chart__svg"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
           <line
             v-for="tick in ticks"
             :key="tick.y"
@@ -101,7 +130,10 @@ function formatValue(value: number) {
             x2="100"
             :y2="tick.y"
           />
-          <path class="line-chart__line" :d="linePath" />
+          <path
+            class="line-chart__line"
+            :d="linePath"
+          />
         </svg>
       </div>
 
@@ -111,7 +143,9 @@ function formatValue(value: number) {
           :key="`${label}-${index}`"
           v-show="isLabelVisible(index)"
           :title="label"
-          :style="{ left: `${labels.length > 1 ? 100 * index / (labels.length - 1) : 50}%` }"
+          :style="{
+            left: `${labels.length > 1 ? (100 * index) / (labels.length - 1) : 50}%`,
+          }"
         >
           {{ axisLabel(label) }}
         </span>
@@ -181,8 +215,14 @@ function formatValue(value: number) {
     font-size: 10px;
     line-height: 12px;
     color: @beacon-text-tertiary;
-    span { position: absolute; white-space: nowrap; transform: translateX(-50%); }
-    span:first-child { transform: none; }
+    span {
+      position: absolute;
+      white-space: nowrap;
+      transform: translateX(-50%);
+    }
+    span:first-child {
+      transform: none;
+    }
   }
 
   // 抽稀时保留占位，标签才继续与数据点对齐

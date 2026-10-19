@@ -3,7 +3,10 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { MonitorStatus } from '@/api/types'
-import type { PublicStatusPage, PublicStatusPageMonitor } from '@/api/types/status-page'
+import type {
+  PublicStatusPage,
+  PublicStatusPageMonitor,
+} from '@/api/types/status-page'
 import ChartCard from '@/components/charts/ChartCard.vue'
 import EChart from '@/components/charts/EChart.vue'
 import {
@@ -37,9 +40,16 @@ const { t } = useI18n()
 const theme = useChartTheme()
 
 /** 环形图的固定顺序（正常状态在前，未知放最后） */
-const STATUS_ORDER: MonitorStatus[] = ['UP', 'DEGRADED', 'DOWN', 'PAUSED', 'UNKNOWN']
+const STATUS_ORDER: MonitorStatus[] = [
+  'UP',
+  'DEGRADED',
+  'DOWN',
+  'PAUSED',
+  'UNKNOWN',
+]
 
-const statusLabel = (status: MonitorStatus) => t(`workspace.monitor.status.${status}`)
+const statusLabel = (status: MonitorStatus) =>
+  t(`workspace.monitor.status.${status}`)
 
 function toneColor(current: ChartTheme, status: MonitorStatus) {
   switch (monitorStatusTone(status)) {
@@ -91,7 +101,9 @@ const statusOption = computed<ChartOption>(() => {
 })
 
 const uptimeRows = computed(() =>
-  props.page.monitors.filter((monitor) => typeof monitor.uptimePercent === 'number'),
+  props.page.monitors.filter(
+    (monitor) => typeof monitor.uptimePercent === 'number',
+  ),
 )
 const latencyRows = computed(() =>
   props.page.monitors.filter((monitor) => typeof monitor.latency === 'number'),
@@ -99,19 +111,24 @@ const latencyRows = computed(() =>
 const maxLatency = computed(() => maxMonitorLatency(props.page.monitors))
 const averageUptime = computed(() =>
   uptimeRows.value.length
-    ? uptimeRows.value.reduce((sum, monitor) => sum + (monitor.uptimePercent ?? 0), 0) /
-      uptimeRows.value.length
+    ? uptimeRows.value.reduce(
+        (sum, monitor) => sum + (monitor.uptimePercent ?? 0),
+        0,
+      ) / uptimeRows.value.length
     : null,
 )
 const averageLatency = computed(() =>
   latencyRows.value.length
-    ? latencyRows.value.reduce((sum, monitor) => sum + (monitor.latency ?? 0), 0) /
-      latencyRows.value.length
+    ? latencyRows.value.reduce(
+        (sum, monitor) => sum + (monitor.latency ?? 0),
+        0,
+      ) / latencyRows.value.length
     : null,
 )
 
 /** 监控名过长时截断，避免条形被压扁 */
-const truncate = (label: string) => (label.length > 18 ? `${label.slice(0, 17)}…` : label)
+const truncate = (label: string) =>
+  label.length > 18 ? `${label.slice(0, 17)}…` : label
 
 function barsOption(
   rows: PublicStatusPageMonitor[],
@@ -127,8 +144,15 @@ function barsOption(
   return chartBase(current, {
     grid: { ...chartGrid, top: 8, right: 8 },
     tooltip: chartTooltip(current, 'axis'),
-    xAxis: valueAxis(current, { min: 0, max: options.max, formatter: options.formatter }),
-    yAxis: { ...axis, axisLabel: { ...axis.axisLabel, margin: 8, formatter: truncate } },
+    xAxis: valueAxis(current, {
+      min: 0,
+      max: options.max,
+      formatter: options.formatter,
+    }),
+    yAxis: {
+      ...axis,
+      axisLabel: { ...axis.axisLabel, margin: 8, formatter: truncate },
+    },
     series: [
       {
         type: 'bar',
@@ -160,7 +184,11 @@ const latencyOption = computed(() =>
   <div class="public-charts">
     <ChartCard
       :title="t('statusPage.public.chart.statusTitle')"
-      :extra="t('statusPage.public.chart.monitorCount', { count: page.monitors.length })"
+      :extra="
+        t('statusPage.public.chart.monitorCount', {
+          count: page.monitors.length,
+        })
+      "
     >
       <EChart :option="statusOption" />
     </ChartCard>
@@ -168,19 +196,43 @@ const latencyOption = computed(() =>
     <ChartCard
       v-if="page.showUptime"
       :title="t('statusPage.public.chart.uptimeTitle')"
-      :extra="t('statusPage.public.chart.average', { value: formatUptime(averageUptime) ?? '-' })"
+      :extra="
+        t('statusPage.public.chart.average', {
+          value: formatUptime(averageUptime) ?? '-',
+        })
+      "
     >
-      <EChart v-if="uptimeRows.length" :option="uptimeOption" />
-      <div v-else class="public-charts__empty">{{ t('statusPage.public.chart.empty') }}</div>
+      <EChart
+        v-if="uptimeRows.length"
+        :option="uptimeOption"
+      />
+      <div
+        v-else
+        class="public-charts__empty"
+      >
+        {{ t('statusPage.public.chart.empty') }}
+      </div>
     </ChartCard>
 
     <ChartCard
       v-if="page.showLatency"
       :title="t('statusPage.public.chart.latencyTitle')"
-      :extra="t('statusPage.public.chart.average', { value: formatLatency(averageLatency) ?? '-' })"
+      :extra="
+        t('statusPage.public.chart.average', {
+          value: formatLatency(averageLatency) ?? '-',
+        })
+      "
     >
-      <EChart v-if="latencyRows.length" :option="latencyOption" />
-      <div v-else class="public-charts__empty">{{ t('statusPage.public.chart.empty') }}</div>
+      <EChart
+        v-if="latencyRows.length"
+        :option="latencyOption"
+      />
+      <div
+        v-else
+        class="public-charts__empty"
+      >
+        {{ t('statusPage.public.chart.empty') }}
+      </div>
     </ChartCard>
   </div>
 </template>

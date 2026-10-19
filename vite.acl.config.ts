@@ -8,7 +8,13 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify('acl-test'),
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify('/api'),
   },
-  server: { host: '127.0.0.1', port: 5187, strictPort: true, open: false, proxy: undefined },
+  server: {
+    host: '127.0.0.1',
+    port: 5187,
+    strictPort: true,
+    open: false,
+    proxy: undefined,
+  },
   css: {
     preprocessorOptions: {
       less: {

@@ -231,7 +231,11 @@ function normalizeTimelineEntry(raw: unknown, index: number): TicketTimelineEntr
 /** 时间线排序：按时间升序，时间缺失或非法时保持后端顺序 */
 function sortTimeline(entries: TicketTimelineEntry[]): TicketTimelineEntry[] {
   return entries
-    .map((entry, index) => ({ entry, index, time: Date.parse(entry.createdAt) }))
+    .map((entry, index) => ({
+      entry,
+      index,
+      time: Date.parse(entry.createdAt),
+    }))
     .sort((a, b) => {
       const left = Number.isFinite(a.time) ? a.time : Number.MAX_SAFE_INTEGER
       const right = Number.isFinite(b.time) ? b.time : Number.MAX_SAFE_INTEGER
@@ -318,7 +322,10 @@ export function normalizeTicketStats(raw: unknown): TicketStats {
 
 /** 统计里的单条计数（页面上循环渲染时用） */
 export function ticketStatsRows(stats: TicketStats): { status: TicketStatus; count: number }[] {
-  return TICKET_STATUSES.map((status) => ({ status, count: stats.byStatus[status] }))
+  return TICKET_STATUSES.map((status) => ({
+    status,
+    count: stats.byStatus[status],
+  }))
 }
 
 /** 优先级分布（只看非零项，避免空态里出现四行 0） */

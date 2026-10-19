@@ -3,7 +3,11 @@ import { useI18n } from 'vue-i18n'
 
 import type { AdminOrder } from '@/api/types/admin'
 import { formatAmount, formatDateTime } from '@/utils/billing'
-import { isOrderExpired, orderActions, orderStatusTheme } from '@/utils/admin-presenter'
+import {
+  isOrderExpired,
+  orderActions,
+  orderStatusTheme,
+} from '@/utils/admin-presenter'
 import { shortId } from '@/utils/team-presenter'
 
 /**
@@ -27,10 +31,17 @@ const actions = () => (props.order ? orderActions(props.order) : null)
     :header="t('adminPage.order.detailTitle')"
     :footer="false"
   >
-    <div v-if="order" class="order-detail">
+    <div
+      v-if="order"
+      class="order-detail"
+    >
       <header class="order-detail__head">
         <span class="order-detail__no">{{ order.orderNo }}</span>
-        <t-tag size="small" variant="light" :theme="orderStatusTheme(order.status)">
+        <t-tag
+          size="small"
+          variant="light"
+          :theme="orderStatusTheme(order.status)"
+        >
           {{ t(`adminPage.order.statusLabel.${order.status}`) }}
         </t-tag>
         <t-tag
@@ -72,7 +83,11 @@ const actions = () => (props.order ? orderActions(props.order) : null)
         </div>
         <div>
           <dt>{{ t('adminPage.order.duration') }}</dt>
-          <dd>{{ t('adminPage.order.durationDays', { days: order.durationDays }) }}</dd>
+          <dd>
+            {{
+              t('adminPage.order.durationDays', { days: order.durationDays })
+            }}
+          </dd>
         </div>
         <div>
           <dt>{{ t('adminPage.order.createdAt') }}</dt>
@@ -96,7 +111,10 @@ const actions = () => (props.order ? orderActions(props.order) : null)
         </div>
       </dl>
 
-      <div v-if="actions()" class="order-detail__actions">
+      <div
+        v-if="actions()"
+        class="order-detail__actions"
+      >
         <t-button
           v-if="actions()?.canMarkPaid"
           theme="primary"
@@ -126,8 +144,16 @@ const actions = () => (props.order ? orderActions(props.order) : null)
         </t-button>
       </div>
 
-      <t-alert v-if="order.status === 'PENDING'" theme="info" :message="t('adminPage.order.markPaidHint')" />
-      <t-alert v-else-if="order.status === 'PAID'" theme="warning" :message="t('adminPage.order.refundHint')" />
+      <t-alert
+        v-if="order.status === 'PENDING'"
+        theme="info"
+        :message="t('adminPage.order.markPaidHint')"
+      />
+      <t-alert
+        v-else-if="order.status === 'PAID'"
+        theme="warning"
+        :message="t('adminPage.order.refundHint')"
+      />
     </div>
   </t-drawer>
 </template>

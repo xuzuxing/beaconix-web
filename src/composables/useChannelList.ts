@@ -31,7 +31,9 @@ export function useChannelList(orgId: MaybeRefOrGetter<string | undefined>) {
     }
     loading.value = true
     try {
-      const result = await listNotificationChannels(organization, { signal: controller.signal })
+      const result = await listNotificationChannels(organization, {
+        signal: controller.signal,
+      })
       if (token === generation) channels.value = result
     } catch (cause) {
       if (token === generation)

@@ -42,8 +42,16 @@ const userStore = useUserStore()
 const { canManage, canGrantAdmin } = useOrganizationRole()
 
 const orgId = computed(() => orgStore.currentOrganizationId)
-const { members, invitations, loading, error, invitationsDenied, pendingKey, load, act } =
-  useTeamMembers(orgId, canManage)
+const {
+  members,
+  invitations,
+  loading,
+  error,
+  invitationsDenied,
+  pendingKey,
+  load,
+  act,
+} = useTeamMembers(orgId, canManage)
 // keep-alive 页面：从别的页面返回时重新拉取成员与邀请列表
 useRefreshOnActivate(load)
 
@@ -54,7 +62,11 @@ const page = ref(1)
 const inviteVisible = ref(false)
 const permissionsVisible = ref(false)
 const permissionUserId = ref('')
-const roleChange = ref<{ member: Membership; role: MembershipRole; orgId: string } | null>(null)
+const roleChange = ref<{
+  member: Membership
+  role: MembershipRole
+  orgId: string
+} | null>(null)
 const roleChangeVisible = computed({
   get: () => roleChange.value !== null,
   set: (value: boolean) => {
@@ -71,10 +83,17 @@ watch(
   { flush: 'sync' },
 )
 
-const filtered = computed(() => selectMembers(members.value, keyword.value, roleFilter.value))
-const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)))
+const filtered = computed(() =>
+  selectMembers(members.value, keyword.value, roleFilter.value),
+)
+const pageCount = computed(() =>
+  Math.max(1, Math.ceil(filtered.value.length / pageSize.value)),
+)
 const rows = computed(() =>
-  filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
+  filtered.value.slice(
+    (page.value - 1) * pageSize.value,
+    page.value * pageSize.value,
+  ),
 )
 const pendingInvitations = computed(() =>
   selectInvitations(invitations.value).filter(isPendingInvitation),
@@ -82,10 +101,15 @@ const pendingInvitations = computed(() =>
 
 const roleFilterOptions = computed(() => [
   { label: t('workspace.member.allRoles'), value: 'all' },
-  ...MEMBER_ROLES.map((role) => ({ label: t(`workspace.member.roleOption.${role}`), value: role })),
+  ...MEMBER_ROLES.map((role) => ({
+    label: t(`workspace.member.roleOption.${role}`),
+    value: role,
+  })),
 ])
 const assignableOptions = computed(() =>
-  ASSIGNABLE_ROLES.filter((role) => role !== 'ADMIN' || canGrantAdmin.value).map((role) => ({
+  ASSIGNABLE_ROLES.filter(
+    (role) => role !== 'ADMIN' || canGrantAdmin.value,
+  ).map((role) => ({
     label: t(`workspace.member.roleOption.${role}`),
     value: role,
   })),
@@ -138,7 +162,11 @@ async function confirmRoleChange() {
   const change = roleChange.value
   if (!change || change.orgId !== orgId.value) return
   const { member, role } = change
-  if (!permissions(member).canChangeRole || (role === 'ADMIN' && !canGrantAdmin.value)) return
+  if (
+    !permissions(member).canChangeRole ||
+    (role === 'ADMIN' && !canGrantAdmin.value)
+  )
+    return
   await act(member.userId, async () => {
     if (
       roleChange.value !== change ||
@@ -227,18 +255,27 @@ function clearFilters() {
           @click="load"
           ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
-      <t-button v-if="canManage" :disabled="!orgId" @click="inviteVisible = true"
+      <t-button
+        v-if="canManage"
+        :disabled="!orgId"
+        @click="inviteVisible = true"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('workspace.member.invite') }}</t-button
       >
     </HeaderActions>
 
-    <t-alert v-if="!canManage" theme="info" :message="t('workspace.member.noPermission')" />
+    <t-alert
+      v-if="!canManage"
+      theme="info"
+      :message="t('workspace.member.noPermission')"
+    />
 
     <t-card class="members__panel">
       <template #title>{{ t('workspace.member.title') }}</template>
       <template #actions>
-        <span class="members__scope">{{ orgStore.currentOrganization?.name ?? '—' }}</span>
+        <span class="members__scope">{{
+          orgStore.currentOrganization?.name ?? '—'
+        }}</span>
       </template>
 
       <div class="members__filters">
@@ -256,12 +293,25 @@ function clearFilters() {
         />
       </div>
 
-      <div v-if="error" class="members__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('workspace.member.reset') }}</t-button>
+      <div
+        v-if="error"
+        class="members__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('workspace.member.reset') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !members.length" class="members__state">
+      <div
+        v-else-if="loading && !members.length"
+        class="members__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -273,17 +323,27 @@ function clearFilters() {
             <span>{{ t('workspace.member.joinedAt') }}</span>
             <span>{{ t('workspace.member.remove') }}</span>
           </div>
-          <article v-for="member in rows" :key="member.id" class="member-row">
+          <article
+            v-for="member in rows"
+            :key="member.id"
+            class="member-row"
+          >
             <div class="member-row__identity">
               <t-avatar size="32px">{{ identity(member).initial }}</t-avatar>
               <div class="member-row__text">
                 <span class="member-row__name">
                   {{ identity(member).name }}
-                  <t-tag v-if="permissions(member).isSelf" size="small" variant="light-outline">
+                  <t-tag
+                    v-if="permissions(member).isSelf"
+                    size="small"
+                    variant="light-outline"
+                  >
                     {{ t('workspace.member.me') }}
                   </t-tag>
                 </span>
-                <span class="member-row__sub">{{ identity(member).email || member.userId }}</span>
+                <span class="member-row__sub">{{
+                  identity(member).email || member.userId
+                }}</span>
               </div>
             </div>
 
@@ -297,12 +357,18 @@ function clearFilters() {
                 :aria-label="t('workspace.member.changeRole')"
                 @change="(value: unknown) => changeRole(member, value)"
               />
-              <t-tag v-else size="small" variant="light-outline">
+              <t-tag
+                v-else
+                size="small"
+                variant="light-outline"
+              >
                 {{ t(`workspace.member.roleOption.${member.role}`) }}
               </t-tag>
             </div>
 
-            <span class="member-row__joined">{{ formatDateTime(member.joinedAt) }}</span>
+            <span class="member-row__joined">{{
+              formatDateTime(member.joinedAt)
+            }}</span>
 
             <div class="member-row__actions">
               <t-button
@@ -326,7 +392,11 @@ function clearFilters() {
                   {{ t('workspace.member.remove') }}
                 </t-button>
               </t-popconfirm>
-              <span v-else class="member-row__locked">{{ lockHint(member) || '—' }}</span>
+              <span
+                v-else
+                class="member-row__locked"
+                >{{ lockHint(member) || '—' }}</span
+              >
             </div>
           </article>
         </div>
@@ -341,29 +411,51 @@ function clearFilters() {
         />
       </template>
 
-      <div v-else class="members__state">
+      <div
+        v-else
+        class="members__state"
+      >
         <p class="members__empty">
-          {{ members.length ? t('workspace.member.noMatches') : t('workspace.member.empty') }}
+          {{
+            members.length
+              ? t('workspace.member.noMatches')
+              : t('workspace.member.empty')
+          }}
         </p>
-        <t-button v-if="members.length" variant="outline" @click="clearFilters">
+        <t-button
+          v-if="members.length"
+          variant="outline"
+          @click="clearFilters"
+        >
           {{ t('workspace.member.reset') }}
         </t-button>
       </div>
     </t-card>
 
-    <t-card v-if="canManage" class="members__panel">
+    <t-card
+      v-if="canManage"
+      class="members__panel"
+    >
       <template #title>{{ t('workspace.invitation.listTitle') }}</template>
       <p class="members__hint">{{ t('workspace.invitation.listHint') }}</p>
 
       <template v-if="pendingInvitations.length">
-        <div v-for="invitation in pendingInvitations" :key="invitation.id" class="invite-row">
+        <div
+          v-for="invitation in pendingInvitations"
+          :key="invitation.id"
+          class="invite-row"
+        >
           <div class="invite-row__identity">
             <span class="invite-row__email">{{ invitation.email }}</span>
             <span class="invite-row__expires">
-              {{ t('workspace.invitation.expiresAt') }} {{ formatDateTime(invitation.expiresAt) }}
+              {{ t('workspace.invitation.expiresAt') }}
+              {{ formatDateTime(invitation.expiresAt) }}
             </span>
           </div>
-          <t-tag size="small" variant="light-outline">
+          <t-tag
+            size="small"
+            variant="light-outline"
+          >
             {{ t(`workspace.member.roleOption.${invitation.role}`) }}
           </t-tag>
           <InvitationScope :invitation="invitation" />
@@ -371,13 +463,17 @@ function clearFilters() {
             size="small"
             variant="light"
             :theme="
-              invitationTheme(isInvitationExpired(invitation) ? 'EXPIRED' : invitation.status)
+              invitationTheme(
+                isInvitationExpired(invitation) ? 'EXPIRED' : invitation.status,
+              )
             "
           >
             {{
               t(
                 `workspace.invitation.statusName.${
-                  isInvitationExpired(invitation) ? 'EXPIRED' : invitation.status
+                  isInvitationExpired(invitation)
+                    ? 'EXPIRED'
+                    : invitation.status
                 }`,
               )
             }}
@@ -386,13 +482,20 @@ function clearFilters() {
             :content="t('workspace.invitation.revokeConfirm')"
             @confirm="revoke(invitation)"
           >
-            <t-button variant="text" size="small" :loading="pendingKey === invitation.id">
+            <t-button
+              variant="text"
+              size="small"
+              :loading="pendingKey === invitation.id"
+            >
               {{ t('workspace.invitation.revoke') }}
             </t-button>
           </t-popconfirm>
         </div>
       </template>
-      <p v-else class="members__empty">
+      <p
+        v-else
+        class="members__empty"
+      >
         {{
           invitationsDenied
             ? t('workspace.invitation.noPermission')

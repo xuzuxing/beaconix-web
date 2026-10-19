@@ -14,7 +14,11 @@ import { RULE_EDITOR_KEY, type RuleEditorContext } from './rule-editor'
 /** 一条规则：指标 / 运算符 / 阈值（对齐参考图的规则行） */
 defineOptions({ name: 'RuleConditionRow' })
 
-const props = defineProps<{ node: ConditionNode; index?: number; removable?: boolean }>()
+const props = defineProps<{
+  node: ConditionNode
+  index?: number
+  removable?: boolean
+}>()
 const injected = inject(RULE_EDITOR_KEY)
 if (!injected) throw new Error('RuleConditionRow 必须渲染在 RuleTreeEditor 内')
 const editor: RuleEditorContext = injected
@@ -22,8 +26,12 @@ const t = editor.t
 const meta = editor.meta
 
 const fieldMeta = computed(() => meta.value?.meta[props.node.field])
-const valueType = computed(() => FIELD_VALUE_TYPES[props.node.field] ?? 'string')
-const isMulti = computed(() => ['in', 'not_in', 'statusClass'].includes(props.node.operator))
+const valueType = computed(
+  () => FIELD_VALUE_TYPES[props.node.field] ?? 'string',
+)
+const isMulti = computed(() =>
+  ['in', 'not_in', 'statusClass'].includes(props.node.operator),
+)
 const isStatusClass = computed(() => props.node.operator === 'statusClass')
 
 const fieldOptions = computed(() =>
@@ -34,13 +42,17 @@ const fieldOptions = computed(() =>
 )
 const operatorOptions = computed(() =>
   (fieldMeta.value?.operators ?? []).map((operator) => ({
-    label: OPERATOR_LABEL_KEYS[operator] ? t(OPERATOR_LABEL_KEYS[operator]) : operator,
+    label: OPERATOR_LABEL_KEYS[operator]
+      ? t(OPERATOR_LABEL_KEYS[operator])
+      : operator,
     value: operator,
   })),
 )
 const statusClassOptions = computed(() =>
   (meta.value?.statusClassValues ?? []).map((value) => ({
-    label: STATUS_CLASS_LABEL_KEYS[value] ? t(STATUS_CLASS_LABEL_KEYS[value]) : String(value),
+    label: STATUS_CLASS_LABEL_KEYS[value]
+      ? t(STATUS_CLASS_LABEL_KEYS[value])
+      : String(value),
     value: String(value),
   })),
 )
@@ -76,12 +88,18 @@ const textValue = computed({
 function changeField(field: RuleField) {
   const current = meta.value
   if (current)
-    editor.updateCondition(props.node.id, conditionPatchFor(current, props.node, { field }))
+    editor.updateCondition(
+      props.node.id,
+      conditionPatchFor(current, props.node, { field }),
+    )
 }
 function changeOperator(operator: RuleOperator) {
   const current = meta.value
   if (current)
-    editor.updateCondition(props.node.id, conditionPatchFor(current, props.node, { operator }))
+    editor.updateCondition(
+      props.node.id,
+      conditionPatchFor(current, props.node, { operator }),
+    )
 }
 </script>
 
@@ -89,7 +107,9 @@ function changeOperator(operator: RuleOperator) {
   <div class="rule-row">
     <div class="rule-row__head">
       <span class="rule-row__title">{{
-        index === undefined ? t('ruleGroup.condition') : t('ruleGroup.conditionTitle', { index })
+        index === undefined
+          ? t('ruleGroup.condition')
+          : t('ruleGroup.conditionTitle', { index })
       }}</span>
       <t-button
         v-if="removable"
@@ -147,7 +167,11 @@ function changeOperator(operator: RuleOperator) {
           :max="fieldMeta?.constraints?.max"
           :step="fieldMeta?.constraints?.integer === false ? 0.1 : 1"
         />
-        <t-input v-else v-model="textValue" :maxlength="fieldMeta?.constraints?.maxLength ?? 512" />
+        <t-input
+          v-else
+          v-model="textValue"
+          :maxlength="fieldMeta?.constraints?.maxLength ?? 512"
+        />
       </label>
     </div>
   </div>
@@ -175,7 +199,10 @@ function changeOperator(operator: RuleOperator) {
 
   &__grid {
     display: grid;
-    grid-template-columns: minmax(150px, 1fr) minmax(130px, 1fr) minmax(180px, 1.3fr);
+    grid-template-columns: minmax(150px, 1fr) minmax(130px, 1fr) minmax(
+        180px,
+        1.3fr
+      );
     gap: 12px 16px;
   }
 

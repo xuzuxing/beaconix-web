@@ -57,16 +57,26 @@ const queryValue = (key: string) =>
   typeof route.query[key] === 'string' ? (route.query[key] as string) : ''
 function setFilter(key: string, value: string) {
   void router.replace({
-    query: { ...route.query, [key]: value === 'all' || value === '' ? undefined : value },
+    query: {
+      ...route.query,
+      [key]: value === 'all' || value === '' ? undefined : value,
+    },
   })
 }
-const search = computed({ get: () => queryValue('q'), set: (value) => setFilter('q', value) })
+const search = computed({
+  get: () => queryValue('q'),
+  set: (value) => setFilter('q', value),
+})
 const scope = computed({
-  get: () => (['org', 'project'].includes(queryValue('scope')) ? queryValue('scope') : 'all'),
+  get: () =>
+    ['org', 'project'].includes(queryValue('scope'))
+      ? queryValue('scope')
+      : 'all',
   set: (value) => setFilter('scope', value),
 })
 const state = computed({
-  get: () => (['on', 'off'].includes(queryValue('state')) ? queryValue('state') : 'all'),
+  get: () =>
+    ['on', 'off'].includes(queryValue('state')) ? queryValue('state') : 'all',
   set: (value) => setFilter('state', value),
 })
 
@@ -85,14 +95,17 @@ async function load() {
   try {
     const result = await listRuleGroups(id, { signal: controller.signal })
     for (const project of new Set(
-      result.map((group) => group.projectId).filter((value): value is string => !!value),
+      result
+        .map((group) => group.projectId)
+        .filter((value): value is string => !!value),
     )) {
       await permissions.ensureProject(project)
     }
     if (token === generation) groups.value = result
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('ruleGroup.loadFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('ruleGroup.loadFailed')
   } finally {
     if (token === generation) loading.value = false
   }
@@ -120,12 +133,16 @@ const rows = computed(() => {
   const query = search.value.trim().toLocaleLowerCase()
   return groups.value.filter((group) => {
     const matchesQuery =
-      !query || `${group.name} ${group.description ?? ''}`.toLocaleLowerCase().includes(query)
+      !query ||
+      `${group.name} ${group.description ?? ''}`
+        .toLocaleLowerCase()
+        .includes(query)
     const matchesScope =
       scope.value === 'all' ||
       (scope.value === 'project' ? Boolean(group.projectId) : !group.projectId)
     const matchesState =
-      state.value === 'all' || (state.value === 'on' ? group.enabled : !group.enabled)
+      state.value === 'all' ||
+      (state.value === 'on' ? group.enabled : !group.enabled)
     return matchesQuery && matchesScope && matchesState
   })
 })
@@ -184,7 +201,8 @@ function openDetail(group: RuleGroup) {
       <template #title>{{ t('ruleGroup.title') }}</template>
       <template #actions>
         <span class="rule-groups__scope">
-          {{ org.currentOrganization?.name ?? '-' }} / {{ org.currentProject?.name ?? '-' }}
+          {{ org.currentOrganization?.name ?? '-' }} /
+          {{ org.currentProject?.name ?? '-' }}
         </span>
       </template>
       <p class="rule-groups__desc">{{ t('ruleGroup.pageHint') }}</p>
@@ -215,15 +233,27 @@ function openDetail(group: RuleGroup) {
           ]"
         />
       </div>
-      <div v-if="error" class="rule-groups__empty">
-        <t-alert theme="error" :message="error" /><t-button @click="load">{{
-          t('ruleGroup.retry')
-        }}</t-button>
+      <div
+        v-if="error"
+        class="rule-groups__empty"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        /><t-button @click="load">{{ t('ruleGroup.retry') }}</t-button>
       </div>
-      <div v-else-if="loading" class="rule-groups__empty">
+      <div
+        v-else-if="loading"
+        class="rule-groups__empty"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
-      <div v-else-if="!orgId" class="rule-groups__empty">{{ t('ruleGroup.noOrganization') }}</div>
+      <div
+        v-else-if="!orgId"
+        class="rule-groups__empty"
+      >
+        {{ t('ruleGroup.noOrganization') }}
+      </div>
       <template v-else-if="rows.length">
         <div class="rule-groups__table">
           <div class="rule-groups__table-head">
@@ -245,14 +275,33 @@ function openDetail(group: RuleGroup) {
                   size="small"
                   variant="light"
                   :theme="group.enabled ? 'success' : 'default'"
-                  >{{ t(group.enabled ? 'ruleGroup.state.on' : 'ruleGroup.state.off') }}</t-tag
+                  >{{
+                    t(
+                      group.enabled
+                        ? 'ruleGroup.state.on'
+                        : 'ruleGroup.state.off',
+                    )
+                  }}</t-tag
                 >
-                <t-tag size="small" variant="outline">{{
-                  group.projectId ? t('ruleGroup.scope.project') : t('ruleGroup.scope.org')
-                }}</t-tag>
+                <t-tag
+                  size="small"
+                  variant="outline"
+                  >{{
+                    group.projectId
+                      ? t('ruleGroup.scope.project')
+                      : t('ruleGroup.scope.org')
+                  }}</t-tag
+                >
               </div>
-              <p v-if="group.description" class="rule-group-row__desc">{{ group.description }}</p>
-              <p class="rule-group-row__fields">{{ fieldLabels(group).join(' · ') || '-' }}</p>
+              <p
+                v-if="group.description"
+                class="rule-group-row__desc"
+              >
+                {{ group.description }}
+              </p>
+              <p class="rule-group-row__fields">
+                {{ fieldLabels(group).join(' · ') || '-' }}
+              </p>
             </div>
             <div class="rule-group-row__count">
               <span v-if="group.tree">{{
@@ -267,21 +316,34 @@ function openDetail(group: RuleGroup) {
               formatMonitorTime(group.updatedAt, locale)
             }}</time>
             <div class="rule-group-row__actions">
-              <t-button v-if="canEdit(group)" variant="text" @click.stop="edit(group)">{{
-                t('ruleGroup.edit')
-              }}</t-button>
-              <t-button variant="text" @click.stop="openDetail(group)">{{
-                t('ruleGroup.detail')
-              }}</t-button>
+              <t-button
+                v-if="canEdit(group)"
+                variant="text"
+                @click.stop="edit(group)"
+                >{{ t('ruleGroup.edit') }}</t-button
+              >
+              <t-button
+                variant="text"
+                @click.stop="openDetail(group)"
+                >{{ t('ruleGroup.detail') }}</t-button
+              >
             </div>
           </article>
         </div>
       </template>
-      <div v-else class="rule-groups__empty">
-        <p>{{ t(groups.length ? 'ruleGroup.noMatches' : 'ruleGroup.empty') }}</p>
-        <t-button v-if="hasFilters" variant="outline" @click="router.replace({ query: {} })">{{
-          t('ruleGroup.reset')
-        }}</t-button>
+      <div
+        v-else
+        class="rule-groups__empty"
+      >
+        <p>
+          {{ t(groups.length ? 'ruleGroup.noMatches' : 'ruleGroup.empty') }}
+        </p>
+        <t-button
+          v-if="hasFilters"
+          variant="outline"
+          @click="router.replace({ query: {} })"
+          >{{ t('ruleGroup.reset') }}</t-button
+        >
       </div>
     </t-card>
     <RuleGroupEditorDialog

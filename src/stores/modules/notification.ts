@@ -175,7 +175,10 @@ export const useNotificationStore = defineStore('notification', () => {
         (result?.total ?? data.length) - (data.length - recent.value.length),
       )
       loaded.value = true
-      filterTotals.value = { ...filterTotals.value, [filter.value]: total.value }
+      filterTotals.value = {
+        ...filterTotals.value,
+        [filter.value]: total.value,
+      }
     } catch (cause) {
       if (token !== generation) return
       error.value = cause instanceof Error ? cause.message : ''
@@ -553,7 +556,10 @@ export const useNotificationStore = defineStore('notification', () => {
     recent.value = recent.value.filter((entry) => entry.id !== id)
     if (item) {
       total.value = Math.max(0, total.value - 1)
-      filterTotals.value = { ...filterTotals.value, [filter.value]: total.value }
+      filterTotals.value = {
+        ...filterTotals.value,
+        [filter.value]: total.value,
+      }
       if (!item.isRead) syncUnread(unreadCount.value - 1)
     } else if (wasUnread && !knownRead.has(id)) {
       syncUnread(unreadCount.value - 1)

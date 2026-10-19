@@ -39,13 +39,24 @@ async function copy() {
     :header="t('workspace.apiKey.createdTitle')"
     width="min(520px, calc(100vw - 32px))"
     :confirm-btn="t('common.confirm')"
+    @confirm="visible = false"
   >
-    <t-alert theme="warning" :message="t('workspace.apiKey.createdHint')" class="secret__hint" />
+    <t-alert
+      theme="warning"
+      :message="t('workspace.apiKey.createdHint')"
+      class="secret__hint"
+    />
 
     <div class="secret__value">
       <code class="secret__code">{{ secret }}</code>
-      <t-button variant="outline" size="small" @click="copy">
-        <template #icon><AppIcon :icon="Copy01Icon" /></template>
+      <t-button
+        variant="outline"
+        size="small"
+        @click="copy"
+      >
+        <template #icon>
+          <AppIcon :icon="Copy01Icon" />
+        </template>
         {{ copied ? t('workspace.apiKey.copied') : t('workspace.apiKey.copy') }}
       </t-button>
     </div>

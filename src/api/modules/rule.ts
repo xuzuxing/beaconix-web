@@ -16,7 +16,11 @@ export function getRuleMeta(config?: AxiosRequestConfig) {
 
 /** 组织下的规则组（含项目级规则组） */
 export function listRuleGroups(orgId: string, config?: AxiosRequestConfig) {
-  return get<RuleGroup[]>(`/organizations/${encodeURIComponent(orgId)}/rule-groups`, undefined, config)
+  return get<RuleGroup[]>(
+    `/organizations/${encodeURIComponent(orgId)}/rule-groups`,
+    undefined,
+    config,
+  )
 }
 
 export function getRuleGroup(orgId: string, id: string, config?: AxiosRequestConfig) {

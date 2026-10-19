@@ -6,7 +6,11 @@ import ChannelStatusTag from '@/components/channels/ChannelStatusTag.vue'
 import ChannelTypeTag from '@/components/channels/ChannelTypeTag.vue'
 import { useChannelList } from '@/composables/useChannelList'
 import { useOrganizationStore } from '@/stores'
-import { CHANNEL_TYPES, channelConfigSummary, summarizeChannels } from '@/utils/channel-presenter'
+import {
+  CHANNEL_TYPES,
+  channelConfigSummary,
+  summarizeChannels,
+} from '@/utils/channel-presenter'
 
 /**
  * 通知渠道 → 概览。
@@ -21,8 +25,18 @@ const { channels, loading, error, load } = useChannelList(orgId)
 
 const summary = computed(() => summarizeChannels(channels.value))
 const stats = computed(() => [
-  { key: 'total', label: t('channelPage.total'), value: summary.value.total, query: {} },
-  { key: 'enabled', label: t('channelPage.enabled'), value: summary.value.enabled, query: { status: 'enabled' } },
+  {
+    key: 'total',
+    label: t('channelPage.total'),
+    value: summary.value.total,
+    query: {},
+  },
+  {
+    key: 'enabled',
+    label: t('channelPage.enabled'),
+    value: summary.value.enabled,
+    query: { status: 'enabled' },
+  },
   {
     key: 'disabled',
     label: t('channelPage.disabled'),
@@ -32,20 +46,29 @@ const stats = computed(() => [
   {
     key: 'types',
     label: t('channelPage.typeCount'),
-    value: CHANNEL_TYPES.filter((type) => summary.value.byType[type] > 0).length,
+    value: CHANNEL_TYPES.filter((type) => summary.value.byType[type] > 0)
+      .length,
     query: {},
   },
 ])
 const distribution = computed(() =>
-  CHANNEL_TYPES.map((type) => ({ type, count: summary.value.byType[type] ?? 0 })),
+  CHANNEL_TYPES.map((type) => ({
+    type,
+    count: summary.value.byType[type] ?? 0,
+  })),
 )
-const maxCount = computed(() => Math.max(1, ...distribution.value.map((item) => item.count)))
+const maxCount = computed(() =>
+  Math.max(1, ...distribution.value.map((item) => item.count)),
+)
 const recent = computed(() =>
   [...channels.value]
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
     .slice(0, 5),
 )
-const target = (query: Record<string, string | undefined>) => ({ name: 'channels', query })
+const target = (query: Record<string, string | undefined>) => ({
+  name: 'channels',
+  query,
+})
 </script>
 
 <template>
@@ -53,20 +76,37 @@ const target = (query: Record<string, string | undefined>) => ({ name: 'channels
     <t-card class="channel-overview__card">
       <template #title>{{ t('channelPage.overviewTitle') }}</template>
       <template #actions>
-        <span class="channel-overview__scope">{{ org.currentOrganization?.name ?? '-' }}</span>
+        <span class="channel-overview__scope">{{
+          org.currentOrganization?.name ?? '-'
+        }}</span>
       </template>
 
-      <div v-if="error" class="channel-overview__state">
-        <t-alert theme="error" :message="error" />
+      <div
+        v-if="error"
+        class="channel-overview__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
         <t-button @click="load">{{ t('channelPage.retry') }}</t-button>
       </div>
-      <div v-else-if="loading" class="channel-overview__state">
+      <div
+        v-else-if="loading"
+        class="channel-overview__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
-      <div v-else-if="!orgId" class="channel-overview__state">
+      <div
+        v-else-if="!orgId"
+        class="channel-overview__state"
+      >
         {{ t('channelPage.noOrganization') }}
       </div>
-      <div v-else class="channel-overview__grid">
+      <div
+        v-else
+        class="channel-overview__grid"
+      >
         <RouterLink
           v-for="item in stats"
           :key="item.key"
@@ -86,17 +126,32 @@ const target = (query: Record<string, string | undefined>) => ({ name: 'channels
 
     <t-card class="channel-overview__card">
       <template #title>{{ t('channelPage.distribution') }}</template>
-      <div v-if="error || loading || !orgId" class="channel-overview__state">
-        <t-loading v-if="loading" :text="t('common.loading')" />
+      <div
+        v-if="error || loading || !orgId"
+        class="channel-overview__state"
+      >
+        <t-loading
+          v-if="loading"
+          :text="t('common.loading')"
+        />
         <span v-else>-</span>
       </div>
-      <ul v-else class="channel-overview__bars">
-        <li v-for="item in distribution" :key="item.type" class="channel-bar">
+      <ul
+        v-else
+        class="channel-overview__bars"
+      >
+        <li
+          v-for="item in distribution"
+          :key="item.type"
+          class="channel-bar"
+        >
           <ChannelTypeTag :type="item.type" />
           <span class="channel-bar__track">
             <span
               class="channel-bar__fill"
-              :style="{ width: `${Math.round((item.count / maxCount) * 100)}%` }"
+              :style="{
+                width: `${Math.round((item.count / maxCount) * 100)}%`,
+              }"
             />
           </span>
           <span class="channel-bar__count">{{ item.count }}</span>
@@ -106,18 +161,36 @@ const target = (query: Record<string, string | undefined>) => ({ name: 'channels
 
     <t-card class="channel-overview__card">
       <template #title>{{ t('channelPage.recent') }}</template>
-      <div v-if="error || loading || !orgId" class="channel-overview__state">
-        <t-loading v-if="loading" :text="t('common.loading')" />
+      <div
+        v-if="error || loading || !orgId"
+        class="channel-overview__state"
+      >
+        <t-loading
+          v-if="loading"
+          :text="t('common.loading')"
+        />
         <span v-else>-</span>
       </div>
-      <p v-else-if="!recent.length" class="channel-overview__empty">
+      <p
+        v-else-if="!recent.length"
+        class="channel-overview__empty"
+      >
         {{ t('channelPage.empty') }}
       </p>
-      <ul v-else class="channel-overview__list">
-        <li v-for="channel in recent" :key="channel.id" class="channel-overview__item">
+      <ul
+        v-else
+        class="channel-overview__list"
+      >
+        <li
+          v-for="channel in recent"
+          :key="channel.id"
+          class="channel-overview__item"
+        >
           <div class="channel-overview__item-main">
             <span class="channel-overview__item-name">{{ channel.name }}</span>
-            <span class="channel-overview__item-summary">{{ channelConfigSummary(channel) }}</span>
+            <span class="channel-overview__item-summary">{{
+              channelConfigSummary(channel)
+            }}</span>
           </div>
           <ChannelTypeTag :type="channel.type" />
           <ChannelStatusTag :enabled="channel.enabled" />

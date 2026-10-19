@@ -17,7 +17,10 @@ import {
   notificationReceivedInvitationId,
 } from '@/utils/notification-presenter'
 
-const props = defineProps<{ notification: UserNotification; disabled?: boolean }>()
+const props = defineProps<{
+  notification: UserNotification
+  disabled?: boolean
+}>()
 const { t } = useI18n()
 const store = useNotificationStore()
 const loading = ref(false)
@@ -27,18 +30,25 @@ const now = ref(Date.now())
 let generation = 0
 let expiryTimer: ReturnType<typeof setTimeout> | undefined
 const id = computed(() => notificationInvitationId(props.notification))
-const lookupId = computed(() => notificationReceivedInvitationId(props.notification))
-const invitation = computed(() => (lookupId.value ? store.invitations[lookupId.value] : undefined))
+const lookupId = computed(() =>
+  notificationReceivedInvitationId(props.notification),
+)
+const invitation = computed(() =>
+  lookupId.value ? store.invitations[lookupId.value] : undefined,
+)
 const status = computed(() =>
   notificationInvitationStatus(props.notification, invitation.value, now.value),
 )
 const expiresAt = computed(
-  () => invitation.value?.expiresAt ?? props.notification.meta?.invitationExpiresAt,
+  () =>
+    invitation.value?.expiresAt ?? props.notification.meta?.invitationExpiresAt,
 )
 const action = computed(() =>
   lookupId.value ? store.invitationPending[lookupId.value] : undefined,
 )
-const errorKey = computed(() => (lookupId.value ? store.invitationErrors[lookupId.value] : ''))
+const errorKey = computed(() =>
+  lookupId.value ? store.invitationErrors[lookupId.value] : '',
+)
 const actionable = computed(
   () =>
     ready.value &&
@@ -47,7 +57,11 @@ const actionable = computed(
     canActOnInvitation(props.notification, invitation.value, now.value),
 )
 const theme = computed(() =>
-  status.value === 'ACCEPTED' ? 'success' : status.value === 'PENDING' ? 'warning' : 'default',
+  status.value === 'ACCEPTED'
+    ? 'success'
+    : status.value === 'PENDING'
+      ? 'warning'
+      : 'default',
 )
 
 async function refresh() {
@@ -112,10 +126,20 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div v-if="id" class="invitation-actions">
-    <InvitationScope v-if="ready && invitation" :invitation="invitation" />
+  <div
+    v-if="id"
+    class="invitation-actions"
+  >
+    <InvitationScope
+      v-if="ready && invitation"
+      :invitation="invitation"
+    />
     <div class="invitation-actions__row">
-      <t-tag :theme="theme" variant="light" size="small">
+      <t-tag
+        :theme="theme"
+        variant="light"
+        size="small"
+      >
         {{ t(`notificationCenter.invitation.status.${status ?? 'unknown'}`) }}
       </t-tag>
       <span
@@ -136,7 +160,11 @@ onBeforeUnmount(() => {
           :disabled="disabled || !!action || loading"
           @click="act('accept')"
         >
-          <template #icon><AppIcon :icon="CheckmarkCircle02Icon" :size="14" /></template>
+          <template #icon
+            ><AppIcon
+              :icon="CheckmarkCircle02Icon"
+              :size="14"
+          /></template>
           {{ t('notificationCenter.invitation.accept') }}
         </t-button>
         <t-button
@@ -146,11 +174,18 @@ onBeforeUnmount(() => {
           :disabled="disabled || !!action || loading"
           @click="act('decline')"
         >
-          <template #icon><AppIcon :icon="Cancel01Icon" :size="14" /></template>
+          <template #icon
+            ><AppIcon
+              :icon="Cancel01Icon"
+              :size="14"
+          /></template>
           {{ t('notificationCenter.invitation.decline') }}
         </t-button>
       </template>
-      <t-tooltip v-if="lookupId" :content="t('notificationCenter.refresh')">
+      <t-tooltip
+        v-if="lookupId"
+        :content="t('notificationCenter.refresh')"
+      >
         <t-button
           variant="text"
           shape="square"
@@ -160,12 +195,22 @@ onBeforeUnmount(() => {
           :aria-label="t('notificationCenter.refresh')"
           @click="refresh"
         >
-          <template #icon><AppIcon :icon="RefreshIcon" :size="14" /></template>
+          <template #icon
+            ><AppIcon
+              :icon="RefreshIcon"
+              :size="14"
+          /></template>
         </t-button>
       </t-tooltip>
     </div>
-    <p v-if="failed || errorKey" class="invitation-actions__error" role="alert">
-      {{ t(`notificationCenter.invitation.${failed ? 'loadFailed' : errorKey}`) }}
+    <p
+      v-if="failed || errorKey"
+      class="invitation-actions__error"
+      role="alert"
+    >
+      {{
+        t(`notificationCenter.invitation.${failed ? 'loadFailed' : errorKey}`)
+      }}
     </p>
   </div>
 </template>

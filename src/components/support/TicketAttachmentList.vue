@@ -27,8 +27,12 @@ const viewerVisible = ref(false)
 const viewerIndex = ref(0)
 
 const items = computed(() => props.attachments ?? [])
-const images = computed(() => items.value.filter((item) => isImageAttachment(item)))
-const files = computed(() => items.value.filter((item) => !isImageAttachment(item)))
+const images = computed(() =>
+  items.value.filter((item) => isImageAttachment(item)),
+)
+const files = computed(() =>
+  items.value.filter((item) => !isImageAttachment(item)),
+)
 const imageUrls = computed(() => images.value.map((item) => item.url))
 
 function openViewer(index: number) {
@@ -42,8 +46,15 @@ function fileIcon(item: AttachmentRef) {
 </script>
 
 <template>
-  <div v-if="items.length" class="attachment-list" :class="{ 'is-compact': compact }">
-    <div v-if="images.length" class="attachment-list__images">
+  <div
+    v-if="items.length"
+    class="attachment-list"
+    :class="{ 'is-compact': compact }"
+  >
+    <div
+      v-if="images.length"
+      class="attachment-list__images"
+    >
       <button
         v-for="(item, index) in images"
         :key="item.fileKey || item.url"
@@ -53,13 +64,28 @@ function fileIcon(item: AttachmentRef) {
         :title="item.filename"
         @click="openViewer(index)"
       >
-        <img :src="item.url" :alt="item.filename" loading="lazy" />
+        <img
+          :src="item.url"
+          :alt="item.filename"
+          loading="lazy"
+        />
       </button>
     </div>
 
-    <ul v-if="files.length" class="attachment-list__files">
-      <li v-for="item in files" :key="item.fileKey || item.url" class="attachment-list__file">
-        <AppIcon class="attachment-list__icon" :icon="fileIcon(item)" :size="16" />
+    <ul
+      v-if="files.length"
+      class="attachment-list__files"
+    >
+      <li
+        v-for="item in files"
+        :key="item.fileKey || item.url"
+        class="attachment-list__file"
+      >
+        <AppIcon
+          class="attachment-list__icon"
+          :icon="fileIcon(item)"
+          :size="16"
+        />
         <a
           class="attachment-list__name"
           :href="item.url"
@@ -69,7 +95,9 @@ function fileIcon(item: AttachmentRef) {
         >
           {{ item.filename }}
         </a>
-        <span class="attachment-list__size">{{ formatFileSize(item.size) }}</span>
+        <span class="attachment-list__size">{{
+          formatFileSize(item.size)
+        }}</span>
       </li>
     </ul>
 

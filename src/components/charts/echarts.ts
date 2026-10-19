@@ -11,7 +11,12 @@ import * as echarts from 'echarts/core'
 import { LegacyGridContainLabel } from 'echarts/features'
 import { CanvasRenderer } from 'echarts/renderers'
 
-import type { BarSeriesOption, HeatmapSeriesOption, LineSeriesOption, PieSeriesOption } from 'echarts/charts'
+import type {
+  BarSeriesOption,
+  HeatmapSeriesOption,
+  LineSeriesOption,
+  PieSeriesOption,
+} from 'echarts/charts'
 import type {
   GridComponentOption,
   LegendComponentOption,

@@ -29,7 +29,9 @@ const {
 } = useMonitorList(projectId)
 
 const range = ref<MonitorRange>('1h')
-const tz = ref(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai')
+const tz = ref(
+  Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai',
+)
 const RANGE_OPTIONS = [
   { value: '1h', labelKey: 'dashboard.range.h1' },
   { value: 'today', labelKey: 'dashboard.range.today' },
@@ -44,8 +46,12 @@ const {
   refresh,
 } = useMonitoringDashboard(projectId, range, tz, { withAvailability: false })
 
-const kpis = computed(() => (dashboard.value ? adaptKpis(dashboard.value) : undefined))
-const timeline = computed(() => (dashboard.value ? adaptTimeline(dashboard.value) : undefined))
+const kpis = computed(() =>
+  dashboard.value ? adaptKpis(dashboard.value) : undefined,
+)
+const timeline = computed(() =>
+  dashboard.value ? adaptTimeline(dashboard.value) : undefined,
+)
 /** 数据概览：轻量 SVG 指标卡（检查次数、失败检查、平均耗时、可用率） */
 const metrics = computed(() => {
   const series = timeline.value
@@ -85,10 +91,21 @@ const retry = () => {
   refresh()
 }
 
-const statuses: MonitorStatus[] = ['UP', 'DOWN', 'DEGRADED', 'PAUSED', 'UNKNOWN']
+const statuses: MonitorStatus[] = [
+  'UP',
+  'DOWN',
+  'DEGRADED',
+  'PAUSED',
+  'UNKNOWN',
+]
 const summary = computed(() => summarizeMonitors(monitors.value))
 const items = computed(() => [
-  { key: 'all', label: t('monitorPage.total'), value: summary.value.total, status: undefined },
+  {
+    key: 'all',
+    label: t('monitorPage.total'),
+    value: summary.value.total,
+    status: undefined,
+  },
   ...statuses.map((status) => ({
     key: status,
     label: t(`workspace.monitor.status.${status}`),
@@ -96,7 +113,10 @@ const items = computed(() => [
     status,
   })),
 ])
-const target = (status?: MonitorStatus) => ({ name: 'monitor', query: status ? { status } : {} })
+const target = (status?: MonitorStatus) => ({
+  name: 'monitor',
+  query: status ? { status } : {},
+})
 </script>
 
 <template>
@@ -105,21 +125,37 @@ const target = (status?: MonitorStatus) => ({ name: 'monitor', query: status ? {
       <template #title>{{ t('monitorPage.statusOverview') }}</template>
       <template #actions>
         <span class="monitor-overview__scope">
-          {{ org.currentOrganization?.name ?? '-' }} / {{ org.currentProject?.name ?? '-' }}
+          {{ org.currentOrganization?.name ?? '-' }} /
+          {{ org.currentProject?.name ?? '-' }}
         </span>
       </template>
 
-      <div v-if="monitorsError" class="monitor-overview__state">
-        <t-alert theme="error" :message="monitorsError" />
+      <div
+        v-if="monitorsError"
+        class="monitor-overview__state"
+      >
+        <t-alert
+          theme="error"
+          :message="monitorsError"
+        />
         <t-button @click="loadMonitors">{{ t('monitorPage.retry') }}</t-button>
       </div>
-      <div v-else-if="monitorsLoading" class="monitor-overview__state">
+      <div
+        v-else-if="monitorsLoading"
+        class="monitor-overview__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
-      <div v-else-if="!projectId" class="monitor-overview__state">
+      <div
+        v-else-if="!projectId"
+        class="monitor-overview__state"
+      >
         {{ t('monitorPage.noProjectData') }}
       </div>
-      <div v-else class="monitor-overview__grid">
+      <div
+        v-else
+        class="monitor-overview__grid"
+      >
         <RouterLink
           v-for="item in items"
           :key="item.key"
@@ -137,13 +173,22 @@ const target = (status?: MonitorStatus) => ({ name: 'monitor', query: status ? {
       </div>
     </t-card>
 
-    <t-card v-if="dashboardError" class="monitor-overview__card">
+    <t-card
+      v-if="dashboardError"
+      class="monitor-overview__card"
+    >
       <div class="monitor-overview__state">
-        <t-alert theme="error" :message="dashboardError" />
+        <t-alert
+          theme="error"
+          :message="dashboardError"
+        />
         <t-button @click="retry">{{ t('monitorPage.retry') }}</t-button>
       </div>
     </t-card>
-    <t-card v-else-if="dashboardLoading" class="monitor-overview__card">
+    <t-card
+      v-else-if="dashboardLoading"
+      class="monitor-overview__card"
+    >
       <div class="monitor-overview__state">
         <t-loading :text="t('common.loading')" />
       </div>
@@ -151,8 +196,14 @@ const target = (status?: MonitorStatus) => ({ name: 'monitor', query: status ? {
     <template v-else-if="dashboard">
       <section class="monitor-overview__section">
         <div class="monitor-overview__section-head">
-          <h3 class="monitor-overview__section-title">{{ t('dashboard.section.kpi') }}</h3>
-          <t-radio-group v-model="range" variant="default-filled" size="small">
+          <h3 class="monitor-overview__section-title">
+            {{ t('dashboard.section.kpi') }}
+          </h3>
+          <t-radio-group
+            v-model="range"
+            variant="default-filled"
+            size="small"
+          >
             <t-radio-button
               v-for="option in RANGE_OPTIONS"
               :key="option.value"
@@ -162,12 +213,17 @@ const target = (status?: MonitorStatus) => ({ name: 'monitor', query: status ? {
             </t-radio-button>
           </t-radio-group>
         </div>
-        <MonitorKpiGrid v-if="kpis" :kpis="kpis" />
+        <MonitorKpiGrid
+          v-if="kpis"
+          :kpis="kpis"
+        />
       </section>
 
       <section class="monitor-overview__section">
         <div class="monitor-overview__section-head">
-          <h3 class="monitor-overview__section-title">{{ t('dashboard.section.dataOverview') }}</h3>
+          <h3 class="monitor-overview__section-title">
+            {{ t('dashboard.section.dataOverview') }}
+          </h3>
         </div>
         <div class="monitor-overview__charts">
           <MetricChartCard

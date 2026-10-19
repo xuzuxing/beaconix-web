@@ -11,8 +11,15 @@ const { footerCopyright, icpLicense } = useBrand()
 </script>
 
 <template>
-  <footer v-if="footerCopyright || icpLicense" class="app-footer">
-    <span v-if="footerCopyright" class="app-footer__copy">{{ footerCopyright }}</span>
+  <footer
+    v-if="footerCopyright || icpLicense"
+    class="app-footer"
+  >
+    <span
+      v-if="footerCopyright"
+      class="app-footer__copy"
+      >{{ footerCopyright }}</span
+    >
   </footer>
 </template>
 

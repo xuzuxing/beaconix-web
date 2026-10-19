@@ -116,7 +116,12 @@ export function useAdminSettings() {
     try {
       for (const item of targets) {
         const parsed = parseDraft(item, draftOf(item))
-        if (!parsed.ok) return { saved, total: targets.length, invalid: { key: item.key, reason: parsed.reason } }
+        if (!parsed.ok)
+          return {
+            saved,
+            total: targets.length,
+            invalid: { key: item.key, reason: parsed.reason },
+          }
         const updated = await updateAdminSetting(item.key, parsed.value)
         replaceSetting(updated)
         saved += 1

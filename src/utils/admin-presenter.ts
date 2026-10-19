@@ -229,9 +229,7 @@ export function schedulerHealthLevel(health: AdminSchedulerHealth): HealthLevel 
 
 /** 定时任务的触发方式：间隔型与 cron 型二选一 */
 export type JobSchedule =
-  | { kind: 'interval'; ms: number }
-  | { kind: 'cron'; pattern: string }
-  | { kind: 'unknown' }
+  { kind: 'interval'; ms: number } | { kind: 'cron'; pattern: string } | { kind: 'unknown' }
 
 export function jobSchedule(job: AdminSchedulerJob): JobSchedule {
   if (typeof job.everyMs === 'number' && job.everyMs > 0) {

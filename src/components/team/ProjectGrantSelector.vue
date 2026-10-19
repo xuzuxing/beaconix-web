@@ -14,7 +14,9 @@ const { t } = useI18n()
 const search = ref('')
 const candidates = computed(() =>
   props.projects.filter((project) =>
-    `${project.name} ${project.key}`.toLowerCase().includes(search.value.trim().toLowerCase()),
+    `${project.name} ${project.key}`
+      .toLowerCase()
+      .includes(search.value.trim().toLowerCase()),
   ),
 )
 const roles = computed(() =>
@@ -27,11 +29,14 @@ function selected(id: string) {
   return grants.value.find((grant) => grant.projectId === id)
 }
 function toggle(id: string, checked: unknown) {
-  if (props.disabled || !props.projects.some((project) => project.id === id)) return
+  if (props.disabled || !props.projects.some((project) => project.id === id))
+    return
   if (
     checked &&
     (selected(id) ||
-      !props.projects.some((project) => project.id === id && project.status === 'ACTIVE'))
+      !props.projects.some(
+        (project) => project.id === id && project.status === 'ACTIVE',
+      ))
   )
     return
   grants.value = checked
@@ -39,10 +44,14 @@ function toggle(id: string, checked: unknown) {
     : grants.value.filter((grant) => grant.projectId !== id)
 }
 function setRole(id: string, role: unknown) {
-  if (props.disabled || !['VIEWER', 'MEMBER', 'ADMIN'].includes(String(role))) return
+  if (props.disabled || !['VIEWER', 'MEMBER', 'ADMIN'].includes(String(role)))
+    return
   grants.value = grants.value.map((grant) =>
     grant.projectId === id
-      ? { ...grant, role: props.viewer ? 'VIEWER' : (String(role) as ProjectRole) }
+      ? {
+          ...grant,
+          role: props.viewer ? 'VIEWER' : (String(role) as ProjectRole),
+        }
       : grant,
   )
 }
@@ -57,19 +66,31 @@ function setRole(id: string, role: unknown) {
     />
     <p>{{ t('access.selected', { count: grants.length }) }}</p>
     <div class="grant-selector__rows">
-      <div v-for="project in candidates" :key="project.id" class="grant-selector__row">
+      <div
+        v-for="project in candidates"
+        :key="project.id"
+        class="grant-selector__row"
+      >
         <t-checkbox
           :checked="!!selected(project.id)"
-          :disabled="disabled || (project.status !== 'ACTIVE' && !selected(project.id))"
+          :disabled="
+            disabled || (project.status !== 'ACTIVE' && !selected(project.id))
+          "
           @change="(value: unknown) => toggle(project.id, value)"
         >
           <span class="grant-selector__name">{{ project.name }}</span>
           <small>{{ project.key }}</small>
           <small v-if="effectiveRoles?.[project.id]">{{
-            t('access.effectiveRole', { role: t(`access.role.${effectiveRoles[project.id]}`) })
+            t('access.effectiveRole', {
+              role: t(`access.role.${effectiveRoles[project.id]}`),
+            })
           }}</small>
         </t-checkbox>
-        <t-tag v-if="project.status !== 'ACTIVE'" size="small">{{ t('access.archived') }}</t-tag>
+        <t-tag
+          v-if="project.status !== 'ACTIVE'"
+          size="small"
+          >{{ t('access.archived') }}</t-tag
+        >
         <t-select
           v-if="selected(project.id)"
           :value="selected(project.id)?.role"

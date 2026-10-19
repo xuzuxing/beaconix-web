@@ -20,10 +20,7 @@ export function listNotificationChannels(orgId: string, config?: AxiosRequestCon
   )
 }
 
-export function createNotificationChannel(
-  orgId: string,
-  data: CreateNotificationChannelParams,
-) {
+export function createNotificationChannel(orgId: string, data: CreateNotificationChannelParams) {
   return post<NotificationChannel>(
     `/organizations/${encodeURIComponent(orgId)}/notification-channels`,
     data,

@@ -19,8 +19,17 @@ defineOptions({ name: 'AdminTenantsView' })
 
 const { t } = useI18n()
 const userStore = useUserStore()
-const { tenants, filtered, loading, error, keyword, state, togglingId, load, toggle } =
-  useAdminTenants()
+const {
+  tenants,
+  filtered,
+  loading,
+  error,
+  keyword,
+  state,
+  togglingId,
+  load,
+  toggle,
+} = useAdminTenants()
 
 const stateOptions = computed(() => [
   { label: t('adminPage.tenant.allStates'), value: 'all' },
@@ -67,7 +76,9 @@ async function confirmToggle() {
     const updated = await toggle(tenant)
     if (!updated) return
     MessagePlugin.success(
-      restoring ? t('adminPage.tenant.restoreSuccess') : t('adminPage.tenant.suspendSuccess'),
+      restoring
+        ? t('adminPage.tenant.restoreSuccess')
+        : t('adminPage.tenant.suspendSuccess'),
     )
     // 抽屉里若正展示这条租户，同步替换为新状态
     if (selected.value?.id === updated.id) selected.value = updated
@@ -100,9 +111,16 @@ onMounted(() => {
       </t-tooltip>
     </HeaderActions>
 
-    <t-alert v-if="!userStore.isSuperAdmin" theme="info" :message="t('adminPage.common.noPermission')" />
+    <t-alert
+      v-if="!userStore.isSuperAdmin"
+      theme="info"
+      :message="t('adminPage.common.noPermission')"
+    />
 
-    <t-card v-else class="admin-tenants__panel">
+    <t-card
+      v-else
+      class="admin-tenants__panel"
+    >
       <template #title>{{ t('adminPage.tenant.title') }}</template>
       <template #actions>
         <span class="admin-tenants__counts">
@@ -112,7 +130,9 @@ onMounted(() => {
         </span>
       </template>
 
-      <p class="admin-tenants__subtitle">{{ t('adminPage.tenant.subtitle') }}</p>
+      <p class="admin-tenants__subtitle">
+        {{ t('adminPage.tenant.subtitle') }}
+      </p>
 
       <div class="admin-tenants__filters">
         <t-input
@@ -121,15 +141,32 @@ onMounted(() => {
           :placeholder="t('adminPage.tenant.search')"
           :aria-label="t('adminPage.tenant.search')"
         />
-        <t-select v-model="state" :options="stateOptions" :aria-label="t('adminPage.common.status')" />
+        <t-select
+          v-model="state"
+          :options="stateOptions"
+          :aria-label="t('adminPage.common.status')"
+        />
       </div>
 
-      <div v-if="error" class="admin-tenants__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('adminPage.common.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="admin-tenants__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('adminPage.common.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !tenants.length" class="admin-tenants__state">
+      <div
+        v-else-if="loading && !tenants.length"
+        class="admin-tenants__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -145,12 +182,19 @@ onMounted(() => {
             <span>{{ t('adminPage.common.createdAt') }}</span>
             <span>{{ t('adminPage.common.actions') }}</span>
           </div>
-          <div v-for="tenant in filtered" :key="tenant.id" class="admin-tenants__row">
+          <div
+            v-for="tenant in filtered"
+            :key="tenant.id"
+            class="admin-tenants__row"
+          >
             <span class="admin-tenants__identity">
               <span class="admin-tenants__name">{{ tenant.name }}</span>
               <span class="admin-tenants__slug">{{ tenant.slug }}</span>
             </span>
-            <span class="admin-tenants__owner" :title="tenant.ownerId">
+            <span
+              class="admin-tenants__owner"
+              :title="tenant.ownerId"
+            >
               {{ shortId(tenant.ownerId) }}
             </span>
             <span>{{ tenant.memberCount }}</span>
@@ -169,9 +213,15 @@ onMounted(() => {
                 }}
               </t-tag>
             </span>
-            <span class="admin-tenants__created">{{ formatDateTime(tenant.createdAt) }}</span>
+            <span class="admin-tenants__created">{{
+              formatDateTime(tenant.createdAt)
+            }}</span>
             <span class="admin-tenants__actions">
-              <t-button variant="text" size="small" @click="openDetail(tenant)">
+              <t-button
+                variant="text"
+                size="small"
+                @click="openDetail(tenant)"
+              >
                 {{ t('adminPage.tenant.viewDetail') }}
               </t-button>
               <t-button
@@ -180,27 +230,44 @@ onMounted(() => {
                 :loading="togglingId === tenant.id"
                 @click="askToggle(tenant)"
               >
-                {{ tenant.active ? t('adminPage.tenant.suspend') : t('adminPage.tenant.restore') }}
+                {{
+                  tenant.active
+                    ? t('adminPage.tenant.suspend')
+                    : t('adminPage.tenant.restore')
+                }}
               </t-button>
             </span>
           </div>
         </div>
       </template>
 
-      <div v-else class="admin-tenants__state">
+      <div
+        v-else
+        class="admin-tenants__state"
+      >
         <p class="admin-tenants__empty">
-          {{ tenants.length ? t('adminPage.common.noMatches') : t('adminPage.tenant.empty') }}
+          {{
+            tenants.length
+              ? t('adminPage.common.noMatches')
+              : t('adminPage.tenant.empty')
+          }}
         </p>
       </div>
     </t-card>
 
-    <AdminTenantDetailDrawer v-model:visible="detailVisible" :tenant="selected" />
+    <AdminTenantDetailDrawer
+      v-model:visible="detailVisible"
+      :tenant="selected"
+    />
 
     <t-dialog
       v-model:visible="confirmVisible"
       :header="t('adminPage.tenant.title')"
       width="min(480px, calc(100vw - 32px))"
-      :confirm-btn="{ content: t('adminPage.common.confirm'), loading: Boolean(togglingId) }"
+      :confirm-btn="{
+        content: t('adminPage.common.confirm'),
+        loading: Boolean(togglingId),
+      }"
       :cancel-btn="t('adminPage.common.cancel')"
       @confirm="confirmToggle"
     >
@@ -242,7 +309,9 @@ onMounted(() => {
   &__table-head,
   &__row {
     display: grid;
-    grid-template-columns: minmax(180px, 1.4fr) 110px repeat(3, 80px) 96px 150px 190px;
+    grid-template-columns:
+      minmax(180px, 1.4fr) 110px repeat(3, 80px)
+      96px 150px 190px;
     gap: 12px;
     align-items: center;
     min-width: 1040px;

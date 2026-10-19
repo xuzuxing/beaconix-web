@@ -4,7 +4,11 @@ import { useI18n } from 'vue-i18n'
 
 import type { AuditLog } from '@/api/types/team'
 import { formatDateTime } from '@/utils/billing'
-import { auditActionTheme, diffSnapshots, formatSnapshot } from '@/utils/team-presenter'
+import {
+  auditActionTheme,
+  diffSnapshots,
+  formatSnapshot,
+} from '@/utils/team-presenter'
 
 /**
  * 审计日志详情抽屉：动作上下文 + 字段级变更 + before/after 原始快照。
@@ -26,9 +30,15 @@ const changes = computed(() => (props.log ? diffSnapshots(props.log) : []))
     :header="t('workspace.auditLog.detailTitle')"
     :footer="false"
   >
-    <div v-if="log" class="audit-detail">
+    <div
+      v-if="log"
+      class="audit-detail"
+    >
       <header class="audit-detail__head">
-        <t-tag :theme="auditActionTheme(log.action)" variant="light">
+        <t-tag
+          :theme="auditActionTheme(log.action)"
+          variant="light"
+        >
           {{ t(`workspace.auditLog.actionName.${log.action}`) }}
         </t-tag>
         <span class="audit-detail__entity">{{ log.entity }}</span>
@@ -63,31 +73,55 @@ const changes = computed(() => (props.log ? diffSnapshots(props.log) : []))
 
       <section class="audit-detail__section">
         <h4>{{ t('workspace.auditLog.changes') }}</h4>
-        <div v-if="changes.length" class="audit-detail__table">
+        <div
+          v-if="changes.length"
+          class="audit-detail__table"
+        >
           <div class="audit-detail__table-head">
             <span>{{ t('workspace.auditLog.field') }}</span>
             <span>{{ t('workspace.auditLog.before') }}</span>
             <span>{{ t('workspace.auditLog.after') }}</span>
           </div>
-          <div v-for="change in changes" :key="change.field" class="audit-detail__row">
+          <div
+            v-for="change in changes"
+            :key="change.field"
+            class="audit-detail__row"
+          >
             <span class="audit-detail__field">{{ change.field }}</span>
-            <span class="audit-detail__value audit-detail__value--before">{{ change.before }}</span>
-            <span class="audit-detail__value audit-detail__value--after">{{ change.after }}</span>
+            <span class="audit-detail__value audit-detail__value--before">{{
+              change.before
+            }}</span>
+            <span class="audit-detail__value audit-detail__value--after">{{
+              change.after
+            }}</span>
           </div>
         </div>
-        <p v-else class="audit-detail__empty">{{ t('workspace.auditLog.noChanges') }}</p>
+        <p
+          v-else
+          class="audit-detail__empty"
+        >
+          {{ t('workspace.auditLog.noChanges') }}
+        </p>
       </section>
 
       <section class="audit-detail__section">
         <h4>{{ t('workspace.auditLog.raw') }}</h4>
         <div class="audit-detail__snapshots">
           <div>
-            <span class="audit-detail__snapshot-label">{{ t('workspace.auditLog.before') }}</span>
-            <pre class="audit-detail__snapshot">{{ formatSnapshot(log.before) }}</pre>
+            <span class="audit-detail__snapshot-label">{{
+              t('workspace.auditLog.before')
+            }}</span>
+            <pre class="audit-detail__snapshot">{{
+              formatSnapshot(log.before)
+            }}</pre>
           </div>
           <div>
-            <span class="audit-detail__snapshot-label">{{ t('workspace.auditLog.after') }}</span>
-            <pre class="audit-detail__snapshot">{{ formatSnapshot(log.after) }}</pre>
+            <span class="audit-detail__snapshot-label">{{
+              t('workspace.auditLog.after')
+            }}</span>
+            <pre class="audit-detail__snapshot">{{
+              formatSnapshot(log.after)
+            }}</pre>
           </div>
         </div>
       </section>

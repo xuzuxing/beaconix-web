@@ -50,9 +50,13 @@ const expanded = ref(false)
 const theme = computed(() => notificationTheme(props.notification.type))
 const labelKey = computed(() => notificationLabelKey(props.notification.type))
 const text = computed(() => notificationBodyText(props.notification.body))
-const time = computed(() => formatNotificationTime(props.notification.createdAt, props.withTime))
+const time = computed(() =>
+  formatNotificationTime(props.notification.createdAt, props.withTime),
+)
 const target = computed(() =>
-  resolveNotificationTarget(props.notification, { isSuperAdmin: userStore.isSuperAdmin }),
+  resolveNotificationTarget(props.notification, {
+    isSuperAdmin: userStore.isSuperAdmin,
+  }),
 )
 const icon = computed(() => notificationIcon(props.notification.type))
 
@@ -80,13 +84,27 @@ function handle() {
 </script>
 
 <template>
-  <article class="notice" :class="[`notice--${theme}`, { 'notice--unread': !notification.isRead }]">
-    <span class="notice__bar" aria-hidden="true" />
+  <article
+    class="notice"
+    :class="[`notice--${theme}`, { 'notice--unread': !notification.isRead }]"
+  >
+    <span
+      class="notice__bar"
+      aria-hidden="true"
+    />
 
     <div class="notice__main">
       <div class="notice__head">
-        <t-tag class="notice__tag" :theme="theme" variant="light" size="small">
-          <AppIcon :icon="icon" :size="12" />
+        <t-tag
+          class="notice__tag"
+          :theme="theme"
+          variant="light"
+          size="small"
+        >
+          <AppIcon
+            :icon="icon"
+            :size="12"
+          />
           {{ t(labelKey) }}
         </t-tag>
         <RouterLink
@@ -98,9 +116,12 @@ function handle() {
         >
           {{ notification.title }}
         </RouterLink>
-        <span v-else class="notice__title" :title="notification.title">{{
-          notification.title
-        }}</span>
+        <span
+          v-else
+          class="notice__title"
+          :title="notification.title"
+          >{{ notification.title }}</span
+        >
         <span
           v-if="!notification.isRead"
           class="notice__dot"
@@ -110,7 +131,12 @@ function handle() {
       </div>
 
       <div class="notice__content">
-        <p class="notice__text" :class="{ 'notice__text--full': expanded }">{{ text }}</p>
+        <p
+          class="notice__text"
+          :class="{ 'notice__text--full': expanded }"
+        >
+          {{ text }}
+        </p>
 
         <div class="notice__actions">
           <t-button
@@ -129,7 +155,11 @@ function handle() {
             :disabled="pending"
             @click="toggleDetail"
           >
-            {{ expanded ? t('notificationCenter.collapse') : t('notificationCenter.detail') }}
+            {{
+              expanded
+                ? t('notificationCenter.collapse')
+                : t('notificationCenter.detail')
+            }}
             <AppIcon
               v-if="!expanded"
               class="notice__action-icon"
@@ -150,15 +180,27 @@ function handle() {
         </div>
       </div>
 
-      <InvitationActions :notification="notification" :disabled="pending" />
+      <InvitationActions
+        :notification="notification"
+        :disabled="pending"
+      />
 
       <!-- 展开区：完整正文 + 关联资源 / 时间 / 附加信息 -->
-      <dl v-if="expanded" class="notice__detail">
-        <div v-if="text" class="notice__detail-row">
+      <dl
+        v-if="expanded"
+        class="notice__detail"
+      >
+        <div
+          v-if="text"
+          class="notice__detail-row"
+        >
           <dt>{{ t('notificationCenter.content') }}</dt>
           <dd class="notice__detail-text">{{ text }}</dd>
         </div>
-        <div v-if="resourceText" class="notice__detail-row">
+        <div
+          v-if="resourceText"
+          class="notice__detail-row"
+        >
           <dt>{{ t('notificationCenter.resource') }}</dt>
           <dd>{{ resourceText }}</dd>
         </div>
@@ -166,14 +208,24 @@ function handle() {
           <dt>{{ t('notificationCenter.createdAt') }}</dt>
           <dd>{{ formatNotificationTime(notification.createdAt, true) }}</dd>
         </div>
-        <div v-if="notification.readAt" class="notice__detail-row">
+        <div
+          v-if="notification.readAt"
+          class="notice__detail-row"
+        >
           <dt>{{ t('notificationCenter.readAt') }}</dt>
           <dd>{{ formatNotificationTime(notification.readAt, true) }}</dd>
         </div>
-        <div v-if="metaRows.length" class="notice__detail-row">
+        <div
+          v-if="metaRows.length"
+          class="notice__detail-row"
+        >
           <dt>{{ t('notificationCenter.meta') }}</dt>
           <dd>
-            <span v-for="row in metaRows" :key="row.key" class="notice__meta">
+            <span
+              v-for="row in metaRows"
+              :key="row.key"
+              class="notice__meta"
+            >
               {{ row.key }}：{{ row.value }}
             </span>
           </dd>

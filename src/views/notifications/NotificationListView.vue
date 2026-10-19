@@ -1,18 +1,32 @@
 <script setup lang="ts">
 import { MessagePlugin } from 'tdesign-vue-next'
-import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue'
+import {
+  computed,
+  onActivated,
+  onBeforeUnmount,
+  onDeactivated,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { listUserNotifications } from '@/api'
-import type { NotificationReadFilter, UserNotification } from '@/api/types/notification-center'
+import type {
+  NotificationReadFilter,
+  UserNotification,
+} from '@/api/types/notification-center'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import NotificationItem from '@/components/notifications/NotificationItem.vue'
 import PendingInvitations from '@/components/notifications/PendingInvitations.vue'
 import { RefreshIcon } from '@/icons'
 import { useNotificationStore, useUserStore } from '@/stores'
-import { notificationReadParam, resolveNotificationTarget } from '@/utils/notification-presenter'
+import {
+  notificationReadParam,
+  resolveNotificationTarget,
+} from '@/utils/notification-presenter'
 
 /**
  * 消息通知 → 事项列表。
@@ -50,14 +64,19 @@ const filter = computed<NotificationReadFilter>({
     const value = queryValue('status') as NotificationReadFilter
     return FILTERS.includes(value) ? value : 'all'
   },
-  set: (value) => setQuery({ status: value === 'all' ? undefined : value, page: undefined }),
+  set: (value) =>
+    setQuery({ status: value === 'all' ? undefined : value, page: undefined }),
 })
 
 const pageSize = computed(() =>
-  PAGE_SIZES.includes(Number(queryValue('size'))) ? Number(queryValue('size')) : 20,
+  PAGE_SIZES.includes(Number(queryValue('size')))
+    ? Number(queryValue('size'))
+    : 20,
 )
 
-const page = computed(() => Math.max(1, Math.floor(Number(queryValue('page'))) || 1))
+const page = computed(() =>
+  Math.max(1, Math.floor(Number(queryValue('page'))) || 1),
+)
 
 const filterOptions = computed(() =>
   FILTERS.map((value) => {
@@ -88,7 +107,10 @@ async function load() {
     )
   } catch (cause) {
     if (token !== generation) return
-    error.value = cause instanceof Error ? cause.message : t('notificationCenter.loadFailed')
+    error.value =
+      cause instanceof Error
+        ? cause.message
+        : t('notificationCenter.loadFailed')
     items.value = []
     total.value = 0
   } finally {
@@ -209,7 +231,10 @@ onMounted(() => {
           @click="refresh"
           ><template #icon><AppIcon :icon="RefreshIcon" /></template></t-button
       ></t-tooltip>
-      <t-button :disabled="!store.hasUnread" @click="markAll">
+      <t-button
+        :disabled="!store.hasUnread"
+        @click="markAll"
+      >
         {{ t('notificationCenter.markAllRead') }}
       </t-button>
     </HeaderActions>
@@ -230,12 +255,25 @@ onMounted(() => {
         </span>
       </div>
 
-      <div v-if="error" class="notice-page__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('notificationCenter.retry') }}</t-button>
+      <div
+        v-if="error"
+        class="notice-page__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('notificationCenter.retry') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !items.length" class="notice-page__state">
+      <div
+        v-else-if="loading && !items.length"
+        class="notice-page__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -264,9 +302,16 @@ onMounted(() => {
         />
       </template>
 
-      <div v-else class="notice-page__state">
+      <div
+        v-else
+        class="notice-page__state"
+      >
         <p class="notice-page__empty">
-          {{ filter === 'all' ? t('notificationCenter.empty') : t('notificationCenter.noMatches') }}
+          {{
+            filter === 'all'
+              ? t('notificationCenter.empty')
+              : t('notificationCenter.noMatches')
+          }}
         </p>
         <t-button
           v-if="filter !== 'all'"

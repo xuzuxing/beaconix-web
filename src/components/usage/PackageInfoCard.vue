@@ -50,14 +50,18 @@ const monitorQuota = computed(() => props.quota?.resources.monitors ?? null)
 
 /** 按 sortOrder 升序的套餐目录 */
 const sortedPlans = computed(() =>
-  [...(props.plans ?? [])].sort((left, right) => left.sortOrder - right.sortOrder),
+  [...(props.plans ?? [])].sort(
+    (left, right) => left.sortOrder - right.sortOrder,
+  ),
 )
 
 /** 升级目标：当前套餐之后的下一个套餐；已是最高的则无 */
 const upgradePlan = computed(() => {
   const current = props.plan
   if (!current) return sortedPlans.value[0] ?? null
-  return sortedPlans.value.find((item) => item.sortOrder > current.sortOrder) ?? null
+  return (
+    sortedPlans.value.find((item) => item.sortOrder > current.sortOrder) ?? null
+  )
 })
 
 function seconds(value: number) {
@@ -91,10 +95,26 @@ const privileges = computed(() => {
   const rows: string[] = []
 
   const limits = [
-    { labelKey: 'usage.package.limit.monitors', from: current?.maxMonitors ?? 0, to: next.maxMonitors },
-    { labelKey: 'usage.package.limit.probes', from: current?.maxProbes ?? 0, to: next.maxProbes },
-    { labelKey: 'usage.package.limit.members', from: current?.maxMembers ?? 0, to: next.maxMembers },
-    { labelKey: 'usage.package.limit.channels', from: current?.maxChannels ?? 0, to: next.maxChannels },
+    {
+      labelKey: 'usage.package.limit.monitors',
+      from: current?.maxMonitors ?? 0,
+      to: next.maxMonitors,
+    },
+    {
+      labelKey: 'usage.package.limit.probes',
+      from: current?.maxProbes ?? 0,
+      to: next.maxProbes,
+    },
+    {
+      labelKey: 'usage.package.limit.members',
+      from: current?.maxMembers ?? 0,
+      to: next.maxMembers,
+    },
+    {
+      labelKey: 'usage.package.limit.channels',
+      from: current?.maxChannels ?? 0,
+      to: next.maxChannels,
+    },
   ]
   limits.forEach(({ labelKey, from, to }) => {
     if (to > from) rows.push(`${t(labelKey)} ${from} → ${to}`)
@@ -103,12 +123,22 @@ const privileges = computed(() => {
   // 检测间隔越小越好
   const fromInterval = current?.minInterval ?? 0
   if (fromInterval > next.minInterval) {
-    rows.push(`${t('usage.package.minInterval')} ${seconds(fromInterval)} → ${seconds(next.minInterval)}`)
+    rows.push(
+      `${t('usage.package.minInterval')} ${seconds(fromInterval)} → ${seconds(next.minInterval)}`,
+    )
   }
 
   const features = [
-    { labelKey: 'usage.package.feature.tenantProbe', from: current?.allowTenantProbe, to: next.allowTenantProbe },
-    { labelKey: 'usage.package.feature.statusPage', from: current?.allowStatusPage, to: next.allowStatusPage },
+    {
+      labelKey: 'usage.package.feature.tenantProbe',
+      from: current?.allowTenantProbe,
+      to: next.allowTenantProbe,
+    },
+    {
+      labelKey: 'usage.package.feature.statusPage',
+      from: current?.allowStatusPage,
+      to: next.allowStatusPage,
+    },
   ]
   features.forEach(({ labelKey, from, to }) => {
     if (!from && to) rows.push(`${t(labelKey)} ${yesNo(from)} → ${yesNo(to)}`)
@@ -119,15 +149,32 @@ const privileges = computed(() => {
 </script>
 
 <template>
-  <div v-loading="loading" class="package">
+  <div
+    v-loading="loading"
+    class="package"
+  >
     <!-- 左侧：当前套餐概况 -->
     <div class="package__card">
       <div class="package__head">
-        <span class="package__name beacon-plan-badge" :class="`beacon-plan--${planTier(plan)}`">{{ name }}</span>
-        <span v-if="isFree" class="package__badge beacon-plan-badge beacon-plan--free">{{ t('usage.package.freeBadge') }}</span>
-        <router-link class="package__billing" :to="{ name: 'billing-orders' }">
+        <span
+          class="package__name beacon-plan-badge"
+          :class="`beacon-plan--${planTier(plan)}`"
+          >{{ name }}</span
+        >
+        <span
+          v-if="isFree"
+          class="package__badge beacon-plan-badge beacon-plan--free"
+          >{{ t('usage.package.freeBadge') }}</span
+        >
+        <router-link
+          class="package__billing"
+          :to="{ name: 'billing-orders' }"
+        >
           {{ t('usage.package.orders') }}
-          <AppIcon :icon="ArrowRight01Icon" :size="14" />
+          <AppIcon
+            :icon="ArrowRight01Icon"
+            :size="14"
+          />
         </router-link>
       </div>
 
@@ -139,7 +186,9 @@ const privileges = computed(() => {
 
       <template v-if="monitorQuota">
         <div class="package__quota">
-          <strong class="package__quota-label">{{ t('usage.package.quotaLabel') }}</strong>
+          <strong class="package__quota-label">{{
+            t('usage.package.quotaLabel')
+          }}</strong>
           <span class="package__quota-value">{{ monitorQuota.used }}</span>
           <span class="package__quota-total">/ {{ monitorQuota.limit }}</span>
         </div>
@@ -152,14 +201,32 @@ const privileges = computed(() => {
         />
       </template>
 
-      <p v-if="isFree" class="package__note">{{ t('usage.package.noAutoRenew') }}</p>
+      <p
+        v-if="isFree"
+        class="package__note"
+      >
+        {{ t('usage.package.noAutoRenew') }}
+      </p>
 
       <div class="package__actions">
-        <t-button theme="primary" size="small" :disabled="!upgradePlan" @click="emit('upgrade')">
-          <template #icon><AppIcon :icon="FlashIcon" :size="14" /></template>
+        <t-button
+          theme="primary"
+          size="small"
+          :disabled="!upgradePlan"
+          @click="emit('upgrade')"
+        >
+          <template #icon
+            ><AppIcon
+              :icon="FlashIcon"
+              :size="14"
+          /></template>
           {{ t('usage.package.upgrade') }}
         </t-button>
-        <t-button variant="outline" size="small" @click="emit('upgrade')">
+        <t-button
+          variant="outline"
+          size="small"
+          @click="emit('upgrade')"
+        >
           {{ t('usage.package.compare') }}
         </t-button>
       </div>
@@ -168,10 +235,19 @@ const privileges = computed(() => {
     <!-- 右侧：当前能力 + 升级解锁 -->
     <div class="package__panels">
       <section class="package__block">
-        <h3 class="package__block-title">{{ t('usage.package.currentTitle') }}</h3>
+        <h3 class="package__block-title">
+          {{ t('usage.package.currentTitle') }}
+        </h3>
         <ul class="package__abilities">
-          <li v-for="(item, index) in currentAbilities" :key="index">
-            <AppIcon class="package__ability-icon" :icon="CheckmarkCircle02Icon" :size="14" />
+          <li
+            v-for="(item, index) in currentAbilities"
+            :key="index"
+          >
+            <AppIcon
+              class="package__ability-icon"
+              :icon="CheckmarkCircle02Icon"
+              :size="14"
+            />
             <span>{{ item }}</span>
           </li>
         </ul>
@@ -180,18 +256,37 @@ const privileges = computed(() => {
       <section class="package__block">
         <h3 class="package__block-title">
           {{ t('usage.package.nextTitle') }}
-          <span v-if="upgradePlan" class="package__target beacon-plan-badge"
-            :class="`beacon-plan--${planTier(upgradePlan)}`">{{ upgradePlan.name }}</span>
+          <span
+            v-if="upgradePlan"
+            class="package__target beacon-plan-badge"
+            :class="`beacon-plan--${planTier(upgradePlan)}`"
+            >{{ upgradePlan.name }}</span
+          >
         </h3>
 
-        <ul v-if="privileges.length" class="package__abilities">
-          <li v-for="(item, index) in privileges" :key="index">
-            <AppIcon class="package__ability-icon is-upgrade" :icon="CheckmarkCircle02Icon" :size="14" />
+        <ul
+          v-if="privileges.length"
+          class="package__abilities"
+        >
+          <li
+            v-for="(item, index) in privileges"
+            :key="index"
+          >
+            <AppIcon
+              class="package__ability-icon is-upgrade"
+              :icon="CheckmarkCircle02Icon"
+              :size="14"
+            />
             <span>{{ item }}</span>
           </li>
         </ul>
 
-        <p v-else class="package__empty">{{ t('usage.package.topPlan') }}</p>
+        <p
+          v-else
+          class="package__empty"
+        >
+          {{ t('usage.package.topPlan') }}
+        </p>
       </section>
     </div>
   </div>

@@ -30,7 +30,9 @@ const { t } = useI18n()
 
 /** 行内延迟条的归一基准：同类里的最大延迟 */
 const maxLatency = computed(() => maxMonitorLatency(props.page.monitors))
-const summary = computed(() => summarizePublicMonitorMetrics(props.page.monitors))
+const summary = computed(() =>
+  summarizePublicMonitorMetrics(props.page.monitors),
+)
 </script>
 
 <template>
@@ -38,27 +40,47 @@ const summary = computed(() => summarizePublicMonitorMetrics(props.page.monitors
     <section class="public-card public-panel__hero">
       <div class="public-panel__identity">
         <h1 class="public-panel__title">{{ page.title }}</h1>
-        <p v-if="page.description" class="public-panel__desc">{{ page.description }}</p>
+        <p
+          v-if="page.description"
+          class="public-panel__desc"
+        >
+          {{ page.description }}
+        </p>
       </div>
 
       <div class="public-panel__overall">
-        <span class="public-panel__overall-label">{{ t('statusPage.public.overall') }}</span>
-        <PublicStatusBadge :status="page.overallStatus" size="large" />
+        <span class="public-panel__overall-label">{{
+          t('statusPage.public.overall')
+        }}</span>
+        <PublicStatusBadge
+          :status="page.overallStatus"
+          size="large"
+        />
         <span class="public-panel__updated">
-          {{ t('statusPage.public.updatedAt') }} {{ formatDateTime(page.updatedAt) }}
+          {{ t('statusPage.public.updatedAt') }}
+          {{ formatDateTime(page.updatedAt) }}
         </span>
       </div>
 
-      <dl v-if="page.monitors.length" class="public-panel__summary">
+      <dl
+        v-if="page.monitors.length"
+        class="public-panel__summary"
+      >
         <div class="public-panel__summary-item">
           <dt>{{ t('statusPage.public.summary.monitors') }}</dt>
           <dd>{{ summary.total }}</dd>
         </div>
-        <div v-if="page.showUptime" class="public-panel__summary-item">
+        <div
+          v-if="page.showUptime"
+          class="public-panel__summary-item"
+        >
           <dt>{{ t('statusPage.public.summary.uptime') }}</dt>
           <dd>{{ formatUptime(summary.averageUptime) ?? '-' }}</dd>
         </div>
-        <div v-if="page.showLatency" class="public-panel__summary-item">
+        <div
+          v-if="page.showLatency"
+          class="public-panel__summary-item"
+        >
           <dt>{{ t('statusPage.public.summary.latency') }}</dt>
           <dd>{{ formatLatency(summary.averageLatency) ?? '-' }}</dd>
         </div>
@@ -69,12 +91,24 @@ const summary = computed(() => summarizePublicMonitorMetrics(props.page.monitors
       </dl>
     </section>
 
-    <PublicStatusCharts v-if="page.monitors.length" :page="page" />
+    <PublicStatusCharts
+      v-if="page.monitors.length"
+      :page="page"
+    />
 
-    <section v-if="page.monitors.length" class="public-panel__monitors">
-      <h2 class="public-panel__section-title">{{ t('statusPage.public.monitorsTitle') }}</h2>
+    <section
+      v-if="page.monitors.length"
+      class="public-panel__monitors"
+    >
+      <h2 class="public-panel__section-title">
+        {{ t('statusPage.public.monitorsTitle') }}
+      </h2>
       <ul class="public-panel__grid">
-        <li v-for="monitor in page.monitors" :key="monitor.id" class="public-card public-monitor">
+        <li
+          v-for="monitor in page.monitors"
+          :key="monitor.id"
+          class="public-card public-monitor"
+        >
           <header class="public-monitor__head">
             <div class="public-monitor__main">
               <span class="public-monitor__name">{{ monitor.name }}</span>
@@ -87,7 +121,10 @@ const summary = computed(() => summarizePublicMonitorMetrics(props.page.monitors
           </header>
 
           <dl class="public-monitor__metrics">
-            <div v-if="page.showUptime" class="public-monitor__metric">
+            <div
+              v-if="page.showUptime"
+              class="public-monitor__metric"
+            >
               <dt>{{ t('statusPage.monitor.uptime') }}</dt>
               <dd>
                 <PublicMonitorMetricBar
@@ -97,7 +134,10 @@ const summary = computed(() => summarizePublicMonitorMetrics(props.page.monitors
                 />
               </dd>
             </div>
-            <div v-if="page.showLatency" class="public-monitor__metric">
+            <div
+              v-if="page.showLatency"
+              class="public-monitor__metric"
+            >
               <dt>{{ t('statusPage.monitor.latency') }}</dt>
               <dd>
                 <PublicMonitorMetricBar
@@ -120,7 +160,10 @@ const summary = computed(() => summarizePublicMonitorMetrics(props.page.monitors
         </li>
       </ul>
     </section>
-    <p v-else class="public-card public-panel__empty">
+    <p
+      v-else
+      class="public-card public-panel__empty"
+    >
       {{ t('statusPage.public.noMonitors') }}
     </p>
   </div>

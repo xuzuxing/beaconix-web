@@ -34,7 +34,10 @@ export function useTicketCategories() {
   }
 
   const options = computed(() =>
-    categories.value.map((category) => ({ label: category.name, value: category.id })),
+    categories.value.map((category) => ({
+      label: category.name,
+      value: category.id,
+    })),
   )
 
   function nameOf(categoryId: string | null | undefined): string {

@@ -41,7 +41,10 @@ const ruleIndex = (id: string) =>
         <t-select
           :value="node.operator"
           :options="logicOptions"
-          @change="(value: string) => editor.setLogicOperator(node.id, value as 'and' | 'or')"
+          @change="
+            (value: string) =>
+              editor.setLogicOperator(node.id, value as 'and' | 'or')
+          "
         />
         <t-button
           size="small"
@@ -53,21 +56,42 @@ const ruleIndex = (id: string) =>
       </div>
     </div>
     <div class="rule-group__body">
-      <template v-for="child in node.children" :key="child.id">
-        <RuleLogicGroup v-if="child.type === 'logic'" :node="child" :depth="depth + 1" />
-        <RuleConditionRow v-else :node="child" :index="ruleIndex(child.id)" removable />
+      <template
+        v-for="child in node.children"
+        :key="child.id"
+      >
+        <RuleLogicGroup
+          v-if="child.type === 'logic'"
+          :node="child"
+          :depth="depth + 1"
+        />
+        <RuleConditionRow
+          v-else
+          :node="child"
+          :index="ruleIndex(child.id)"
+          removable
+        />
       </template>
-      <p v-if="!node.children.length" class="rule-group__empty">
+      <p
+        v-if="!node.children.length"
+        class="rule-group__empty"
+      >
         {{ t('ruleGroup.emptyGroup') }}
       </p>
     </div>
     <div class="rule-group__footer">
-      <t-button size="small" variant="outline" @click="editor.addCondition(node.id)">{{
-        t('ruleGroup.addCondition')
-      }}</t-button>
-      <t-button v-if="canNest" size="small" @click="editor.addLogicGroup(node.id)">{{
-        t('ruleGroup.addLogicGroup')
-      }}</t-button>
+      <t-button
+        size="small"
+        variant="outline"
+        @click="editor.addCondition(node.id)"
+        >{{ t('ruleGroup.addCondition') }}</t-button
+      >
+      <t-button
+        v-if="canNest"
+        size="small"
+        @click="editor.addLogicGroup(node.id)"
+        >{{ t('ruleGroup.addLogicGroup') }}</t-button
+      >
     </div>
   </div>
 </template>

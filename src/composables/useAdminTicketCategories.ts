@@ -86,5 +86,15 @@ export function useAdminTicketCategories() {
     }
   }
 
-  return { categories, loading, error, creating, actingId, load, create, update, remove }
+  return {
+    categories,
+    loading,
+    error,
+    creating,
+    actingId,
+    load,
+    create,
+    update,
+    remove,
+  }
 }

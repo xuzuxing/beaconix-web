@@ -31,7 +31,10 @@ export class MonitoringRequestState {
     }
     if (response.status !== 200 || response.body === undefined)
       throw new Error('Invalid monitoring response')
-    this.entries.set(contextualKey, { etag: response.etag, body: response.body })
+    this.entries.set(contextualKey, {
+      etag: response.etag,
+      body: response.body,
+    })
     if (this.entries.size > 100) this.entries.delete(this.entries.keys().next().value!)
     return response.body
   }

@@ -57,10 +57,13 @@ watch(
 )
 
 function validate(): string {
-  if (!form.name.trim() || !form.slug.trim()) return t('workspace.team.required')
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) return t('workspace.team.slugInvalid')
+  if (!form.name.trim() || !form.slug.trim())
+    return t('workspace.team.required')
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim()))
+    return t('workspace.team.slugInvalid')
   const website = form.website.trim()
-  if (website && !/^https?:\/\//i.test(website)) return t('workspace.team.websiteInvalid')
+  if (website && !/^https?:\/\//i.test(website))
+    return t('workspace.team.websiteInvalid')
   return ''
 }
 
@@ -91,7 +94,10 @@ async function submit() {
     emit('created', org)
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('workspace.team.createFailed')
+      error.value =
+        cause instanceof Error
+          ? cause.message
+          : t('workspace.team.createFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -108,9 +114,19 @@ async function submit() {
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="team-create__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="team-create__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form" class="team-create__form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+      class="team-create__form"
+    >
       <div class="team-create__grid">
         <!-- 左侧：基础信息 -->
         <div class="team-create__column">
@@ -121,7 +137,10 @@ async function submit() {
               :placeholder="t('workspace.team.namePlaceholder')"
             />
           </t-form-item>
-          <t-form-item :label="t('workspace.team.slug')" :help="t('workspace.team.slugHint')">
+          <t-form-item
+            :label="t('workspace.team.slug')"
+            :help="t('workspace.team.slugHint')"
+          >
             <t-input
               v-model="form.slug"
               :maxlength="50"
@@ -140,9 +159,16 @@ async function submit() {
 
         <!-- 右侧：Logo 与官网 -->
         <div class="team-create__column team-create__column--aside">
-          <t-form-item :label="t('workspace.team.logo')" :help="t('workspace.team.logoHint')">
+          <t-form-item
+            :label="t('workspace.team.logo')"
+            :help="t('workspace.team.logoHint')"
+          >
             <!-- 单入口：点预览框打开弹窗，在里面随机挑一个或自己上传 -->
-            <AvatarPickerField v-model="logoUrl" directory="teams" :disabled="submitting" />
+            <AvatarPickerField
+              v-model="logoUrl"
+              directory="teams"
+              :disabled="submitting"
+            />
           </t-form-item>
           <t-form-item :label="t('workspace.team.website')">
             <t-input

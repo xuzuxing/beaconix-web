@@ -28,7 +28,9 @@ const orgStore = useOrganizationStore()
 const displayName = computed(() => userStore.user?.name ?? '')
 
 /** 当前团队套餐标签：无生效订阅时回退为免费版文案 */
-const planLabel = computed(() => orgStore.currentPlan?.name ?? t('usage.package.freePlan'))
+const planLabel = computed(
+  () => orgStore.currentPlan?.name ?? t('usage.package.freePlan'),
+)
 
 // 顶栏通常已加载过套餐，这里只兜底补一次，避免重复请求
 onMounted(() => {
@@ -37,7 +39,9 @@ onMounted(() => {
 /** 当前时间范围，切换后时序与 KPI 同步重算 */
 const range = ref<MonitorRange>('1h')
 
-const tz = ref(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai')
+const tz = ref(
+  Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai',
+)
 const RANGE_OPTIONS = [
   { value: '1h', labelKey: 'dashboard.range.h1' },
   { value: 'today', labelKey: 'dashboard.range.today' },
@@ -45,11 +49,8 @@ const RANGE_OPTIONS = [
   { value: '30d', labelKey: 'dashboard.range.d30' },
 ]
 const projectId = computed(() => orgStore.currentProjectId || undefined)
-const { dashboard, availability, statusCodes, loading, error, refresh } = useMonitoringDashboard(
-  projectId,
-  range,
-  tz,
-)
+const { dashboard, availability, statusCodes, loading, error, refresh } =
+  useMonitoringDashboard(projectId, range, tz)
 const timeline = computed(() =>
   dashboard.value
     ? adaptTimeline(dashboard.value)
@@ -72,7 +73,8 @@ const truncated = computed(
   () =>
     dashboard.value &&
     Object.entries(dashboard.value.history).some(
-      ([key, value]) => /Current|current|Previous|previous/.test(key) && value === 'TRUNCATED',
+      ([key, value]) =>
+        /Current|current|Previous|previous/.test(key) && value === 'TRUNCATED',
     ),
 )
 
@@ -119,8 +121,13 @@ const svgMetrics = computed(() => [
         <p class="dashboard__desc">{{ t('dashboard.desc') }}</p>
 
         <div class="dashboard__scope">
-          <t-tag variant="light-outline" size="small">
-            {{ orgStore.currentOrganization?.name ?? t('dashboard.scope.noOrg') }}
+          <t-tag
+            variant="light-outline"
+            size="small"
+          >
+            {{
+              orgStore.currentOrganization?.name ?? t('dashboard.scope.noOrg')
+            }}
           </t-tag>
           <t-tag
             v-if="orgStore.subscription"
@@ -132,8 +139,13 @@ const svgMetrics = computed(() => [
           >
             {{ planLabel }}
           </t-tag>
-          <t-tag variant="light-outline" size="small">
-            {{ orgStore.currentProject?.name ?? t('dashboard.scope.noProject') }}
+          <t-tag
+            variant="light-outline"
+            size="small"
+          >
+            {{
+              orgStore.currentProject?.name ?? t('dashboard.scope.noProject')
+            }}
           </t-tag>
           <span class="dashboard__updated">
             {{ t('dashboard.updatedAt', { time: updatedAt }) }}
@@ -145,30 +157,59 @@ const svgMetrics = computed(() => [
         <t-select
           v-model="tz"
           :options="
-            ['Asia/Shanghai', 'UTC', 'America/New_York', 'Europe/London', 'Asia/Kolkata', tz]
+            [
+              'Asia/Shanghai',
+              'UTC',
+              'America/New_York',
+              'Europe/London',
+              'Asia/Kolkata',
+              tz,
+            ]
               .filter((v, i, a) => a.indexOf(v) === i)
               .map((value) => ({ label: value, value }))
           "
           aria-label="Time zone"
           style="width: 184px"
         />
-        <span class="dashboard__range-label">{{ t('dashboard.range.label') }}</span>
-        <t-radio-group v-model="range" variant="default-filled" size="small">
-          <t-radio-button v-for="option in RANGE_OPTIONS" :key="option.value" :value="option.value">
+        <span class="dashboard__range-label">{{
+          t('dashboard.range.label')
+        }}</span>
+        <t-radio-group
+          v-model="range"
+          variant="default-filled"
+          size="small"
+        >
+          <t-radio-button
+            v-for="option in RANGE_OPTIONS"
+            :key="option.value"
+            :value="option.value"
+          >
             {{ t(option.labelKey) }}
           </t-radio-button>
         </t-radio-group>
       </div>
     </header>
-    <t-loading v-if="loading" :text="t('dashboard.live.loading')" />
-    <t-alert v-else-if="error" theme="error" :message="error">
+    <t-loading
+      v-if="loading"
+      :text="t('dashboard.live.loading')"
+    />
+    <t-alert
+      v-else-if="error"
+      theme="error"
+      :message="error"
+    >
       <template #operation
-        ><t-button variant="text" @click="refresh">{{
-          t('dashboard.live.retry')
-        }}</t-button></template
+        ><t-button
+          variant="text"
+          @click="refresh"
+          >{{ t('dashboard.live.retry') }}</t-button
+        ></template
       >
     </t-alert>
-    <t-empty v-else-if="!projectId" :description="t('dashboard.scope.noProject')" />
+    <t-empty
+      v-else-if="!projectId"
+      :description="t('dashboard.scope.noProject')"
+    />
     <template v-if="dashboard && availability && statusCodes">
       <t-alert
         v-if="
@@ -186,7 +227,9 @@ const svgMetrics = computed(() => [
       <!-- 核心指标 -->
       <section class="dashboard__section">
         <div class="dashboard__section-head">
-          <h3 class="dashboard__section-title">{{ t('dashboard.section.kpi') }}</h3>
+          <h3 class="dashboard__section-title">
+            {{ t('dashboard.section.kpi') }}
+          </h3>
         </div>
         <MonitorKpiGrid :kpis="kpis" />
       </section>
@@ -194,7 +237,9 @@ const svgMetrics = computed(() => [
       <!-- 数据概览：保留原有 SVG 指标卡 -->
       <section class="dashboard__section">
         <div class="dashboard__section-head">
-          <h3 class="dashboard__section-title">{{ t('dashboard.section.dataOverview') }}</h3>
+          <h3 class="dashboard__section-title">
+            {{ t('dashboard.section.dataOverview') }}
+          </h3>
         </div>
         <div class="dashboard__charts">
           <MetricChartCard
@@ -212,7 +257,9 @@ const svgMetrics = computed(() => [
       <!-- 性能趋势 -->
       <section class="dashboard__section">
         <div class="dashboard__section-head">
-          <h3 class="dashboard__section-title">{{ t('dashboard.section.trend') }}</h3>
+          <h3 class="dashboard__section-title">
+            {{ t('dashboard.section.trend') }}
+          </h3>
           <span class="dashboard__section-extra">
             {{ t('dashboard.section.trendTip') }}
           </span>
@@ -223,18 +270,25 @@ const svgMetrics = computed(() => [
       <!-- 可用性与状态码 -->
       <section class="dashboard__section">
         <div class="dashboard__section-head">
-          <h3 class="dashboard__section-title">{{ t('dashboard.section.availability') }}</h3>
+          <h3 class="dashboard__section-title">
+            {{ t('dashboard.section.availability') }}
+          </h3>
           <span class="dashboard__section-extra">
             {{ t('dashboard.section.availabilityTip') }}
           </span>
         </div>
-        <MonitorAvailabilityPanel :heatmap="availability" :codes="statusCodes" />
+        <MonitorAvailabilityPanel
+          :heatmap="availability"
+          :codes="statusCodes"
+        />
       </section>
 
       <!-- 监控分布 -->
       <section class="dashboard__section">
         <div class="dashboard__section-head">
-          <h3 class="dashboard__section-title">{{ t('dashboard.section.distribution') }}</h3>
+          <h3 class="dashboard__section-title">
+            {{ t('dashboard.section.distribution') }}
+          </h3>
           <span class="dashboard__section-extra">
             {{ t('dashboard.section.distributionTip') }}
           </span>
@@ -248,12 +302,17 @@ const svgMetrics = computed(() => [
       <!-- 慢项与告警 -->
       <section class="dashboard__section">
         <div class="dashboard__section-head">
-          <h3 class="dashboard__section-title">{{ t('dashboard.section.detail') }}</h3>
+          <h3 class="dashboard__section-title">
+            {{ t('dashboard.section.detail') }}
+          </h3>
           <span class="dashboard__section-extra">
             {{ t('dashboard.section.detailTip') }}
           </span>
         </div>
-        <MonitorDetailPanel :slowest="dashboard.slowestMonitors" :events="dashboard.recentAlerts" />
+        <MonitorDetailPanel
+          :slowest="dashboard.slowestMonitors"
+          :events="dashboard.recentAlerts"
+        />
       </section>
     </template>
   </div>

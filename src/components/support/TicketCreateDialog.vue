@@ -3,9 +3,16 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import type { AttachmentRef } from '@/api/types/attachment'
-import type { CreateTicketParams, TicketCategory, TicketPriority } from '@/api/types/ticket'
+import type {
+  CreateTicketParams,
+  TicketCategory,
+  TicketPriority,
+} from '@/api/types/ticket'
 import TicketAttachmentsField from '@/components/support/TicketAttachmentsField.vue'
-import { TICKET_PRIORITIES, ticketPriorityLabelKey } from '@/utils/ticket-presenter'
+import {
+  TICKET_PRIORITIES,
+  ticketPriorityLabelKey,
+} from '@/utils/ticket-presenter'
 
 /**
  * 提交工单：主题 + 分类（可选）+ 优先级 + 问题描述 + 附件（图片 / 日志 / PDF）。
@@ -54,7 +61,10 @@ const priorityOptions = computed(() =>
 )
 
 const categoryOptions = computed(() =>
-  props.categories.map((category) => ({ label: category.name, value: category.id })),
+  props.categories.map((category) => ({
+    label: category.name,
+    value: category.id,
+  })),
 )
 
 function submit() {
@@ -66,7 +76,11 @@ function submit() {
     return
   }
 
-  const payload: CreateTicketParams = { subject, content, priority: form.priority }
+  const payload: CreateTicketParams = {
+    subject,
+    content,
+    priority: form.priority,
+  }
   if (form.categoryId) payload.categoryId = form.categoryId
   if (attachments.value.length) payload.attachments = attachments.value
   error.value = ''
@@ -84,9 +98,18 @@ function submit() {
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="ticket-create__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="ticket-create__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+    >
       <t-form-item :label="t('ticketPage.subject')">
         <t-input
           v-model="form.subject"
@@ -94,7 +117,10 @@ function submit() {
           :placeholder="t('ticketPage.subjectPlaceholder')"
         />
       </t-form-item>
-      <t-form-item :label="t('ticketPage.category')" :help="t('ticketPage.categoryHint')">
+      <t-form-item
+        :label="t('ticketPage.category')"
+        :help="t('ticketPage.categoryHint')"
+      >
         <t-select
           v-model="form.categoryId"
           :options="categoryOptions"
@@ -103,7 +129,10 @@ function submit() {
         />
       </t-form-item>
       <t-form-item :label="t('ticketPage.priority')">
-        <t-select v-model="form.priority" :options="priorityOptions" />
+        <t-select
+          v-model="form.priority"
+          :options="priorityOptions"
+        />
       </t-form-item>
       <t-form-item :label="t('ticketPage.content')">
         <t-textarea
@@ -113,8 +142,14 @@ function submit() {
           :autosize="{ minRows: 5, maxRows: 12 }"
         />
       </t-form-item>
-      <t-form-item :label="t('ticketPage.attachments')" :help="t('ticketPage.attachmentHint')">
-        <TicketAttachmentsField v-model="attachments" :disabled="submitting" />
+      <t-form-item
+        :label="t('ticketPage.attachments')"
+        :help="t('ticketPage.attachmentHint')"
+      >
+        <TicketAttachmentsField
+          v-model="attachments"
+          :disabled="submitting"
+        />
       </t-form-item>
     </t-form>
   </t-dialog>

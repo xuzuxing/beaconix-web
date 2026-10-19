@@ -33,7 +33,13 @@ const RESOURCE_ICONS: Record<QuotaResourceKey, IconData> = {
   apiKeys: ApiIcon,
 }
 
-const RESOURCE_KEYS: QuotaResourceKey[] = ['monitors', 'probes', 'members', 'channels', 'apiKeys']
+const RESOURCE_KEYS: QuotaResourceKey[] = [
+  'monitors',
+  'probes',
+  'members',
+  'channels',
+  'apiKeys',
+]
 
 /** 单项配额：已用 / 上限 / 剩余（上限为 0 表示套餐不包含该资源） */
 const resources = computed(() =>
@@ -54,7 +60,10 @@ const resources = computed(() =>
 )
 
 /** 用量接近或超出上限时切换进度条状态 */
-function progressStatus(percent: number, included: boolean): 'active' | 'warning' | 'error' {
+function progressStatus(
+  percent: number,
+  included: boolean,
+): 'active' | 'warning' | 'error' {
   if (!included) return 'active'
   if (percent >= 100) return 'error'
   if (percent >= 80) return 'warning'
@@ -71,7 +80,10 @@ const features = computed(() => {
 </script>
 
 <template>
-  <div v-loading="loading" class="quota">
+  <div
+    v-loading="loading"
+    class="quota"
+  >
     <div class="quota__head">
       <h3 class="quota__title">{{ t('usage.quota.title') }}</h3>
       <span
@@ -83,11 +95,23 @@ const features = computed(() => {
     </div>
 
     <div class="quota__grid">
-      <div v-for="item in resources" :key="item.key" class="quota__item">
+      <div
+        v-for="item in resources"
+        :key="item.key"
+        class="quota__item"
+      >
         <div class="quota__item-head">
-          <AppIcon class="quota__icon" :icon="item.icon" />
-          <span class="quota__name">{{ t(`usage.quota.resource.${item.key}`) }}</span>
-          <span v-if="!item.included" class="quota__excluded">
+          <AppIcon
+            class="quota__icon"
+            :icon="item.icon"
+          />
+          <span class="quota__name">{{
+            t(`usage.quota.resource.${item.key}`)
+          }}</span>
+          <span
+            v-if="!item.included"
+            class="quota__excluded"
+          >
             {{ t('usage.quota.notIncluded') }}
           </span>
         </div>
@@ -112,7 +136,11 @@ const features = computed(() => {
     </div>
 
     <div class="quota__features">
-      <div v-for="item in features" :key="item.key" class="quota__feature">
+      <div
+        v-for="item in features"
+        :key="item.key"
+        class="quota__feature"
+      >
         <AppIcon
           :icon="item.enabled ? CheckmarkCircle02Icon : Cancel01Icon"
           :size="14"

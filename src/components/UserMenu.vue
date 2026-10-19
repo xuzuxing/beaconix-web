@@ -29,7 +29,9 @@ const appVersion = __APP_VERSION__
 const displayName = computed(() => userStore.user?.name ?? '')
 
 /** 头像用姓名首字母 */
-const avatarText = computed(() => displayName.value.trim().slice(0, 1).toUpperCase())
+const avatarText = computed(() =>
+  displayName.value.trim().slice(0, 1).toUpperCase(),
+)
 
 /** 用户设置过头像时优先显示图片，未设置则回退首字母 */
 const avatarImage = computed(() => userStore.user?.avatarUrl || undefined)
@@ -88,13 +90,21 @@ async function copyText(text: string) {
       :aria-label="t('layout.profile')"
       v-bind="$attrs"
     >
-      <t-avatar size="32px" :image="avatarImage">{{ avatarText }}</t-avatar>
+      <t-avatar
+        size="32px"
+        :image="avatarImage"
+        >{{ avatarText }}</t-avatar
+      >
     </button>
 
     <template #content>
       <div class="user-panel">
         <div class="user-panel__profile">
-          <t-avatar size="40px" :image="avatarImage">{{ avatarText }}</t-avatar>
+          <t-avatar
+            size="40px"
+            :image="avatarImage"
+            >{{ avatarText }}</t-avatar
+          >
           <div class="user-panel__identity">
             <span class="user-panel__name">{{ displayName }}</span>
             <span class="user-panel__email">{{ userStore.user?.email }}</span>
@@ -102,7 +112,11 @@ async function copyText(text: string) {
         </div>
 
         <div class="user-panel__ids">
-          <div v-for="row in accountRows" :key="row.labelKey" class="user-panel__row">
+          <div
+            v-for="row in accountRows"
+            :key="row.labelKey"
+            class="user-panel__row"
+          >
             <span class="user-panel__label">{{ t(row.labelKey) }}</span>
             <span class="user-panel__value">{{ row.value }}</span>
             <button
@@ -111,12 +125,19 @@ async function copyText(text: string) {
               :aria-label="t('guide.copy')"
               @click="copyText(row.value)"
             >
-              <AppIcon :icon="Copy01Icon" :size="14" />
+              <AppIcon
+                :icon="Copy01Icon"
+                :size="14"
+              />
             </button>
           </div>
         </div>
 
-        <div v-for="(group, index) in groups" :key="index" class="user-panel__group">
+        <div
+          v-for="(group, index) in groups"
+          :key="index"
+          class="user-panel__group"
+        >
           <button
             v-for="item in group"
             :key="item.key"
@@ -125,12 +146,17 @@ async function copyText(text: string) {
             :class="{ 'user-panel__item--danger': item.danger }"
             @click="handleMenu(item.key)"
           >
-            <AppIcon :icon="item.icon" :size="16" />
+            <AppIcon
+              :icon="item.icon"
+              :size="16"
+            />
             {{ t(item.labelKey) }}
           </button>
         </div>
 
-        <div class="user-panel__version">{{ t('layout.userVersion') }}：{{ appVersion }}</div>
+        <div class="user-panel__version">
+          {{ t('layout.userVersion') }}：{{ appVersion }}
+        </div>
       </div>
     </template>
   </t-popup>

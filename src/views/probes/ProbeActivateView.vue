@@ -5,7 +5,11 @@ import { useRoute, useRouter } from 'vue-router'
 import { listOrganizations } from '@/api/modules/organization'
 import { approveProbeActivation, getProbeActivation } from '@/api/modules/probe'
 import type { Organization } from '@/api/types'
-import type { ProbeActivation, ProbeActivationApproval, ProbeProvider } from '@/api/types/probe'
+import type {
+  ProbeActivation,
+  ProbeActivationApproval,
+  ProbeProvider,
+} from '@/api/types/probe'
 import AppIcon from '@/components/AppIcon.vue'
 import { useProbeActions } from '@/composables/useProbeActions'
 import { RefreshIcon, SecurityCheckIcon } from '@/icons'
@@ -49,10 +53,16 @@ const form = reactive({
 })
 const { run, error: actionError } = useProbeActions(() => form.organizationId)
 const teams = computed(() =>
-  organizations.value.filter((organization) => permissions.canOrganization(organization.id)),
+  organizations.value.filter((organization) =>
+    permissions.canOrganization(organization.id),
+  ),
 )
-const pending = computed(() => state.value === 'ready' && activation.value?.status === 'pending')
-const locked = computed(() => submitting.value || teamsLoading.value || !!approval.value)
+const pending = computed(
+  () => state.value === 'ready' && activation.value?.status === 'pending',
+)
+const locked = computed(
+  () => submitting.value || teamsLoading.value || !!approval.value,
+)
 const host = computed(() => activation.value?.client.hostname ?? '')
 let generation = 0
 let teamsGeneration = 0
@@ -73,22 +83,32 @@ async function loadTeams() {
       if (request !== teamsGeneration || !isCurrentContext(context)) return
     }
     if (
-      result.some((organization) => permissions.organizations[organization.id]?.state === 'error')
+      result.some(
+        (organization) =>
+          permissions.organizations[organization.id]?.state === 'error',
+      )
     )
       teamsError.value = t('probePage.activation.teamsFailed')
     if (!form.organizationId) {
       form.organizationId =
-        teams.value.find((organization) => organization.id === workspace.currentOrganizationId)
-          ?.id ??
+        teams.value.find(
+          (organization) => organization.id === workspace.currentOrganizationId,
+        )?.id ??
         teams.value[0]?.id ??
         ''
-    } else if (!teams.value.some((organization) => organization.id === form.organizationId)) {
+    } else if (
+      !teams.value.some(
+        (organization) => organization.id === form.organizationId,
+      )
+    ) {
       form.organizationId = ''
     }
   } catch (cause) {
     if (request === teamsGeneration && isCurrentContext(context))
       teamsError.value =
-        cause instanceof Error ? cause.message : t('probePage.activation.teamsFailed')
+        cause instanceof Error
+          ? cause.message
+          : t('probePage.activation.teamsFailed')
   } finally {
     if (request === teamsGeneration) teamsLoading.value = false
   }
@@ -125,8 +145,12 @@ async function loadActivation() {
     return result.status === 'pending'
   } catch (cause) {
     if (request !== generation || !isCurrentContext(context, true)) return false
-    state.value = cause instanceof ApiError && cause.status === 404 ? 'expired' : 'error'
-    loadError.value = cause instanceof Error ? cause.message : t('probePage.activation.loadFailed')
+    state.value =
+      cause instanceof ApiError && cause.status === 404 ? 'expired' : 'error'
+    loadError.value =
+      cause instanceof Error
+        ? cause.message
+        : t('probePage.activation.loadFailed')
     return false
   }
 }
@@ -139,7 +163,12 @@ async function initialize() {
   approval.value = null
   formError.value = ''
   actionError.value = ''
-  Object.assign(form, { organizationId: '', name: '', region: '', provider: 'CUSTOM' })
+  Object.assign(form, {
+    organizationId: '',
+    name: '',
+    region: '',
+    provider: 'CUSTOM',
+  })
   await retry()
 }
 async function retry() {
@@ -160,7 +189,12 @@ watch(sessionEpoch, () => {
   activation.value = null
   approval.value = null
   organizations.value = []
-  Object.assign(form, { organizationId: '', name: '', region: '', provider: 'CUSTOM' })
+  Object.assign(form, {
+    organizationId: '',
+    name: '',
+    region: '',
+    provider: 'CUSTOM',
+  })
 })
 onScopeDispose(() => {
   generation++
@@ -181,7 +215,8 @@ async function confirm() {
     : problem
       ? t(`probePage.${problem}`)
       : ''
-  if (formError.value || !permissions.canOrganization(form.organizationId)) return
+  if (formError.value || !permissions.canOrganization(form.organizationId))
+    return
   const payload = {
     userCode: code.value,
     organizationId: form.organizationId,
@@ -208,7 +243,9 @@ async function confirm() {
   } catch (cause) {
     if (isCurrentContext(context))
       formError.value =
-        cause instanceof Error ? cause.message : t('probePage.activation.saveFailed')
+        cause instanceof Error
+          ? cause.message
+          : t('probePage.activation.saveFailed')
   } finally {
     submitting.value = false
   }
@@ -227,14 +264,31 @@ async function viewNodes() {
 
 <template>
   <div class="probe-activate">
-    <h2>{{ t(approval ? 'probePage.activation.success' : 'probePage.activation.title') }}</h2>
+    <h2>
+      {{
+        t(
+          approval
+            ? 'probePage.activation.success'
+            : 'probePage.activation.title',
+        )
+      }}
+    </h2>
     <template v-if="approval">
-      <t-alert theme="success" :message="t('probePage.activation.successDescription')" />
-      <t-button :loading="opening" @click="viewNodes">{{
-        t('probePage.activation.viewNodes')
-      }}</t-button>
+      <t-alert
+        theme="success"
+        :message="t('probePage.activation.successDescription')"
+      />
+      <t-button
+        :loading="opening"
+        @click="viewNodes"
+        >{{ t('probePage.activation.viewNodes') }}</t-button
+      >
     </template>
-    <form v-else-if="!code" class="probe-activate__form" @submit.prevent="enterCode">
+    <form
+      v-else-if="!code"
+      class="probe-activate__form"
+      @submit.prevent="enterCode"
+    >
       <label>
         <span>{{ t('probePage.activation.code') }}</span>
         <t-input
@@ -249,21 +303,35 @@ async function viewNodes() {
         :message="formError || t('probePage.activation.invalidCode')"
       />
       <div class="probe-activate__actions">
-        <t-button type="submit">{{ t('probePage.activation.continue') }}</t-button>
+        <t-button type="submit">{{
+          t('probePage.activation.continue')
+        }}</t-button>
       </div>
     </form>
     <p v-else-if="state === 'loading'">{{ t('common.loading') }}</p>
-    <template v-else-if="state === 'expired' || activation?.status === 'denied'">
+    <template
+      v-else-if="state === 'expired' || activation?.status === 'denied'"
+    >
       <t-alert
         theme="error"
         :message="
-          t(state === 'expired' ? 'probePage.activation.expired' : 'probePage.activation.denied')
+          t(
+            state === 'expired'
+              ? 'probePage.activation.expired'
+              : 'probePage.activation.denied',
+          )
         "
       />
     </template>
     <template v-else-if="state === 'error'">
-      <t-alert theme="error" :message="loadError" />
-      <t-button variant="outline" @click="retry">
+      <t-alert
+        theme="error"
+        :message="loadError"
+      />
+      <t-button
+        variant="outline"
+        @click="retry"
+      >
         <template #icon><AppIcon :icon="RefreshIcon" /></template>
         {{ t('probePage.retry') }}
       </t-button>
@@ -273,7 +341,11 @@ async function viewNodes() {
       theme="info"
       :message="t('probePage.activation.alreadyApproved')"
     />
-    <form v-else-if="pending" class="probe-activate__form" @submit.prevent="confirm">
+    <form
+      v-else-if="pending"
+      class="probe-activate__form"
+      @submit.prevent="confirm"
+    >
       <dl class="probe-activate__device">
         <dt>{{ t('probePage.activation.code') }}</dt>
         <dd>{{ code }}</dd>
@@ -288,11 +360,17 @@ async function viewNodes() {
         <dt>{{ t('probePage.activation.requestedAt') }}</dt>
         <dd>{{ formatDateTime(activation!.requestedAt) }}</dd>
       </dl>
-      <t-alert v-if="teamsError" theme="error" :message="teamsError">
+      <t-alert
+        v-if="teamsError"
+        theme="error"
+        :message="teamsError"
+      >
         <template #operation
-          ><t-button variant="text" @click="loadTeams">{{
-            t('probePage.retry')
-          }}</t-button></template
+          ><t-button
+            variant="text"
+            @click="loadTeams"
+            >{{ t('probePage.retry') }}</t-button
+          ></template
         >
       </t-alert>
       <t-alert
@@ -308,7 +386,10 @@ async function viewNodes() {
           :loading="teamsLoading"
           :placeholder="t('probePage.activation.teamPlaceholder')"
           :options="
-            teams.map((organization) => ({ label: organization.name, value: organization.id }))
+            teams.map((organization) => ({
+              label: organization.name,
+              value: organization.id,
+            }))
           "
         />
       </label>
@@ -336,19 +417,31 @@ async function viewNodes() {
           v-model="form.provider"
           :disabled="locked"
           :options="
-            PROBE_PROVIDERS.map((value) => ({ value, label: t(probeProviderLabelKey(value)) }))
+            PROBE_PROVIDERS.map((value) => ({
+              value,
+              label: t(probeProviderLabelKey(value)),
+            }))
           "
         />
       </label>
-      <t-alert v-if="formError || actionError" theme="error" :message="formError || actionError" />
+      <t-alert
+        v-if="formError || actionError"
+        theme="error"
+        :message="formError || actionError"
+      />
       <div class="probe-activate__actions">
-        <t-button variant="outline" :disabled="submitting" @click="router.push('/team')">{{
-          t('common.cancel')
-        }}</t-button>
+        <t-button
+          variant="outline"
+          :disabled="submitting"
+          @click="router.push('/team')"
+          >{{ t('common.cancel') }}</t-button
+        >
         <t-button
           type="submit"
           :loading="submitting"
-          :disabled="teamsLoading || !permissions.canOrganization(form.organizationId)"
+          :disabled="
+            teamsLoading || !permissions.canOrganization(form.organizationId)
+          "
         >
           <template #icon><AppIcon :icon="SecurityCheckIcon" /></template>
           {{ t('probePage.activation.confirm') }}

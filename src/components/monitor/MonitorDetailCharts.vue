@@ -18,7 +18,9 @@ import { timeLabel } from '@/utils/monitoring-adapter'
 const props = defineProps<{ insights: MonitorInsights }>()
 const { t } = useI18n()
 const theme = useChartTheme()
-const labels = computed(() => props.insights.timeline.points.map((p) => timeLabel(p.time)))
+const labels = computed(() =>
+  props.insights.timeline.points.map((p) => timeLabel(p.time)),
+)
 const timeAxis = computed(() => {
   const axis = categoryAxis(theme.value, labels.value)
   return {
@@ -70,7 +72,9 @@ const uptime = computed<ChartOption>(() => {
         type: 'line',
         connectNulls: false,
         symbolSize: 4,
-        data: props.insights.timeline.points.map((point) => point.uptimePercent),
+        data: props.insights.timeline.points.map(
+          (point) => point.uptimePercent,
+        ),
         lineStyle: { width: 1.8, color: p.success },
         itemStyle: { color: p.success },
       },
@@ -88,7 +92,12 @@ const uptime = computed<ChartOption>(() => {
         :option="latency"
         height="240px"
       />
-      <div v-else class="detail-charts__empty">{{ t('monitorPage.emptyMetrics') }}</div>
+      <div
+        v-else
+        class="detail-charts__empty"
+      >
+        {{ t('monitorPage.emptyMetrics') }}
+      </div>
     </section>
     <section>
       <h2>{{ t('monitorPage.uptimeTrend') }}</h2>
@@ -97,7 +106,12 @@ const uptime = computed<ChartOption>(() => {
         :option="uptime"
         height="240px"
       />
-      <div v-else class="detail-charts__empty">{{ t('monitorPage.emptyMetrics') }}</div>
+      <div
+        v-else
+        class="detail-charts__empty"
+      >
+        {{ t('monitorPage.emptyMetrics') }}
+      </div>
     </section>
   </div>
 </template>

@@ -15,7 +15,11 @@ const visible = defineModel<boolean>('visible', { required: true })
 const emit = defineEmits<{ changed: [] }>()
 const { t } = useI18n()
 
-const form = reactive({ currentPassword: '', newPassword: '', confirmPassword: '' })
+const form = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+})
 const submitting = ref(false)
 const error = ref('')
 let generation = 0
@@ -55,7 +59,8 @@ async function submit() {
     visible.value = false
     emit('changed')
   } catch (cause) {
-    if (token === generation) error.value = cause instanceof Error ? cause.message : ''
+    if (token === generation)
+      error.value = cause instanceof Error ? cause.message : ''
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -72,9 +77,18 @@ async function submit() {
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="change-password__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="change-password__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+    >
       <t-form-item :label="t('workspace.security.currentPassword')">
         <t-input
           v-model="form.currentPassword"
@@ -83,7 +97,10 @@ async function submit() {
         />
       </t-form-item>
 
-      <t-form-item :label="t('workspace.security.newPassword')" :help="t('workspace.security.passwordRule')">
+      <t-form-item
+        :label="t('workspace.security.newPassword')"
+        :help="t('workspace.security.passwordRule')"
+      >
         <t-input
           v-model="form.newPassword"
           type="password"

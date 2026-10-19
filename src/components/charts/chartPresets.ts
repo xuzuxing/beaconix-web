@@ -7,7 +7,13 @@ import type { ChartOption } from './echarts'
  */
 
 /** 统一的绘图区边距（containLabel 保证刻度不被裁切） */
-export const chartGrid = { left: 0, right: 0, top: 34, bottom: 0, containLabel: true }
+export const chartGrid = {
+  left: 0,
+  right: 0,
+  top: 34,
+  bottom: 0,
+  containLabel: true,
+}
 
 /** 提示框：跟随主题底色与边框 */
 export function chartTooltip(theme: ChartTheme, trigger: 'axis' | 'item' = 'axis') {
@@ -65,14 +71,23 @@ export function categoryAxis(
 /** 数值轴 */
 export function valueAxis(
   theme: ChartTheme,
-  options: { name?: string; min?: number; max?: number; formatter?: string } = {},
+  options: {
+    name?: string
+    min?: number
+    max?: number
+    formatter?: string
+  } = {},
 ) {
   return {
     type: 'value' as const,
     name: options.name,
     min: options.min,
     max: options.max,
-    nameTextStyle: { color: theme.textTertiary, fontSize: 10, align: 'left' as const },
+    nameTextStyle: {
+      color: theme.textTertiary,
+      fontSize: 10,
+      align: 'left' as const,
+    },
     axisLine: { show: false },
     axisTick: { show: false },
     splitLine: { lineStyle: { color: theme.splitLine } },

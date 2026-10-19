@@ -38,7 +38,9 @@ export function useAdminProbes() {
   const filtered = computed(() =>
     probes.value
       .filter((probe) => probeMatches(probe, keyword.value))
-      .filter((probe) => liveness.value === 'all' || probeLiveness(probe, now.value) === liveness.value),
+      .filter(
+        (probe) => liveness.value === 'all' || probeLiveness(probe, now.value) === liveness.value,
+      ),
   )
 
   /** 名称重复时用于在编辑弹窗里标出当前探针 */

@@ -136,7 +136,13 @@ usePageHeader({ title: () => monitor.value?.name, back })
 
 <template>
   <Teleport to="#layout-header-actions">
-    <t-button variant="outline" shape="square" :loading="loading" @click="refresh">刷新</t-button>
+    <t-button
+      variant="outline"
+      shape="square"
+      :loading="loading"
+      @click="refresh"
+      >刷新</t-button
+    >
   </Teleport>
 </template>
 ```
@@ -169,7 +175,10 @@ import { Search01Icon } from '@/icons'
 </script>
 
 <template>
-  <AppIcon :icon="Search01Icon" :size="16" />
+  <AppIcon
+    :icon="Search01Icon"
+    :size="16"
+  />
 </template>
 ```
 

@@ -23,19 +23,45 @@ const props = withDefaults(
 
 const stroke = computed(() => `var(--mini-trend-color)`)
 
-const finite = computed(() => props.values.filter((v): v is number => v !== null && Number.isFinite(v)))
-const segments = computed(() => finiteSegments(props.values, Math.min(...finite.value, 0), Math.max(...finite.value, 1), 88)
-  .map(segment => segment.map(p => ({ ...p, y: p.y + 6 }))))
-const path = (points: Array<{ x: number; y: number }>) => points.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ')
+const finite = computed(() =>
+  props.values.filter((v): v is number => v !== null && Number.isFinite(v)),
+)
+const segments = computed(() =>
+  finiteSegments(
+    props.values,
+    Math.min(...finite.value, 0),
+    Math.max(...finite.value, 1),
+    88,
+  ).map((segment) => segment.map((p) => ({ ...p, y: p.y + 6 }))),
+)
+const path = (points: Array<{ x: number; y: number }>) =>
+  points.map((p, i) => `${i ? 'L' : 'M'}${p.x},${p.y}`).join(' ')
 const linePath = computed(() => segments.value.map(path).join(' '))
-const areaPath = computed(() => segments.value.map(s =>
-  `${path(s)} L${s[s.length - 1]!.x},100 L${s[0]!.x},100 Z`).join(' '))
+const areaPath = computed(() =>
+  segments.value
+    .map((s) => `${path(s)} L${s[s.length - 1]!.x},100 L${s[0]!.x},100 Z`)
+    .join(' '),
+)
 </script>
 
 <template>
-  <div class="mini-trend" :class="`mini-trend--${tone}`">
-    <svg v-if="finite.length" class="mini-trend__svg" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label="Trend">
-      <path v-if="filled" class="mini-trend__area" :d="areaPath" />
+  <div
+    class="mini-trend"
+    :class="`mini-trend--${tone}`"
+  >
+    <svg
+      v-if="finite.length"
+      class="mini-trend__svg"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      role="img"
+      aria-label="Trend"
+    >
+      <path
+        v-if="filled"
+        class="mini-trend__area"
+        :d="areaPath"
+      />
       <path
         class="mini-trend__line"
         :d="linePath"

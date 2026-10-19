@@ -16,7 +16,12 @@ import {
 } from '@/icons'
 import { useOrganizationStore } from '@/stores'
 import { formatAmount, planTagTheme, planTier } from '@/utils/billing'
-import { getWechatOpenid, isWechatBrowser, payOrder, waitForOrderPaid } from '@/utils/wechat-pay'
+import {
+  getWechatOpenid,
+  isWechatBrowser,
+  payOrder,
+  waitForOrderPaid,
+} from '@/utils/wechat-pay'
 
 /**
  * 套餐升级弹窗：拉取套餐目录 → 选择套餐与时长 → 创建订单 → 调起微信支付 → 轮询订单转 PAID。
@@ -54,11 +59,15 @@ const comparisonPlans = computed(() =>
 
 /** 免费版仅用于对比，后端不支持为 FREE 创建订单。 */
 const purchasablePlans = computed(() =>
-  comparisonPlans.value.filter((plan) => plan.code.trim().toUpperCase() !== 'FREE'),
+  comparisonPlans.value.filter(
+    (plan) => plan.code.trim().toUpperCase() !== 'FREE',
+  ),
 )
 
 const selectedPlan = computed(
-  () => purchasablePlans.value.find((plan) => plan.id === selectedPlanId.value) ?? null,
+  () =>
+    purchasablePlans.value.find((plan) => plan.id === selectedPlanId.value) ??
+    null,
 )
 
 const total = computed(() => formatAmount(selectedPlan.value?.price ?? 0))
@@ -66,7 +75,9 @@ const total = computed(() => formatAmount(selectedPlan.value?.price ?? 0))
 const busy = computed(() => submitting.value || paying.value)
 const validDuration = computed(
   () =>
-    Number.isInteger(durationDays.value) && durationDays.value >= 1 && durationDays.value <= 3650,
+    Number.isInteger(durationDays.value) &&
+    durationDays.value >= 1 &&
+    durationDays.value <= 3650,
 )
 const canSubmit = computed(
   () =>
@@ -88,7 +99,12 @@ function abilities(plan: Plan) {
       value: plan.maxMonitors,
       allowed: true,
     },
-    { key: 'probes', label: t('usage.package.limit.probes'), value: plan.maxProbes, allowed: true },
+    {
+      key: 'probes',
+      label: t('usage.package.limit.probes'),
+      value: plan.maxProbes,
+      allowed: true,
+    },
     {
       key: 'members',
       label: t('usage.package.limit.members'),
@@ -110,13 +126,21 @@ function abilities(plan: Plan) {
     {
       key: 'tenantProbe',
       label: t('usage.package.feature.tenantProbe'),
-      value: t(plan.allowTenantProbe ? 'usage.package.allowed' : 'usage.package.notAllowed'),
+      value: t(
+        plan.allowTenantProbe
+          ? 'usage.package.allowed'
+          : 'usage.package.notAllowed',
+      ),
       allowed: plan.allowTenantProbe,
     },
     {
       key: 'statusPage',
       label: t('usage.package.feature.statusPage'),
-      value: t(plan.allowStatusPage ? 'usage.package.allowed' : 'usage.package.notAllowed'),
+      value: t(
+        plan.allowStatusPage
+          ? 'usage.package.allowed'
+          : 'usage.package.notAllowed',
+      ),
       allowed: plan.allowStatusPage,
     },
   ]
@@ -129,7 +153,8 @@ const submitText = computed(() => {
 })
 
 function selectPlan(plan: Plan) {
-  if (busy.value || !purchasablePlans.value.some((item) => item.id === plan.id)) return
+  if (busy.value || !purchasablePlans.value.some((item) => item.id === plan.id))
+    return
   selectedPlanId.value = plan.id
   durationDays.value = plan.durationDays
 }
@@ -138,7 +163,8 @@ function onPlanKeydown(event: KeyboardEvent, planId: string) {
   const list = purchasablePlans.value
   const index = list.findIndex((plan) => plan.id === planId)
   let next = index
-  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (index + 1) % list.length
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown')
+    next = (index + 1) % list.length
   else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp')
     next = (index + list.length - 1) % list.length
   else if (event.key === 'Home') next = 0
@@ -239,7 +265,11 @@ watch(
   >
     <p class="upgrade__desc">{{ t('usage.upgrade.desc') }}</p>
 
-    <div v-loading="loading" class="upgrade__content" :aria-busy="loading">
+    <div
+      v-loading="loading"
+      class="upgrade__content"
+      :aria-busy="loading"
+    >
       <div
         v-if="comparisonPlans.length"
         class="upgrade__plans"
@@ -250,7 +280,10 @@ watch(
           v-for="plan in comparisonPlans"
           :key="plan.id"
           class="upgrade__card"
-          :class="[`beacon-plan--${planTier(plan)}`, { 'is-active': plan.id === selectedPlanId }]"
+          :class="[
+            `beacon-plan--${planTier(plan)}`,
+            { 'is-active': plan.id === selectedPlanId },
+          ]"
         >
           <button
             v-if="plan.code.trim().toUpperCase() !== 'FREE'"
@@ -278,11 +311,19 @@ watch(
                 "
                 :size="24"
               />
-              <h3 :id="`${dialogId}-name-${plan.id}`" class="upgrade__card-name">
+              <h3
+                :id="`${dialogId}-name-${plan.id}`"
+                class="upgrade__card-name"
+              >
                 {{ plan.name }}
               </h3>
             </div>
-            <p v-if="plan.description" class="upgrade__plan-desc">{{ plan.description }}</p>
+            <p
+              v-if="plan.description"
+              class="upgrade__plan-desc"
+            >
+              {{ plan.description }}
+            </p>
             <t-tag
               v-if="plan.id === orgStore.currentPlan?.id"
               class="upgrade__current beacon-plan-badge"
@@ -293,7 +334,11 @@ watch(
             </t-tag>
           </header>
           <ul class="upgrade__abilities">
-            <li v-for="ability in abilities(plan)" :key="ability.key" class="upgrade__ability">
+            <li
+              v-for="ability in abilities(plan)"
+              :key="ability.key"
+              class="upgrade__ability"
+            >
               <AppIcon
                 class="upgrade__ability-icon"
                 :class="{ 'is-unavailable': !ability.allowed }"
@@ -304,27 +349,48 @@ watch(
               <strong>{{ ability.value }}</strong>
             </li>
           </ul>
-          <div :id="`${dialogId}-price-${plan.id}`" class="upgrade__price">
+          <div
+            :id="`${dialogId}-price-${plan.id}`"
+            class="upgrade__price"
+          >
             <strong>{{ formatAmount(plan.price) }}</strong>
             <span v-if="plan.code.trim().toUpperCase() !== 'FREE'">
               / {{ t('usage.upgrade.days', { days: plan.durationDays }) }}
             </span>
             <span v-else>{{ t('usage.package.freeBadge') }}</span>
           </div>
-          <span v-if="plan.id === selectedPlanId" class="upgrade__selected" aria-hidden="true">
-            <AppIcon :icon="CheckmarkCircle02Icon" :size="14" />
+          <span
+            v-if="plan.id === selectedPlanId"
+            class="upgrade__selected"
+            aria-hidden="true"
+          >
+            <AppIcon
+              :icon="CheckmarkCircle02Icon"
+              :size="14"
+            />
           </span>
         </article>
       </div>
 
-      <div v-if="selectedPlan" class="upgrade__form">
+      <div
+        v-if="selectedPlan"
+        class="upgrade__form"
+      >
         <div class="upgrade__form-row">
-          <span :id="`${dialogId}-duration-label`" class="upgrade__form-label">
+          <span
+            :id="`${dialogId}-duration-label`"
+            class="upgrade__form-label"
+          >
             {{ t('usage.upgrade.duration') }}
           </span>
           <div class="upgrade__duration">
-            <p class="upgrade__selection" aria-live="polite">
-              {{ t('usage.upgrade.selectedDuration', { days: durationDays || 0 }) }}
+            <p
+              class="upgrade__selection"
+              aria-live="polite"
+            >
+              {{
+                t('usage.upgrade.selectedDuration', { days: durationDays || 0 })
+              }}
             </p>
             <t-radio-group
               v-model="durationDays"
@@ -333,7 +399,11 @@ watch(
               :disabled="busy || loading"
               :aria-labelledby="`${dialogId}-duration-label`"
             >
-              <t-radio-button v-for="days in durationOptions" :key="days" :value="days">
+              <t-radio-button
+                v-for="days in durationOptions"
+                :key="days"
+                :value="days"
+              >
                 {{ t('usage.upgrade.days', { days }) }}
               </t-radio-button>
             </t-radio-group>
@@ -357,28 +427,57 @@ watch(
         </div>
 
         <div class="upgrade__form-row upgrade__amount-row">
-          <span class="upgrade__form-label">{{ t('usage.upgrade.total') }}</span>
+          <span class="upgrade__form-label">{{
+            t('usage.upgrade.total')
+          }}</span>
           <div class="upgrade__amount">
-            <strong class="upgrade__total" aria-live="polite">{{ total }}</strong>
-            <span class="upgrade__note">{{ t('usage.upgrade.amountNote') }}</span>
+            <strong
+              class="upgrade__total"
+              aria-live="polite"
+              >{{ total }}</strong
+            >
+            <span class="upgrade__note">{{
+              t('usage.upgrade.amountNote')
+            }}</span>
           </div>
         </div>
       </div>
 
-      <div v-else class="upgrade__empty" role="status">
-        <AppIcon :icon="Layers01Icon" :size="32" />
-        <p>{{ t(loading ? 'usage.upgrade.loading' : 'usage.upgrade.empty') }}</p>
+      <div
+        v-else
+        class="upgrade__empty"
+        role="status"
+      >
+        <AppIcon
+          :icon="Layers01Icon"
+          :size="32"
+        />
+        <p>
+          {{ t(loading ? 'usage.upgrade.loading' : 'usage.upgrade.empty') }}
+        </p>
       </div>
     </div>
 
     <template #footer>
       <div class="upgrade__buttons">
-        <t-button variant="outline" :disabled="busy" @click="visible = false">
+        <t-button
+          variant="outline"
+          :disabled="busy"
+          @click="visible = false"
+        >
           {{ t('common.cancel') }}
         </t-button>
-        <t-button theme="primary" :loading="busy" :disabled="!canSubmit" @click="submit">
+        <t-button
+          theme="primary"
+          :loading="busy"
+          :disabled="!canSubmit"
+          @click="submit"
+        >
           <template #icon>
-            <AppIcon :icon="FlashIcon" :size="16" />
+            <AppIcon
+              :icon="FlashIcon"
+              :size="16"
+            />
           </template>
           {{ submitText }}
         </t-button>
@@ -501,7 +600,11 @@ watch(
     min-height: 136px;
     padding: 20px 16px 16px;
     background-color: var(--beacon-plan-bg);
-    background-image: linear-gradient(180deg, var(--beacon-plan-bg), @beacon-bg-container);
+    background-image: linear-gradient(
+      180deg,
+      var(--beacon-plan-bg),
+      @beacon-bg-container
+    );
   }
 
   &__card-title {

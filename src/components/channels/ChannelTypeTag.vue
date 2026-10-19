@@ -11,5 +11,10 @@ const theme = computed(() => channelTypeTheme[props.type])
 </script>
 
 <template>
-  <t-tag :theme="theme" size="small" variant="light">{{ t(`channelPage.type.${type}`) }}</t-tag>
+  <t-tag
+    :theme="theme"
+    size="small"
+    variant="light"
+    >{{ t(`channelPage.type.${type}`) }}</t-tag
+  >
 </template>

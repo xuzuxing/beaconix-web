@@ -18,8 +18,19 @@ defineOptions({ name: 'AdminAuditLogsView' })
 
 const { t } = useI18n()
 const userStore = useUserStore()
-const { logs, total, loading, error, page, pageSize, filters, load, applyFilters, reset, changePage } =
-  useAdminAuditLogs()
+const {
+  logs,
+  total,
+  loading,
+  error,
+  page,
+  pageSize,
+  filters,
+  load,
+  applyFilters,
+  reset,
+  changePage,
+} = useAdminAuditLogs()
 
 const detailVisible = ref(false)
 const selected = ref<AuditLog | null>(null)
@@ -77,11 +88,20 @@ onMounted(() => {
       </t-tooltip>
     </HeaderActions>
 
-    <t-alert v-if="!userStore.isSuperAdmin" theme="info" :message="t('adminPage.common.noPermission')" />
+    <t-alert
+      v-if="!userStore.isSuperAdmin"
+      theme="info"
+      :message="t('adminPage.common.noPermission')"
+    />
 
-    <t-card v-else class="admin-audit-logs__panel">
+    <t-card
+      v-else
+      class="admin-audit-logs__panel"
+    >
       <template #title>{{ t('adminPage.auditLog.title') }}</template>
-      <p class="admin-audit-logs__subtitle">{{ t('adminPage.auditLog.subtitle') }}</p>
+      <p class="admin-audit-logs__subtitle">
+        {{ t('adminPage.auditLog.subtitle') }}
+      </p>
 
       <div class="admin-audit-logs__filters">
         <t-select
@@ -123,21 +143,41 @@ onMounted(() => {
           :aria-label="t('workspace.auditLog.createdAt')"
         />
         <div class="admin-audit-logs__filter-actions">
-          <t-button theme="primary" :loading="loading" @click="applyFilters">
+          <t-button
+            theme="primary"
+            :loading="loading"
+            @click="applyFilters"
+          >
             {{ t('adminPage.common.search') }}
           </t-button>
-          <t-button variant="outline" @click="reset">
+          <t-button
+            variant="outline"
+            @click="reset"
+          >
             {{ t('adminPage.common.reset') }}
           </t-button>
         </div>
       </div>
 
-      <div v-if="error" class="admin-audit-logs__state">
-        <t-alert theme="error" :message="error" />
-        <t-button variant="outline" @click="load">{{ t('adminPage.common.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="admin-audit-logs__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('adminPage.common.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !logs.length" class="admin-audit-logs__state">
+      <div
+        v-else-if="loading && !logs.length"
+        class="admin-audit-logs__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
@@ -151,27 +191,52 @@ onMounted(() => {
             <span>{{ t('workspace.auditLog.actor') }}</span>
             <span>{{ t('adminPage.common.detail') }}</span>
           </div>
-          <div v-for="log in logs" :key="log.id" class="admin-audit-logs__row">
-            <span class="admin-audit-logs__time">{{ formatDateTime(log.createdAt) }}</span>
+          <div
+            v-for="log in logs"
+            :key="log.id"
+            class="admin-audit-logs__row"
+          >
+            <span class="admin-audit-logs__time">{{
+              formatDateTime(log.createdAt)
+            }}</span>
             <span>
-              <t-tag size="small" variant="light" :theme="auditActionTheme(log.action)">
+              <t-tag
+                size="small"
+                variant="light"
+                :theme="auditActionTheme(log.action)"
+              >
                 {{ actionLabel(log.action) }}
               </t-tag>
             </span>
             <span class="admin-audit-logs__entity">
-              <span class="admin-audit-logs__entity-name">{{ log.entity }}</span>
-              <span class="admin-audit-logs__entity-id" :title="log.entityId">
+              <span class="admin-audit-logs__entity-name">{{
+                log.entity
+              }}</span>
+              <span
+                class="admin-audit-logs__entity-id"
+                :title="log.entityId"
+              >
                 {{ shortId(log.entityId) }}
               </span>
             </span>
-            <span class="admin-audit-logs__org" :title="log.organizationId ?? ''">
+            <span
+              class="admin-audit-logs__org"
+              :title="log.organizationId ?? ''"
+            >
               {{ log.organizationId ? shortId(log.organizationId) : '—' }}
             </span>
-            <span class="admin-audit-logs__actor" :title="log.actorId ?? ''">
+            <span
+              class="admin-audit-logs__actor"
+              :title="log.actorId ?? ''"
+            >
               {{ log.actorId ? shortId(log.actorId) : '—' }}
             </span>
             <span class="admin-audit-logs__detail">
-              <t-button variant="text" size="small" @click="openDetail(log)">
+              <t-button
+                variant="text"
+                size="small"
+                @click="openDetail(log)"
+              >
                 {{ t('adminPage.common.detail') }}
               </t-button>
             </span>
@@ -188,12 +253,20 @@ onMounted(() => {
         />
       </template>
 
-      <div v-else class="admin-audit-logs__state">
-        <p class="admin-audit-logs__empty">{{ t('adminPage.auditLog.empty') }}</p>
+      <div
+        v-else
+        class="admin-audit-logs__state"
+      >
+        <p class="admin-audit-logs__empty">
+          {{ t('adminPage.auditLog.empty') }}
+        </p>
       </div>
     </t-card>
 
-    <AuditLogDetailDrawer v-model:visible="detailVisible" :log="selected" />
+    <AuditLogDetailDrawer
+      v-model:visible="detailVisible"
+      :log="selected"
+    />
   </section>
 </template>
 

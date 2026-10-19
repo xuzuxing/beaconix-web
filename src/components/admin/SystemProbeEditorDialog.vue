@@ -2,7 +2,11 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import type { CreateSystemProbeParams, ProbeProvider, SystemProbe } from '@/api/types/admin'
+import type {
+  CreateSystemProbeParams,
+  ProbeProvider,
+  SystemProbe,
+} from '@/api/types/admin'
 import { PROBE_PROVIDERS, probeProviderLabelKey } from '@/utils/admin-presenter'
 
 /**
@@ -42,7 +46,9 @@ const providerOptions = computed(() =>
 )
 
 const header = computed(() =>
-  props.probe ? t('adminPage.probe.editTitle') : t('adminPage.probe.createTitle'),
+  props.probe
+    ? t('adminPage.probe.editTitle')
+    : t('adminPage.probe.createTitle'),
 )
 
 const message = computed(() => props.error || localError.value)
@@ -97,42 +103,86 @@ function submit() {
     v-model:visible="visible"
     :header="header"
     width="min(560px, calc(100vw - 32px))"
-    :confirm-btn="{ content: t('adminPage.common.confirm'), loading: submitting }"
+    :confirm-btn="{
+      content: t('adminPage.common.confirm'),
+      loading: submitting,
+    }"
     :cancel-btn="t('adminPage.common.cancel')"
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="message" theme="error" :message="message" class="probe-editor__error" />
+    <t-alert
+      v-if="message"
+      theme="error"
+      :message="message"
+      class="probe-editor__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+    >
       <t-form-item :label="t('adminPage.probe.formName')">
-        <t-input v-model="form.name" :maxlength="100" :placeholder="t('adminPage.probe.formNamePlaceholder')" />
+        <t-input
+          v-model="form.name"
+          :maxlength="100"
+          :placeholder="t('adminPage.probe.formNamePlaceholder')"
+        />
       </t-form-item>
 
       <t-form-item :label="t('adminPage.probe.formProvider')">
-        <t-select v-model="form.provider" :options="providerOptions" />
+        <t-select
+          v-model="form.provider"
+          :options="providerOptions"
+        />
       </t-form-item>
 
       <t-form-item :label="t('adminPage.probe.formRegion')">
-        <t-input v-model="form.region" :placeholder="t('adminPage.probe.formRegionPlaceholder')" />
+        <t-input
+          v-model="form.region"
+          :placeholder="t('adminPage.probe.formRegionPlaceholder')"
+        />
       </t-form-item>
 
       <t-form-item :label="t('adminPage.probe.formCallbackUrl')">
-        <t-input v-model="form.callbackUrl" :placeholder="t('adminPage.probe.formCallbackUrlPlaceholder')" />
+        <t-input
+          v-model="form.callbackUrl"
+          :placeholder="t('adminPage.probe.formCallbackUrlPlaceholder')"
+        />
       </t-form-item>
 
       <t-form-item>
-        <t-space direction="vertical" size="4px">
-          <t-checkbox v-model="form.enabled">{{ t('adminPage.probe.formEnabled') }}</t-checkbox>
+        <t-space
+          direction="vertical"
+          size="4px"
+        >
+          <t-checkbox v-model="form.enabled">{{
+            t('adminPage.probe.formEnabled')
+          }}</t-checkbox>
         </t-space>
       </t-form-item>
 
-      <t-form-item :label="t('adminPage.probe.maxTenants')" :help="t('adminPage.probe.formMaxTenants')">
-        <t-input-number v-model="form.maxTenants" :min="0" theme="normal" />
+      <t-form-item
+        :label="t('adminPage.probe.maxTenants')"
+        :help="t('adminPage.probe.formMaxTenants')"
+      >
+        <t-input-number
+          v-model="form.maxTenants"
+          :min="0"
+          theme="normal"
+        />
       </t-form-item>
 
-      <t-form-item :label="t('adminPage.probe.priority')" :help="t('adminPage.probe.formPriority')">
-        <t-input-number v-model="form.priority" :min="0" theme="normal" />
+      <t-form-item
+        :label="t('adminPage.probe.priority')"
+        :help="t('adminPage.probe.formPriority')"
+      >
+        <t-input-number
+          v-model="form.priority"
+          :min="0"
+          theme="normal"
+        />
       </t-form-item>
     </t-form>
   </t-dialog>

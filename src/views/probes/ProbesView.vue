@@ -3,7 +3,12 @@ import { computed, onScopeDispose, ref, watch } from 'vue'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { deleteProbe, rotateProbeSecret, updateProbe, validateProbe } from '@/api/modules/probe'
+import {
+  deleteProbe,
+  rotateProbeSecret,
+  updateProbe,
+  validateProbe,
+} from '@/api/modules/probe'
 import type { TenantProbe, ProbeValidationChallenge } from '@/api/types/probe'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
@@ -30,7 +35,11 @@ import {
 } from '@/icons'
 import { useOrganizationStore } from '@/stores'
 import { permissionEpoch, sessionEpoch } from '@/utils/access-context'
-import { PROBE_PROVIDERS, probeProviderLabelKey, probeProviderTheme } from '@/utils/admin-presenter'
+import {
+  PROBE_PROVIDERS,
+  probeProviderLabelKey,
+  probeProviderTheme,
+} from '@/utils/admin-presenter'
 import { formatDateTime } from '@/utils/billing'
 import { selectProbes } from '@/utils/probe-presenter'
 
@@ -63,15 +72,22 @@ function setQuery(key: string, value: string) {
     },
   })
 }
-const search = computed({ get: () => query('q'), set: (value) => setQuery('q', value) })
+const search = computed({
+  get: () => query('q'),
+  set: (value) => setQuery('q', value),
+})
 const status = computed({
   get: () =>
-    ['ONLINE', 'OFFLINE', 'disabled'].includes(query('status')) ? query('status') : 'all',
+    ['ONLINE', 'OFFLINE', 'disabled'].includes(query('status'))
+      ? query('status')
+      : 'all',
   set: (value) => setQuery('status', value),
 })
 const provider = computed({
   get: () =>
-    PROBE_PROVIDERS.some((value) => value === query('provider')) ? query('provider') : 'all',
+    PROBE_PROVIDERS.some((value) => value === query('provider'))
+      ? query('provider')
+      : 'all',
   set: (value) => setQuery('provider', value),
 })
 const size = computed(() =>
@@ -139,11 +155,15 @@ async function confirm() {
   const current = confirmation.value
   if (!current) return
   if (current.action === 'delete') {
-    const result = await run(current.probe.id, (id) => deleteProbe(id, current.probe.id))
+    const result = await run(current.probe.id, (id) =>
+      deleteProbe(id, current.probe.id),
+    )
     if (!result) return
     MessagePlugin.success(t('probePage.deleted'))
   } else {
-    const result = await run(current.probe.id, (id) => rotateProbeSecret(id, current.probe.id))
+    const result = await run(current.probe.id, (id) =>
+      rotateProbeSecret(id, current.probe.id),
+    )
     if (!result) return
     if (result.secret)
       credential.value = {
@@ -161,8 +181,16 @@ async function confirm() {
 function showCredential(value: ProbeCredential) {
   if (canManage.value) credential.value = value
 }
-function paginate({ current, pageSize }: { current: number; pageSize: number }) {
-  void router.replace({ query: { ...route.query, page: String(current), size: String(pageSize) } })
+function paginate({
+  current,
+  pageSize,
+}: {
+  current: number
+  pageSize: number
+}) {
+  void router.replace({
+    query: { ...route.query, page: String(current), size: String(pageSize) },
+  })
 }
 </script>
 
@@ -179,19 +207,33 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
           @click="load"
           ><AppIcon :icon="RefreshIcon" /></t-button
       ></t-tooltip>
-      <t-button v-if="canManage" :disabled="!!busy" @click="edit()"
+      <t-button
+        v-if="canManage"
+        :disabled="!!busy"
+        @click="edit()"
         ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('probePage.create') }}</t-button
       >
     </HeaderActions>
-    <t-alert v-if="!canManage" theme="info" :message="t('probePage.noPermission')" />
-    <div v-else class="probe-page__surface">
+    <t-alert
+      v-if="!canManage"
+      theme="info"
+      :message="t('probePage.noPermission')"
+    />
+    <div
+      v-else
+      class="probe-page__surface"
+    >
       <ProbeInstallGuide />
       <header class="probe-page__head">
         <h3>{{ t('probePage.title') }}</h3>
         <span>{{ org.currentOrganization?.name }}</span>
       </header>
-      <t-alert v-if="actionError" theme="error" :message="actionError" />
+      <t-alert
+        v-if="actionError"
+        theme="error"
+        :message="actionError"
+      />
       <div class="probe-page__filters">
         <t-input
           v-model="search"
@@ -216,42 +258,69 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
           :aria-label="t('probePage.allProviders')"
           :options="[
             { value: 'all', label: t('probePage.allProviders') },
-            ...PROBE_PROVIDERS.map((value) => ({ value, label: t(probeProviderLabelKey(value)) })),
+            ...PROBE_PROVIDERS.map((value) => ({
+              value,
+              label: t(probeProviderLabelKey(value)),
+            })),
           ]"
         />
       </div>
-      <div v-if="error" class="probe-page__state">
-        <t-alert theme="error" :message="error" /><t-button @click="load">{{
-          t('probePage.retry')
-        }}</t-button>
+      <div
+        v-if="error"
+        class="probe-page__state"
+      >
+        <t-alert
+          theme="error"
+          :message="error"
+        /><t-button @click="load">{{ t('probePage.retry') }}</t-button>
       </div>
-      <div v-else-if="loading" class="probe-page__state">
+      <div
+        v-else-if="loading"
+        class="probe-page__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
       <template v-else-if="rows.length">
         <div class="probe-page__table-head">
           <span>{{ t('probePage.name') }}</span
           ><span>{{ t('probePage.region') }}</span
-          ><span>{{ t('probePage.status') }}</span> <span>{{ t('probePage.heartbeat') }}</span
+          ><span>{{ t('probePage.status') }}</span>
+          <span>{{ t('probePage.heartbeat') }}</span
           ><span>{{ t('probePage.monitors') }}</span
           ><span>{{ t('probePage.actions') }}</span>
         </div>
-        <article v-for="probe in rows" :key="probe.id" class="probe-row">
+        <article
+          v-for="probe in rows"
+          :key="probe.id"
+          class="probe-row"
+        >
           <div class="probe-row__identity">
-            <button class="probe-row__name" @click="openDetail(probe)">
+            <button
+              class="probe-row__name"
+              @click="openDetail(probe)"
+            >
               <AppIcon :icon="ServerIcon" />{{ probe.name }}
             </button>
             <small>{{ probe.id }}</small>
-            <t-tag size="small" variant="light" :theme="probeProviderTheme(probe.provider)">{{
-              t(probeProviderLabelKey(probe.provider))
-            }}</t-tag>
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="probeProviderTheme(probe.provider)"
+              >{{ t(probeProviderLabelKey(probe.provider)) }}</t-tag
+            >
           </div>
           <span class="probe-row__region">{{ probe.region }}</span>
           <div class="probe-row__status">
             <t-tag
               size="small"
               variant="light"
-              :theme="!probe.enabled ? 'default' : probe.status === 'ONLINE' ? 'success' : 'danger'"
+              :theme="
+                !probe.enabled
+                  ? 'default'
+                  : probe.status === 'ONLINE'
+                    ? 'success'
+                    : 'danger'
+              "
             >
               {{
                 t(
@@ -272,7 +341,9 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
             />
           </div>
           <time class="probe-row__heartbeat">{{
-            probe.lastHeartbeat ? formatDateTime(probe.lastHeartbeat) : t('probePage.never')
+            probe.lastHeartbeat
+              ? formatDateTime(probe.lastHeartbeat)
+              : t('probePage.never')
           }}</time>
           <span class="probe-row__count">{{ probe.monitors.length }}</span>
           <div class="probe-row__actions">
@@ -332,12 +403,23 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
           @change="paginate"
         />
       </template>
-      <div v-else class="probe-page__state">
-        <AppIcon :icon="ServerIcon" :size="32" />
-        <p>{{ t(probes.length ? 'probePage.noMatches' : 'probePage.empty') }}</p>
-        <t-button v-if="probes.length" variant="outline" @click="router.replace({ query: {} })">{{
-          t('probePage.reset')
-        }}</t-button>
+      <div
+        v-else
+        class="probe-page__state"
+      >
+        <AppIcon
+          :icon="ServerIcon"
+          :size="32"
+        />
+        <p>
+          {{ t(probes.length ? 'probePage.noMatches' : 'probePage.empty') }}
+        </p>
+        <t-button
+          v-if="probes.length"
+          variant="outline"
+          @click="router.replace({ query: {} })"
+          >{{ t('probePage.reset') }}</t-button
+        >
       </div>
     </div>
     <ProbeEditorDialog
@@ -361,7 +443,13 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
     />
     <t-dialog
       :visible="!!confirmation"
-      :header="t(confirmation?.action === 'delete' ? 'probePage.delete' : 'probePage.rotate')"
+      :header="
+        t(
+          confirmation?.action === 'delete'
+            ? 'probePage.delete'
+            : 'probePage.rotate',
+        )
+      "
       width="min(480px, calc(100vw - 32px))"
       :confirm-btn="{ content: t('common.confirm'), loading: !!busy }"
       :cancel-btn="t('common.cancel')"
@@ -383,7 +471,11 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
           )
         }}
       </p>
-      <t-alert v-if="actionError" theme="error" :message="actionError" />
+      <t-alert
+        v-if="actionError"
+        theme="error"
+        :message="actionError"
+      />
     </t-dialog>
   </section>
 </template>
@@ -419,7 +511,9 @@ function paginate({ current, pageSize }: { current: number; pageSize: number }) 
   &__table-head,
   .probe-row {
     display: grid;
-    grid-template-columns: minmax(170px, 1fr) minmax(80px, 110px) 110px 145px 70px 170px;
+    grid-template-columns:
+      minmax(170px, 1fr) minmax(80px, 110px)
+      110px 145px 70px 170px;
     gap: 12px;
     align-items: center;
     padding: 14px 0;

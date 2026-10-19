@@ -15,7 +15,9 @@ export interface ProbeCredential {
   expiresAt?: string
   apiUrl?: string
 }
-const credential = defineModel<ProbeCredential | null>('credential', { required: true })
+const credential = defineModel<ProbeCredential | null>('credential', {
+  required: true,
+})
 const { t } = useI18n()
 const visible = computed({
   get: () => credential.value !== null,
@@ -37,14 +39,17 @@ watch(visible, (value) => {
   else pause()
 })
 const expired = computed(
-  () => !!credential.value?.expiresAt && Date.parse(credential.value.expiresAt) <= now.value,
+  () =>
+    !!credential.value?.expiresAt &&
+    Date.parse(credential.value.expiresAt) <= now.value,
 )
 async function copy() {
   const value = credential.value?.value
   if (!value || expired.value) return
   try {
     await navigator.clipboard.writeText(value)
-    if (credential.value?.value === value) MessagePlugin.success(t('probePage.copied'))
+    if (credential.value?.value === value)
+      MessagePlugin.success(t('probePage.copied'))
   } catch {
     MessagePlugin.warning(t('probePage.copyFailed'))
   }
@@ -54,16 +59,29 @@ async function copy() {
 <template>
   <t-dialog
     v-model:visible="visible"
-    :header="t(credential?.kind === 'install' ? 'probePage.installTitle' : 'probePage.secretTitle')"
+    :header="
+      t(
+        credential?.kind === 'install'
+          ? 'probePage.installTitle'
+          : 'probePage.secretTitle',
+      )
+    "
     width="min(680px, calc(100vw - 32px))"
     :footer="false"
     destroy-on-close
   >
-    <div v-if="credential" class="probe-credential">
+    <div
+      v-if="credential"
+      class="probe-credential"
+    >
       <t-alert
         theme="warning"
         :message="
-          t(credential.kind === 'install' ? 'probePage.installWarning' : 'probePage.secretWarning')
+          t(
+            credential.kind === 'install'
+              ? 'probePage.installWarning'
+              : 'probePage.secretWarning',
+          )
         "
       />
       <t-alert
@@ -86,8 +104,15 @@ async function copy() {
           <dd>{{ formatDateTime(credential.expiresAt) }}</dd>
         </div>
       </dl>
-      <t-alert v-if="expired" theme="error" :message="t('probePage.expired')" />
-      <div v-else class="probe-credential__value">
+      <t-alert
+        v-if="expired"
+        theme="error"
+        :message="t('probePage.expired')"
+      />
+      <div
+        v-else
+        class="probe-credential__value"
+      >
         <code>{{ credential.value }}</code>
         <t-tooltip :content="t('probePage.copy')"
           ><t-button
@@ -99,6 +124,14 @@ async function copy() {
         ></t-tooltip>
       </div>
     </div>
+
+    <template #footer>
+      <t-button
+        theme="primary"
+        @click="visible = false"
+        >{{ t('common.close') }}</t-button
+      >
+    </template>
   </t-dialog>
 </template>
 

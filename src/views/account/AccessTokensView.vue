@@ -26,7 +26,8 @@ import {
 defineOptions({ name: 'AccessTokensView' })
 
 const { t } = useI18n()
-const { tokens, loading, error, pendingId, load, act } = usePersonalAccessTokens()
+const { tokens, loading, error, pendingId, load, act } =
+  usePersonalAccessTokens()
 
 const createVisible = ref(false)
 const secretVisible = ref(false)
@@ -37,7 +38,9 @@ onMounted(load)
 onActivated(load)
 
 function patScopeSummary(token: PersonalAccessToken) {
-  return token.scopes.map((scope) => t(patScopeLabelKey(scope))).join(' · ') || '—'
+  return (
+    token.scopes.map((scope) => t(patScopeLabelKey(scope))).join(' · ') || '—'
+  )
 }
 
 function patStateLabel(token: PersonalAccessToken) {
@@ -89,16 +92,32 @@ function revoke(token: PersonalAccessToken) {
 
       <p class="access-tokens__subtitle">{{ t('access.patHint') }}</p>
 
-      <div v-if="error" class="access-tokens__state">
-        <t-alert theme="error" :message="t('workspace.pat.loadFailed')" />
-        <t-button variant="outline" @click="load">{{ t('workspace.security.refresh') }}</t-button>
+      <div
+        v-if="error"
+        class="access-tokens__state"
+      >
+        <t-alert
+          theme="error"
+          :message="t('workspace.pat.loadFailed')"
+        />
+        <t-button
+          variant="outline"
+          @click="load"
+          >{{ t('workspace.security.refresh') }}</t-button
+        >
       </div>
 
-      <div v-else-if="loading && !tokens.length" class="access-tokens__state">
+      <div
+        v-else-if="loading && !tokens.length"
+        class="access-tokens__state"
+      >
         <t-loading :text="t('common.loading')" />
       </div>
 
-      <div v-else-if="tokens.length" class="access-tokens__table">
+      <div
+        v-else-if="tokens.length"
+        class="access-tokens__table"
+      >
         <div class="access-tokens__table-head">
           <span>{{ t('workspace.pat.name') }}</span>
           <span>{{ t('workspace.pat.scopes') }}</span>
@@ -108,10 +127,21 @@ function revoke(token: PersonalAccessToken) {
           <span>{{ t('workspace.pat.revoke') }}</span>
         </div>
 
-        <article v-for="token in tokens" :key="token.id" class="access-token-row">
-          <span class="access-token-row__name" :title="token.name">{{ token.name }}</span>
+        <article
+          v-for="token in tokens"
+          :key="token.id"
+          class="access-token-row"
+        >
+          <span
+            class="access-token-row__name"
+            :title="token.name"
+            >{{ token.name }}</span
+          >
 
-          <p class="access-token-row__scopes" :title="patScopeSummary(token)">
+          <p
+            class="access-token-row__scopes"
+            :title="patScopeSummary(token)"
+          >
             {{ patScopeSummary(token) }}
           </p>
 
@@ -120,13 +150,21 @@ function revoke(token: PersonalAccessToken) {
           </span>
 
           <span>
-            <t-tag size="small" variant="light" :theme="patStateTheme(patState(token))">
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="patStateTheme(patState(token))"
+            >
               {{ patStateLabel(token) }}
             </t-tag>
           </span>
 
           <span class="access-token-row__muted">
-            {{ token.lastUsedAt ? formatDateTime(token.lastUsedAt) : t('workspace.pat.neverUsed') }}
+            {{
+              token.lastUsedAt
+                ? formatDateTime(token.lastUsedAt)
+                : t('workspace.pat.neverUsed')
+            }}
           </span>
 
           <div class="access-token-row__actions">
@@ -144,20 +182,37 @@ function revoke(token: PersonalAccessToken) {
                 {{ t('workspace.pat.revoke') }}
               </t-button>
             </t-popconfirm>
-            <span v-else class="access-token-row__locked">—</span>
+            <span
+              v-else
+              class="access-token-row__locked"
+              >—</span
+            >
           </div>
         </article>
       </div>
 
-      <div v-else class="access-tokens__state">
+      <div
+        v-else
+        class="access-tokens__state"
+      >
         <p class="access-tokens__empty">{{ t('workspace.pat.empty') }}</p>
-        <p class="access-tokens__empty-hint">{{ t('workspace.pat.emptyHint') }}</p>
-        <t-button @click="createVisible = true">{{ t('workspace.pat.create') }}</t-button>
+        <p class="access-tokens__empty-hint">
+          {{ t('workspace.pat.emptyHint') }}
+        </p>
+        <t-button @click="createVisible = true">{{
+          t('workspace.pat.create')
+        }}</t-button>
       </div>
     </t-card>
 
-    <PersonalAccessTokenCreateDialog v-model:visible="createVisible" @created="onCreated" />
-    <PersonalAccessTokenSecretDialog v-model:visible="secretVisible" :secret="secret" />
+    <PersonalAccessTokenCreateDialog
+      v-model:visible="createVisible"
+      @created="onCreated"
+    />
+    <PersonalAccessTokenSecretDialog
+      v-model:visible="secretVisible"
+      :secret="secret"
+    />
   </section>
 </template>
 
@@ -195,7 +250,9 @@ function revoke(token: PersonalAccessToken) {
   &__table-head,
   .access-token-row {
     display: grid;
-    grid-template-columns: minmax(140px, 1fr) minmax(160px, 1.4fr) 140px 80px 130px 80px;
+    grid-template-columns:
+      minmax(140px, 1fr) minmax(160px, 1.4fr)
+      140px 80px 130px 80px;
     gap: 16px;
     align-items: center;
     padding: 12px 16px;

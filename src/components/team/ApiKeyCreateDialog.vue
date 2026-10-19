@@ -33,7 +33,10 @@ const error = ref('')
 let generation = 0
 
 const scopeOptions = computed(() =>
-  API_KEY_SCOPES.map((scope) => ({ label: t(apiKeyScopeLabelKey(scope)), value: scope })),
+  API_KEY_SCOPES.map((scope) => ({
+    label: t(apiKeyScopeLabelKey(scope)),
+    value: scope,
+  })),
 )
 
 watch(
@@ -66,7 +69,8 @@ function validate(): string {
   if (form.expiry === 'custom') {
     if (!form.expiresAt) return t('workspace.apiKey.expiresInvalid')
     const expires = dayjs(form.expiresAt)
-    if (!expires.isValid() || !expires.isAfter(dayjs())) return t('workspace.apiKey.expiresInvalid')
+    if (!expires.isValid() || !expires.isAfter(dayjs()))
+      return t('workspace.apiKey.expiresInvalid')
   }
   return ''
 }
@@ -85,11 +89,18 @@ async function submit() {
   try {
     const id = props.orgId
     await permissions.ensureOrganization(id, true)
-    if (token !== generation || !visible.value || !permissions.canOrganization(id)) return
+    if (
+      token !== generation ||
+      !visible.value ||
+      !permissions.canOrganization(id)
+    )
+      return
     const result = await createApiKey(id, {
       name: form.name.trim(),
       scopes: [...form.scopes],
-      ...(form.expiry === 'custom' ? { expiresAt: dayjs(form.expiresAt).toISOString() } : {}),
+      ...(form.expiry === 'custom'
+        ? { expiresAt: dayjs(form.expiresAt).toISOString() }
+        : {}),
     })
     if (token !== generation) return
     MessagePlugin.success(t('workspace.apiKey.created'))
@@ -97,7 +108,10 @@ async function submit() {
     emit('created', result.key ?? '')
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('workspace.apiKey.createFailed')
+      error.value =
+        cause instanceof Error
+          ? cause.message
+          : t('workspace.apiKey.createFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -109,14 +123,26 @@ async function submit() {
     v-model:visible="visible"
     :header="t('workspace.apiKey.createTitle')"
     width="min(520px, calc(100vw - 32px))"
-    :confirm-btn="{ content: t('workspace.apiKey.create'), loading: submitting }"
+    :confirm-btn="{
+      content: t('workspace.apiKey.create'),
+      loading: submitting,
+    }"
     :cancel-btn="t('common.cancel')"
     :close-on-overlay-click="!submitting"
     @confirm="submit"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="api-key-create__error" />
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="api-key-create__error"
+    />
 
-    <t-form label-align="top" :colon="false" :data="form">
+    <t-form
+      label-align="top"
+      :colon="false"
+      :data="form"
+    >
       <t-form-item :label="t('workspace.apiKey.name')">
         <t-input
           v-model="form.name"
@@ -125,15 +151,25 @@ async function submit() {
         />
       </t-form-item>
 
-      <t-form-item :label="t('workspace.apiKey.scopes')" :help="t('workspace.apiKey.scopesHint')">
-        <t-checkbox-group v-model="form.scopes" :options="scopeOptions" />
+      <t-form-item
+        :label="t('workspace.apiKey.scopes')"
+        :help="t('workspace.apiKey.scopesHint')"
+      >
+        <t-checkbox-group
+          v-model="form.scopes"
+          :options="scopeOptions"
+        />
       </t-form-item>
 
       <t-form-item :label="t('workspace.apiKey.expiresAt')">
         <div class="api-key-create__expiry">
           <t-radio-group v-model="form.expiry">
-            <t-radio value="never">{{ t('workspace.apiKey.expiresNever') }}</t-radio>
-            <t-radio value="custom">{{ t('workspace.apiKey.expiresCustom') }}</t-radio>
+            <t-radio value="never">{{
+              t('workspace.apiKey.expiresNever')
+            }}</t-radio>
+            <t-radio value="custom">{{
+              t('workspace.apiKey.expiresCustom')
+            }}</t-radio>
           </t-radio-group>
           <t-date-picker
             v-if="form.expiry === 'custom'"

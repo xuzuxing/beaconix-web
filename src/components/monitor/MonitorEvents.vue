@@ -2,7 +2,11 @@
 import { useI18n } from 'vue-i18n'
 import type { MonitorInsights } from '@/api/types/monitor-detail'
 import { formatMonitorTime } from '@/utils/monitor-presenter'
-const props = defineProps<{ events: MonitorInsights['events']; asOf: string; tz: string }>()
+const props = defineProps<{
+  events: MonitorInsights['events']
+  asOf: string
+  tz: string
+}>()
 const { t, locale } = useI18n()
 function duration(event: MonitorInsights['events'][number]) {
   const seconds =
@@ -19,8 +23,15 @@ const suppression = (reason: string) =>
 </script>
 
 <template>
-  <div v-if="events.length" class="monitor-events">
-    <article v-for="event in events" :key="event.id" class="monitor-event">
+  <div
+    v-if="events.length"
+    class="monitor-events"
+  >
+    <article
+      v-for="event in events"
+      :key="event.id"
+      class="monitor-event"
+    >
       <div class="monitor-event__head">
         <strong>{{ t(`monitorPage.eventKind.${event.kind}`) }}</strong>
         <t-tag
@@ -34,15 +45,26 @@ const suppression = (reason: string) =>
                 : 'warning'
           "
           >{{
-            t(event.status === 'resolved' ? 'monitorPage.resolved' : 'monitorPage.active')
+            t(
+              event.status === 'resolved'
+                ? 'monitorPage.resolved'
+                : 'monitorPage.active',
+            )
           }}</t-tag
         >
         <span>{{
-          t(event.level === 'critical' ? 'monitorPage.critical' : 'monitorPage.warning')
+          t(
+            event.level === 'critical'
+              ? 'monitorPage.critical'
+              : 'monitorPage.warning',
+          )
         }}</span>
-        <t-tag v-if="event.origin === 'BASELINE'" size="small" variant="outline">{{
-          t('monitorPage.baseline')
-        }}</t-tag>
+        <t-tag
+          v-if="event.origin === 'BASELINE'"
+          size="small"
+          variant="outline"
+          >{{ t('monitorPage.baseline') }}</t-tag
+        >
       </div>
       <p>{{ event.message || event.reason }}</p>
       <div class="monitor-event__meta">
@@ -55,12 +77,19 @@ const suppression = (reason: string) =>
           {{ formatMonitorTime(event.resolvedAt, locale, tz) }}</span
         >
         <span>{{ t('monitorPage.duration') }} · {{ duration(event) }}</span>
-        <span>{{ t(event.notified ? 'monitorPage.notified' : 'monitorPage.unnotified') }}</span>
-        <span v-if="event.suppressedReason">{{ suppression(event.suppressedReason) }}</span>
+        <span>{{
+          t(event.notified ? 'monitorPage.notified' : 'monitorPage.unnotified')
+        }}</span>
+        <span v-if="event.suppressedReason">{{
+          suppression(event.suppressedReason)
+        }}</span>
       </div>
     </article>
   </div>
-  <t-empty v-else :description="t('monitorPage.noEvents')" />
+  <t-empty
+    v-else
+    :description="t('monitorPage.noEvents')"
+  />
 </template>
 
 <style scoped lang="less">

@@ -4,7 +4,12 @@ import { useI18n } from 'vue-i18n'
 
 import AppIcon from '@/components/AppIcon.vue'
 import { guideCategories, type GuideStep } from '@/config/guide'
-import { ArrowDown01Icon, ArrowRight01Icon, Cancel01Icon, LinkSquare02Icon } from '@/icons'
+import {
+  ArrowDown01Icon,
+  ArrowRight01Icon,
+  Cancel01Icon,
+  LinkSquare02Icon,
+} from '@/icons'
 
 import CodeBlock from './CodeBlock.vue'
 
@@ -22,27 +27,36 @@ const categories = guideCategories
 
 const activeCategoryKey = ref(categories[0]!.key)
 const activeSubKey = ref(categories[0]!.subCategories[0]!.key)
-const activeScenarioKey = ref(categories[0]!.subCategories[0]!.scenarios[0]!.key)
+const activeScenarioKey = ref(
+  categories[0]!.subCategories[0]!.scenarios[0]!.key,
+)
 /** 各步骤展开状态与当前选中的代码页签 */
 const expandedSteps = ref<string[]>([])
 const codeTabs = ref<Record<string, string>>({})
 
 const activeCategory = computed(
-  () => categories.find((item) => item.key === activeCategoryKey.value) ?? categories[0]!,
+  () =>
+    categories.find((item) => item.key === activeCategoryKey.value) ??
+    categories[0]!,
 )
 const activeSub = computed(
   () =>
-    activeCategory.value.subCategories.find((item) => item.key === activeSubKey.value) ??
-    activeCategory.value.subCategories[0]!,
+    activeCategory.value.subCategories.find(
+      (item) => item.key === activeSubKey.value,
+    ) ?? activeCategory.value.subCategories[0]!,
 )
 const activeScenario = computed(
   () =>
-    activeSub.value.scenarios.find((item) => item.key === activeScenarioKey.value) ??
-    activeSub.value.scenarios[0]!,
+    activeSub.value.scenarios.find(
+      (item) => item.key === activeScenarioKey.value,
+    ) ?? activeSub.value.scenarios[0]!,
 )
 
 const scenarioOptions = computed(() =>
-  activeSub.value.scenarios.map((item) => ({ content: t(item.nameKey), value: item.key })),
+  activeSub.value.scenarios.map((item) => ({
+    content: t(item.nameKey),
+    value: item.key,
+  })),
 )
 
 function selectCategory(key: string) {
@@ -54,7 +68,9 @@ function selectCategory(key: string) {
 
 function selectSub(key: string) {
   activeSubKey.value = key
-  const sub = activeCategory.value.subCategories.find((item) => item.key === key)!
+  const sub = activeCategory.value.subCategories.find(
+    (item) => item.key === key,
+  )!
   activeScenarioKey.value = sub.scenarios[0]!.key
 }
 
@@ -81,7 +97,10 @@ function setCodeTab(stepKey: string, tabKey: string) {
 }
 
 function activeCode(step: GuideStep) {
-  return step.codeTabs.find((tab) => tab.key === currentCodeTab(step)) ?? step.codeTabs[0]!
+  return (
+    step.codeTabs.find((tab) => tab.key === currentCodeTab(step)) ??
+    step.codeTabs[0]!
+  )
 }
 
 // 切换场景时默认展开第一步，其余折叠
@@ -119,25 +138,38 @@ watch(
     </template>
 
     <div class="guide-dialog__body">
-      <t-alert theme="info" :message="t('access.patHint')" />
+      <t-alert
+        theme="info"
+        :message="t('access.patHint')"
+      />
       <!-- 一级分类：标题 + 说明 -->
       <ul class="guide-dialog__categories">
-        <li v-for="category in categories" :key="category.key">
+        <li
+          v-for="category in categories"
+          :key="category.key"
+        >
           <button
             type="button"
             class="guide-dialog__category"
             :class="{ 'is-active': category.key === activeCategoryKey }"
             @click="selectCategory(category.key)"
           >
-            <span class="guide-dialog__category-title">{{ t(category.titleKey) }}</span>
-            <span class="guide-dialog__category-desc">{{ t(category.descKey) }}</span>
+            <span class="guide-dialog__category-title">{{
+              t(category.titleKey)
+            }}</span>
+            <span class="guide-dialog__category-desc">{{
+              t(category.descKey)
+            }}</span>
           </button>
         </li>
       </ul>
 
       <!-- 二级分类 -->
       <ul class="guide-dialog__sub-categories">
-        <li v-for="sub in activeCategory.subCategories" :key="sub.key">
+        <li
+          v-for="sub in activeCategory.subCategories"
+          :key="sub.key"
+        >
           <button
             type="button"
             class="guide-dialog__sub-category"
@@ -151,16 +183,31 @@ watch(
 
       <!-- 场景选择 + 详细文档 -->
       <div class="guide-dialog__scenario">
-        <t-dropdown trigger="click" :options="scenarioOptions" @click="selectScenario">
-          <button type="button" class="guide-dialog__scenario-btn">
+        <t-dropdown
+          trigger="click"
+          :options="scenarioOptions"
+          @click="selectScenario"
+        >
+          <button
+            type="button"
+            class="guide-dialog__scenario-btn"
+          >
             <span>{{ t(activeScenario.nameKey) }}</span>
             <AppIcon :icon="ArrowDown01Icon" />
           </button>
         </t-dropdown>
 
-        <a class="guide-dialog__doc" :href="activeScenario.docUrl" target="_blank" rel="noreferrer">
+        <a
+          class="guide-dialog__doc"
+          :href="activeScenario.docUrl"
+          target="_blank"
+          rel="noreferrer"
+        >
           {{ t('guide.detailDoc') }}
-          <AppIcon :icon="LinkSquare02Icon" :size="14" />
+          <AppIcon
+            :icon="LinkSquare02Icon"
+            :size="14"
+          />
         </a>
       </div>
 
@@ -173,7 +220,10 @@ watch(
         >
           <div class="guide-dialog__step-rail">
             <span class="guide-dialog__step-num">{{ index + 1 }}</span>
-            <span v-if="index < activeScenario.steps.length - 1" class="guide-dialog__step-line" />
+            <span
+              v-if="index < activeScenario.steps.length - 1"
+              class="guide-dialog__step-line"
+            />
           </div>
 
           <div class="guide-dialog__step-body">
@@ -185,17 +235,30 @@ watch(
             >
               <AppIcon
                 class="guide-dialog__step-caret"
-                :icon="isStepExpanded(step) ? ArrowDown01Icon : ArrowRight01Icon"
+                :icon="
+                  isStepExpanded(step) ? ArrowDown01Icon : ArrowRight01Icon
+                "
                 :size="16"
               />
               <span>{{ t(step.titleKey) }}</span>
             </button>
 
-            <div v-show="isStepExpanded(step)" class="guide-dialog__step-content">
-              <p v-if="step.descKey" class="guide-dialog__step-desc">{{ t(step.descKey) }}</p>
+            <div
+              v-show="isStepExpanded(step)"
+              class="guide-dialog__step-content"
+            >
+              <p
+                v-if="step.descKey"
+                class="guide-dialog__step-desc"
+              >
+                {{ t(step.descKey) }}
+              </p>
 
               <ul class="guide-dialog__code-tabs">
-                <li v-for="tab in step.codeTabs" :key="tab.key">
+                <li
+                  v-for="tab in step.codeTabs"
+                  :key="tab.key"
+                >
                   <button
                     type="button"
                     class="guide-dialog__code-tab"
@@ -207,7 +270,10 @@ watch(
                 </li>
               </ul>
 
-              <CodeBlock :code="activeCode(step).code" :language="activeCode(step).language" />
+              <CodeBlock
+                :code="activeCode(step).code"
+                :language="activeCode(step).language"
+              />
             </div>
           </div>
         </li>

@@ -13,7 +13,11 @@ const { t } = useI18n()
 <template>
   <t-card :bordered="false">
     <div class="placeholder">
-      <AppIcon class="placeholder__icon" :icon="AppWindowIcon" :size="40" />
+      <AppIcon
+        class="placeholder__icon"
+        :icon="AppWindowIcon"
+        :size="40"
+      />
       <p class="placeholder__title">{{ t('placeholder.title') }}</p>
       <p class="placeholder__desc">{{ t('placeholder.desc') }}</p>
     </div>

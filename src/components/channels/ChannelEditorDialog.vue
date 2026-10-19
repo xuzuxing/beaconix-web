@@ -4,7 +4,10 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { createNotificationChannel, updateNotificationChannel } from '@/api'
-import type { NotificationChannel, NotificationChannelType } from '@/api/types/notification'
+import type {
+  NotificationChannel,
+  NotificationChannelType,
+} from '@/api/types/notification'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { permissionEpoch } from '@/utils/access-context'
 import {
@@ -44,10 +47,15 @@ const form = reactive({
 })
 
 const typeOptions = computed(() =>
-  CHANNEL_TYPES.map((type) => ({ label: t(`channelPage.type.${type}`), value: type })),
+  CHANNEL_TYPES.map((type) => ({
+    label: t(`channelPage.type.${type}`),
+    value: type,
+  })),
 )
 const isWebhook = computed(() => isWebhookChannelType(form.type))
-const webhookPlaceholder = computed(() => t(`channelPage.webhookPlaceholder.${form.type}`))
+const webhookPlaceholder = computed(() =>
+  t(`channelPage.webhookPlaceholder.${form.type}`),
+)
 
 /** 按当前类型组装 config（空的可选字段不提交） */
 function buildConfig(): Record<string, unknown> {
@@ -79,7 +87,8 @@ function validate(): string {
   if (form.type === 'WECHAT_SUBSCRIBE') {
     if (!form.appId.trim() || !form.appSecret.trim() || !form.templateId.trim())
       return t('channelPage.required')
-    if (!parseListInput(form.openIds).length) return t('channelPage.openIdsRequired')
+    if (!parseListInput(form.openIds).length)
+      return t('channelPage.openIdsRequired')
     return ''
   }
   const recipients = parseListInput(form.recipients)
@@ -132,7 +141,12 @@ async function save() {
   submitting.value = true
   try {
     await permissions.ensureOrganization(orgId, true)
-    if (token !== generation || !visible.value || !permissions.canOrganization(orgId)) return
+    if (
+      token !== generation ||
+      !visible.value ||
+      !permissions.canOrganization(orgId)
+    )
+      return
     const payload = {
       type: form.type,
       name: form.name.trim(),
@@ -143,12 +157,15 @@ async function save() {
       ? await updateNotificationChannel(orgId, editing, payload)
       : await createNotificationChannel(orgId, payload)
     if (token !== generation) return
-    MessagePlugin.success(t(editing ? 'channelPage.updated' : 'channelPage.created'))
+    MessagePlugin.success(
+      t(editing ? 'channelPage.updated' : 'channelPage.created'),
+    )
     visible.value = false
     emit('saved', result)
   } catch (cause) {
     if (token === generation)
-      error.value = cause instanceof Error ? cause.message : t('channelPage.saveFailed')
+      error.value =
+        cause instanceof Error ? cause.message : t('channelPage.saveFailed')
   } finally {
     if (token === generation) submitting.value = false
   }
@@ -165,18 +182,35 @@ async function save() {
     :close-on-overlay-click="!submitting"
     @confirm="save"
   >
-    <t-alert v-if="error" theme="error" :message="error" class="editor-error" />
-    <t-form :data="form" label-align="top" :colon="false">
+    <t-alert
+      v-if="error"
+      theme="error"
+      :message="error"
+      class="editor-error"
+    />
+    <t-form
+      :data="form"
+      label-align="top"
+      :colon="false"
+    >
       <t-form-item :label="t('channelPage.name')"
-        ><t-input v-model="form.name" :maxlength="100"
+        ><t-input
+          v-model="form.name"
+          :maxlength="100"
       /></t-form-item>
       <t-form-item :label="t('channelPage.typeLabel')">
-        <t-select v-model="form.type" :options="typeOptions" />
+        <t-select
+          v-model="form.type"
+          :options="typeOptions"
+        />
       </t-form-item>
 
       <template v-if="isWebhook">
         <t-form-item :label="t('channelPage.webhookUrl')"
-          ><t-input v-model="form.webhookUrl" :maxlength="2048" :placeholder="webhookPlaceholder"
+          ><t-input
+            v-model="form.webhookUrl"
+            :maxlength="2048"
+            :placeholder="webhookPlaceholder"
         /></t-form-item>
         <t-form-item :label="t('channelPage.secret')"
           ><t-input
@@ -189,24 +223,39 @@ async function save() {
 
       <template v-else-if="form.type === 'WECHAT_SUBSCRIBE'">
         <t-form-item :label="t('channelPage.appId')"
-          ><t-input v-model="form.appId" :maxlength="128"
+          ><t-input
+            v-model="form.appId"
+            :maxlength="128"
         /></t-form-item>
         <t-form-item :label="t('channelPage.appSecret')"
-          ><t-input v-model="form.appSecret" type="password" :maxlength="256"
+          ><t-input
+            v-model="form.appSecret"
+            type="password"
+            :maxlength="256"
         /></t-form-item>
         <t-form-item :label="t('channelPage.templateId')"
-          ><t-input v-model="form.templateId" :maxlength="256"
+          ><t-input
+            v-model="form.templateId"
+            :maxlength="256"
         /></t-form-item>
         <t-form-item :label="t('channelPage.openIds')"
-          ><t-textarea v-model="form.openIds" :autosize="{ minRows: 3, maxRows: 8 }"
+          ><t-textarea
+            v-model="form.openIds"
+            :autosize="{ minRows: 3, maxRows: 8 }"
         /></t-form-item>
         <t-form-item :label="t('channelPage.page')"
-          ><t-input v-model="form.page" :maxlength="512"
+          ><t-input
+            v-model="form.page"
+            :maxlength="512"
         /></t-form-item>
       </template>
 
-      <t-form-item v-else :label="t('channelPage.recipients')"
-        ><t-textarea v-model="form.recipients" :autosize="{ minRows: 3, maxRows: 8 }"
+      <t-form-item
+        v-else
+        :label="t('channelPage.recipients')"
+        ><t-textarea
+          v-model="form.recipients"
+          :autosize="{ minRows: 3, maxRows: 8 }"
       /></t-form-item>
 
       <t-form-item :label="t('channelPage.enabledLabel')"

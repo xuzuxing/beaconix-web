@@ -83,7 +83,12 @@ export default {
   query: '查询',
   trigger: '触发方式',
   triggerLabel: { SCHEDULED: '定时', MANUAL: '手动', CALLBACK: '回调' },
-  executionStatus: { SUCCESS: '成功', FAILED: '失败', TIMEOUT: '超时', SKIPPED: '已跳过' },
+  executionStatus: {
+    SUCCESS: '成功',
+    FAILED: '失败',
+    TIMEOUT: '超时',
+    SKIPPED: '已跳过',
+  },
   metadata: '执行元数据',
   bind: '绑定监控',
   bindPlaceholder: '选择监控项',

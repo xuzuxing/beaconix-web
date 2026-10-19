@@ -94,13 +94,20 @@ function onDrop(event: DragEvent) {
     @dragleave.prevent="dragActive = false"
     @drop.prevent="onDrop"
   >
-    <ul v-if="model.length" class="attachment-uploader__list">
+    <ul
+      v-if="model.length"
+      class="attachment-uploader__list"
+    >
       <li
         v-for="(item, index) in model"
         :key="item.fileKey || item.url"
         class="attachment-uploader__item"
       >
-        <AppIcon class="attachment-uploader__icon" :icon="fileIcon(item)" :size="16" />
+        <AppIcon
+          class="attachment-uploader__icon"
+          :icon="fileIcon(item)"
+          :size="16"
+        />
         <a
           class="attachment-uploader__name"
           :href="item.url"
@@ -110,7 +117,9 @@ function onDrop(event: DragEvent) {
         >
           {{ item.filename }}
         </a>
-        <span class="attachment-uploader__size">{{ formatFileSize(item.size) }}</span>
+        <span class="attachment-uploader__size">{{
+          formatFileSize(item.size)
+        }}</span>
         <t-button
           v-if="!disabled"
           variant="text"
@@ -130,9 +139,18 @@ function onDrop(event: DragEvent) {
       :disabled="!canAdd"
       @click="openPicker"
     >
-      <t-loading v-if="uploading" size="16px" />
-      <AppIcon v-else :icon="PlusSignIcon" :size="16" />
-      <span>{{ uploading ? t('upload.uploading') : t('upload.selectFile') }}</span>
+      <t-loading
+        v-if="uploading"
+        size="16px"
+      />
+      <AppIcon
+        v-else
+        :icon="PlusSignIcon"
+        :size="16"
+      />
+      <span>{{
+        uploading ? t('upload.uploading') : t('upload.selectFile')
+      }}</span>
       <span class="attachment-uploader__drop">{{ t('upload.dropHint') }}</span>
     </button>
 

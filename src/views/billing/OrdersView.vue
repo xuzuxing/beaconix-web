@@ -7,7 +7,12 @@ import { cancelOrder, listOrders } from '@/api'
 import type { Order, OrderStatus } from '@/api/types/billing'
 import { useOrganizationStore } from '@/stores'
 import { formatAmount, formatDateTime } from '@/utils/billing'
-import { getWechatOpenid, isWechatBrowser, payOrder, waitForOrderPaid } from '@/utils/wechat-pay'
+import {
+  getWechatOpenid,
+  isWechatBrowser,
+  payOrder,
+  waitForOrderPaid,
+} from '@/utils/wechat-pay'
 
 /** 订单管理：当前团队的购买订单，支持对待支付订单发起微信支付或取消 */
 defineOptions({ name: 'OrdersView' })
@@ -96,39 +101,71 @@ watch(orgId, load, { immediate: true })
 <template>
   <div class="orders">
     <div class="orders__bar">
-      <span class="orders__scope">{{ orgStore.currentOrganization?.name ?? '—' }}</span>
-      <t-button variant="outline" size="small" :loading="loading" @click="load">
+      <span class="orders__scope">{{
+        orgStore.currentOrganization?.name ?? '—'
+      }}</span>
+      <t-button
+        variant="outline"
+        size="small"
+        :loading="loading"
+        @click="load"
+      >
         {{ t('usage.refresh') }}
       </t-button>
     </div>
 
-    <div v-loading="loading" class="orders__panel">
-      <div v-if="orders.length" class="orders__list">
-        <div v-for="order in orders" :key="order.id" class="orders__item">
+    <div
+      v-loading="loading"
+      class="orders__panel"
+    >
+      <div
+        v-if="orders.length"
+        class="orders__list"
+      >
+        <div
+          v-for="order in orders"
+          :key="order.id"
+          class="orders__item"
+        >
           <div class="orders__main">
             <span class="orders__no">{{ order.orderNo }}</span>
-            <t-tag :theme="STATUS_THEME[order.status]" variant="light" size="small">
+            <t-tag
+              :theme="STATUS_THEME[order.status]"
+              variant="light"
+              size="small"
+            >
               {{ t(`usage.orders.status.${order.status}`) }}
             </t-tag>
           </div>
 
           <div class="orders__meta">
-            <span class="orders__plan">{{ order.plan?.name ?? order.planId }}</span>
+            <span class="orders__plan">{{
+              order.plan?.name ?? order.planId
+            }}</span>
             <span class="orders__amount">{{ formatAmount(order.amount) }}</span>
-            <span>{{ t('usage.orders.duration', { days: order.durationDays }) }}</span>
+            <span>{{
+              t('usage.orders.duration', { days: order.durationDays })
+            }}</span>
           </div>
 
           <div class="orders__time">
-            <span>{{ t('usage.orders.createdAt') }} {{ formatDateTime(order.createdAt) }}</span>
+            <span
+              >{{ t('usage.orders.createdAt') }}
+              {{ formatDateTime(order.createdAt) }}</span
+            >
             <span v-if="order.paidAt">
               {{ t('usage.orders.paidAt') }} {{ formatDateTime(order.paidAt) }}
             </span>
             <span v-else-if="order.status === 'PENDING'">
-              {{ t('usage.orders.expiresAt') }} {{ formatDateTime(order.expiresAt) }}
+              {{ t('usage.orders.expiresAt') }}
+              {{ formatDateTime(order.expiresAt) }}
             </span>
           </div>
 
-          <div v-if="order.status === 'PENDING'" class="orders__actions">
+          <div
+            v-if="order.status === 'PENDING'"
+            class="orders__actions"
+          >
             <t-button
               theme="primary"
               size="small"
@@ -141,7 +178,11 @@ watch(orgId, load, { immediate: true })
               :content="t('usage.orders.cancelConfirm')"
               @confirm="cancel(order)"
             >
-              <t-button variant="outline" size="small" :loading="cancellingId === order.id">
+              <t-button
+                variant="outline"
+                size="small"
+                :loading="cancellingId === order.id"
+              >
                 {{ t('usage.orders.cancel') }}
               </t-button>
             </t-popconfirm>
@@ -149,7 +190,12 @@ watch(orgId, load, { immediate: true })
         </div>
       </div>
 
-      <p v-else-if="!loading" class="orders__empty">{{ t('usage.orders.empty') }}</p>
+      <p
+        v-else-if="!loading"
+        class="orders__empty"
+      >
+        {{ t('usage.orders.empty') }}
+      </p>
     </div>
   </div>
 </template>

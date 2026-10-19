@@ -27,9 +27,14 @@ export const replaceMemberProjectPermissions = (
     quiet,
   )
 export const getProjectMembers = (id: string) =>
-  get<{ id: string; name: string; avatarUrl: string | null; effectiveRole: string }[]>(
-    `/projects/${id}/members`,
-  )
+  get<
+    {
+      id: string
+      name: string
+      avatarUrl: string | null
+      effectiveRole: string
+    }[]
+  >(`/projects/${id}/members`)
 export const getProjectProbeOptions = (id: string) =>
   get<{ id: string; name: string; status: string }[]>(`/projects/${id}/probe-options`)
 export const getProjectChannelOptions = (id: string) =>

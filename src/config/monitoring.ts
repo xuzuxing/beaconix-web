@@ -20,14 +20,20 @@ export const RANGE_OPTIONS: { value: MonitorRange; labelKey: string }[] = [
 ]
 
 /** 各范围的采样点数与采样间隔（分钟） */
-const RANGE_PRESETS: Record<Exclude<MonitorRange, 'today'>, { points: number; stepMinutes: number }> = {
+const RANGE_PRESETS: Record<
+  Exclude<MonitorRange, 'today'>,
+  { points: number; stepMinutes: number }
+> = {
   '1h': { points: 30, stepMinutes: 2 },
   '7d': { points: 28, stepMinutes: 360 },
   '30d': { points: 30, stepMinutes: 1440 },
 }
 
 /** 「今天」按整点采样，点数随当前时间增长（至少 4 个点，保证图表可读） */
-function resolvePreset(range: MonitorRange): { points: number; stepMinutes: number } {
+function resolvePreset(range: MonitorRange): {
+  points: number
+  stepMinutes: number
+} {
   if (range === 'today') {
     return { points: Math.max(dayjs().hour() + 1, 4), stepMinutes: 60 }
   }
@@ -158,7 +164,8 @@ export const monitorSummary = {
 
 /** 由时序派生 KPI 卡片 */
 export function buildMonitorKpis(timeline: MonitorTimeline): MonitorKpi[] {
-  const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length
+  const average = (values: number[]) =>
+    values.reduce((sum, value) => sum + value, 0) / values.length
 
   const availability = average(timeline.availability.slice(0, -1))
   const failingRate =
@@ -303,15 +310,60 @@ export const monitorTypeDistribution: { nameKey: string; value: number }[] = [
 ]
 
 /** 探针节点：名称与最近 1 小时平均延迟 */
-export const probeNodes: { name: string; regionKey: string; latency: number; online: boolean }[] = [
-  { name: 'probe-sh-01', regionKey: 'dashboard.region.shanghai', latency: 38, online: true },
-  { name: 'probe-bj-01', regionKey: 'dashboard.region.beijing', latency: 46, online: true },
-  { name: 'probe-gz-01', regionKey: 'dashboard.region.guangzhou', latency: 52, online: true },
-  { name: 'probe-cd-02', regionKey: 'dashboard.region.chengdu', latency: 74, online: true },
-  { name: 'probe-hk-01', regionKey: 'dashboard.region.hongkong', latency: 96, online: true },
-  { name: 'probe-sg-01', regionKey: 'dashboard.region.singapore', latency: 128, online: true },
-  { name: 'probe-fra-01', regionKey: 'dashboard.region.frankfurt', latency: 186, online: true },
-  { name: 'probe-sfo-01', regionKey: 'dashboard.region.siliconValley', latency: 0, online: false },
+export const probeNodes: {
+  name: string
+  regionKey: string
+  latency: number
+  online: boolean
+}[] = [
+  {
+    name: 'probe-sh-01',
+    regionKey: 'dashboard.region.shanghai',
+    latency: 38,
+    online: true,
+  },
+  {
+    name: 'probe-bj-01',
+    regionKey: 'dashboard.region.beijing',
+    latency: 46,
+    online: true,
+  },
+  {
+    name: 'probe-gz-01',
+    regionKey: 'dashboard.region.guangzhou',
+    latency: 52,
+    online: true,
+  },
+  {
+    name: 'probe-cd-02',
+    regionKey: 'dashboard.region.chengdu',
+    latency: 74,
+    online: true,
+  },
+  {
+    name: 'probe-hk-01',
+    regionKey: 'dashboard.region.hongkong',
+    latency: 96,
+    online: true,
+  },
+  {
+    name: 'probe-sg-01',
+    regionKey: 'dashboard.region.singapore',
+    latency: 128,
+    online: true,
+  },
+  {
+    name: 'probe-fra-01',
+    regionKey: 'dashboard.region.frankfurt',
+    latency: 186,
+    online: true,
+  },
+  {
+    name: 'probe-sfo-01',
+    regionKey: 'dashboard.region.siliconValley',
+    latency: 0,
+    online: false,
+  },
 ]
 
 /** 按小时统计的状态码分布（堆叠柱状图） */

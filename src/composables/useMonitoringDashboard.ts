@@ -78,5 +78,12 @@ export function useMonitoringDashboard(
     controller?.abort()
     state.clear()
   })
-  return { dashboard, availability, statusCodes, loading, error, refresh: () => revision.value++ }
+  return {
+    dashboard,
+    availability,
+    statusCodes,
+    loading,
+    error,
+    refresh: () => revision.value++,
+  }
 }
