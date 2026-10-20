@@ -58,6 +58,7 @@ const GROUP_LABEL_KEYS: Record<string, string> = {
   attachments: 'adminPage.setting.group.attachments',
   smtp: 'adminPage.setting.group.smtp',
   wechat: 'adminPage.setting.group.wechat',
+  alipay: 'adminPage.setting.group.alipay',
 }
 
 function groupLabel(key: string) {

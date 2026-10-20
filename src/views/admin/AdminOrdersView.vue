@@ -2,6 +2,7 @@
 import { MessagePlugin } from 'tdesign-vue-next'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import type { AdminOrder } from '@/api/types/admin'
 import AppIcon from '@/components/AppIcon.vue'
@@ -11,7 +12,7 @@ import {
   useAdminOrders,
   type AdminOrderAction,
 } from '@/composables/useAdminOrders'
-import { RefreshIcon } from '@/icons'
+import { RefreshIcon, Settings01Icon } from '@/icons'
 import { useUserStore } from '@/stores'
 import { formatAmount, formatDateTime } from '@/utils/billing'
 import {
@@ -26,6 +27,7 @@ import { shortId } from '@/utils/team-presenter'
 defineOptions({ name: 'AdminOrdersView' })
 
 const { t } = useI18n()
+const router = useRouter()
 const userStore = useUserStore()
 const {
   orders,
@@ -135,6 +137,14 @@ onMounted(() => {
           <template #icon><AppIcon :icon="RefreshIcon" /></template>
         </t-button>
       </t-tooltip>
+      <t-button
+        variant="outline"
+        :disabled="!userStore.isSuperAdmin"
+        @click="router.push('/admin/plans')"
+      >
+        <template #icon><AppIcon :icon="Settings01Icon" /></template>
+        {{ t('adminPage.plan.manage') }}
+      </t-button>
     </HeaderActions>
 
     <t-alert

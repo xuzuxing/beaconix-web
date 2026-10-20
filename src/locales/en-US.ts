@@ -353,6 +353,7 @@ export default {
       probes: 'System probes',
       auditLogs: 'Audit logs',
       orders: 'Orders',
+      plans: 'Plans',
       tickets: 'Tickets',
       ticketCategories: 'Ticket categories',
       settings: 'Platform settings',

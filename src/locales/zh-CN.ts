@@ -352,6 +352,7 @@ export default {
       probes: '系统探针',
       auditLogs: '审计日志',
       orders: '订单管理',
+      plans: '套餐管理',
       tickets: '工单管理',
       ticketCategories: '工单分类',
       settings: '平台配置',

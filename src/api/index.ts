@@ -2,6 +2,7 @@
 export * from './modules/admin-audit-log'
 export * from './modules/admin-metrics'
 export * from './modules/admin-order'
+export * from './modules/admin-plan'
 export * from './modules/admin-probe'
 export * from './modules/admin-setting'
 export * from './modules/admin-tenant'

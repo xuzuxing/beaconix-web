@@ -372,6 +372,18 @@ export const layoutChildren: RouteRecordRaw[] = [
     },
   },
   {
+    // 套餐配置：从订单管理页进入的二级页面，不进侧边栏（页面左上角返回订单管理）
+    path: 'admin/plans',
+    name: 'admin-plans',
+    component: () => import('@/views/admin/AdminPlansView.vue'),
+    meta: {
+      titleKey: 'submenu.admin.plans',
+      hidden: true,
+      menuExcluded: true,
+      roles: ADMIN_ROLES,
+    },
+  },
+  {
     // 平台级运行时配置：顶部 tab 的分组清单与顺序由 develop.configGroup 决定
     path: 'admin/settings',
     name: 'admin-settings',

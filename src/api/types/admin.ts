@@ -4,7 +4,8 @@
 // AdminAuditLogsController / AdminOrdersController 的返回结构。
 // ============================================================
 
-import type { Order, OrderStatus } from './billing'
+import type { MonitorType } from '../types'
+import type { Order, OrderStatus, Plan } from './billing'
 import type { AuditLog, AuditLogQuery } from './team'
 
 // ------------------------------------------------------------
@@ -248,6 +249,49 @@ export interface AdminOrderPage {
   limit: number
   totalPages: number
 }
+
+// ------------------------------------------------------------
+// 套餐（管理端 /admin/plans）
+// ------------------------------------------------------------
+
+/**
+ * 管理端套餐：`PlanEntity` 的全字段，额外带上协议白名单。
+ *
+ * 用户侧 `Plan`（GET /plans）没有 `allowedMonitorTypes`，因为那里用不到；
+ * 管理端要配置它，所以在这里补上。
+ */
+export interface AdminPlan extends Plan {
+  /** 该套餐允许创建的监控协议；空数组表示不限制 */
+  allowedMonitorTypes: MonitorType[]
+}
+
+/**
+ * 新建套餐（POST /admin/plans）。
+ * 只有 code / name / price / durationDays 是必填，其余走后端默认值。
+ */
+export interface CreateAdminPlanParams {
+  /** 套餐编码，全局唯一，如 FREE / PRO / TEAM */
+  code: string
+  name: string
+  description?: string | null
+  /** 价格，单位：分 */
+  price: number
+  durationDays: number
+  sortOrder?: number
+  maxMonitors?: number
+  maxProbes?: number
+  maxMembers?: number
+  maxChannels?: number
+  /** 最小检测间隔（秒） */
+  minInterval?: number
+  allowTenantProbe?: boolean
+  allowStatusPage?: boolean
+  allowedMonitorTypes?: MonitorType[]
+  enabled?: boolean
+}
+
+/** 更新套餐（PATCH /admin/plans/{id}）：整体或局部字段均可 */
+export type UpdateAdminPlanParams = Partial<CreateAdminPlanParams>
 
 // ------------------------------------------------------------
 // 平台运行时配置（GET /admin/settings）
