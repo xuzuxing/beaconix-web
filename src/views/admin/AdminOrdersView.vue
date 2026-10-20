@@ -14,7 +14,11 @@ import {
 } from '@/composables/useAdminOrders'
 import { RefreshIcon, Settings01Icon } from '@/icons'
 import { useUserStore } from '@/stores'
-import { formatAmount, formatDateTime } from '@/utils/billing'
+import {
+  formatAmount,
+  formatDateTime,
+  planCycleLabelKey,
+} from '@/utils/billing'
 import {
   isOrderExpired,
   ORDER_STATUSES,
@@ -294,7 +298,10 @@ onMounted(() => {
               formatAmount(order.amount)
             }}</span>
             <span>{{
-              t('adminPage.order.durationDays', { days: order.durationDays })
+              t('adminPage.order.cycleDays', {
+                cycle: t(planCycleLabelKey(order.cycle)),
+                days: order.durationDays,
+              })
             }}</span>
             <span>
               <t-tag

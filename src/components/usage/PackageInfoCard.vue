@@ -5,7 +5,12 @@ import { useI18n } from 'vue-i18n'
 import type { Plan, QuotaSummary } from '@/api/types/billing'
 import AppIcon from '@/components/AppIcon.vue'
 import { ArrowRight01Icon, CheckmarkCircle02Icon, FlashIcon } from '@/icons'
-import { formatAmount, formatDate, planTier } from '@/utils/billing'
+import {
+  formatAmount,
+  formatDate,
+  cheapestTerm,
+  planTier,
+} from '@/utils/billing'
 
 /**
  * 套餐用量页顶部的套餐信息卡（对齐 CloudBase 套餐卡）：
@@ -36,7 +41,12 @@ const name = computed(() => props.plan?.name ?? t('usage.package.freePlan'))
 
 const price = computed(() => {
   if (!props.plan || props.plan.price <= 0) return t('usage.package.free')
-  return `${formatAmount(props.plan.price)} / ${props.plan.durationDays}${t('usage.package.dayUnit')}`
+  // 订阅栈接口的 plan 不带 terms：price 是「最便宜启用档」的镜像，按「起」展示
+  const term = cheapestTerm(props.plan)
+  return t('usage.package.priceFrom', {
+    price: formatAmount(props.plan.price),
+    days: term?.durationDays ?? props.plan.durationDays,
+  })
 })
 
 const validUntil = computed(() =>

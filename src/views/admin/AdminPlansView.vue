@@ -5,13 +5,21 @@ import { useI18n } from 'vue-i18n'
 
 import type { AdminPlan, CreateAdminPlanParams } from '@/api/types/admin'
 import type { MonitorType } from '@/api/types'
+import type { PlanCycle } from '@/api/types/billing'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import { useAdminPlans } from '@/composables/useAdminPlans'
 import { usePageHeader } from '@/composables/usePageHeader'
 import { PlusSignIcon, RefreshIcon } from '@/icons'
 import { useUserStore } from '@/stores'
-import { formatAmount, formatDateTime } from '@/utils/billing'
+import {
+  cheapestTerm,
+  enabledTerms,
+  formatAmount,
+  formatDateTime,
+  PLAN_CYCLES,
+  planCycleLabelKey,
+} from '@/utils/billing'
 import { MONITOR_TYPE_OPTIONS } from '@/utils/monitor-config'
 
 /**
@@ -61,8 +69,26 @@ function typeLabels(plan: AdminPlan): string[] {
 
 function typeSummary(plan: AdminPlan): string {
   const labels = typeLabels(plan)
-  if (!labels.length) return t('adminPage.plan.allTypes')
+  // 空数组表示禁止创建任何监控（后端语义），不是「不限制」
+  if (!labels.length) return t('adminPage.plan.noTypes')
   return t('adminPage.plan.typeCount', { count: labels.length })
+}
+
+/** 列表价格：最便宜启用档价（plan.price 已是它的镜像，档位缺失时回退） */
+function rowPrice(plan: AdminPlan): string {
+  return formatAmount(cheapestTerm(plan)?.price ?? plan.price)
+}
+
+/** 列表时长：启用档天数，如「30 / 90 / 365 天」 */
+function rowTermDays(plan: AdminPlan): string {
+  const days = enabledTerms(plan).map((term) => term.durationDays)
+  if (!days.length) return t('adminPage.plan.noTerm')
+  return t('adminPage.plan.termDaysValue', { days: days.join(' / ') })
+}
+
+/** 档位数量标签，如「3 档」 */
+function rowTermCount(plan: AdminPlan): string {
+  return t('adminPage.plan.termCount', { count: plan.terms.length })
 }
 
 // ---------- 新建 / 编辑弹窗 ----------
@@ -70,16 +96,39 @@ const formVisible = ref(false)
 const editing = ref<AdminPlan | null>(null)
 const formError = ref('')
 
-/** 表单模型：价格按「元」输入，提交时换算成后端使用的「分」 */
+/** 表单里的一个计费周期档；价格按「元」输入，提交时换算成后端使用的「分」 */
+interface TermDraft {
+  cycle: PlanCycle
+  durationDays: number
+  priceYuan: number
+  enabled: boolean
+}
+
+/** 新增档位时的天数预设（运营仍可改） */
+const DEFAULT_TERM_DAYS: Record<PlanCycle, number> = {
+  MONTHLY: 30,
+  QUARTERLY: 90,
+  YEARLY: 365,
+}
+
+function emptyTerm(cycle: PlanCycle = 'MONTHLY'): TermDraft {
+  return {
+    cycle,
+    durationDays: DEFAULT_TERM_DAYS[cycle],
+    priceYuan: 0,
+    enabled: true,
+  }
+}
+
 const form = reactive({
   code: '',
   name: '',
   description: '',
-  priceYuan: 0,
-  durationDays: 30,
   sortOrder: 0,
   maxMonitors: 0,
   maxProbes: 0,
+  maxProbesPerMonitor: 0,
+  maxApiKeys: 0,
   maxMembers: 0,
   maxChannels: 0,
   minInterval: 0,
@@ -87,19 +136,26 @@ const form = reactive({
   allowStatusPage: false,
   allowedMonitorTypes: [] as MonitorType[],
   enabled: true,
+  terms: [emptyTerm()] as TermDraft[],
 })
 
 function resetForm(plan: AdminPlan | null) {
   formError.value = ''
+  const terms = (plan?.terms ?? []).map((term) => ({
+    cycle: term.cycle,
+    durationDays: term.durationDays,
+    priceYuan: term.price / 100,
+    enabled: term.enabled,
+  }))
   Object.assign(form, {
     code: plan?.code ?? '',
     name: plan?.name ?? '',
     description: plan?.description ?? '',
-    priceYuan: (plan?.price ?? 0) / 100,
-    durationDays: plan?.durationDays ?? 30,
     sortOrder: plan?.sortOrder ?? 0,
     maxMonitors: plan?.maxMonitors ?? 0,
     maxProbes: plan?.maxProbes ?? 0,
+    maxProbesPerMonitor: plan?.maxProbesPerMonitor ?? 0,
+    maxApiKeys: plan?.maxApiKeys ?? 0,
     maxMembers: plan?.maxMembers ?? 0,
     maxChannels: plan?.maxChannels ?? 0,
     minInterval: plan?.minInterval ?? 0,
@@ -107,7 +163,35 @@ function resetForm(plan: AdminPlan | null) {
     allowStatusPage: plan?.allowStatusPage ?? false,
     allowedMonitorTypes: [...(plan?.allowedMonitorTypes ?? [])],
     enabled: plan?.enabled ?? true,
+    // 编辑时保留停用档（PATCH 是整体替换，漏掉等于把它删掉）
+    terms: terms.length ? terms : [emptyTerm()],
   })
+}
+
+/** 「添加周期」只能选尚未使用的周期 */
+const availableCycles = computed(() =>
+  PLAN_CYCLES.filter(
+    (cycle) => !form.terms.some((term) => term.cycle === cycle),
+  ),
+)
+
+/** 某一行的周期选项：自身已选的周期 + 其余未占用的周期 */
+function cycleOptions(current: TermDraft) {
+  return PLAN_CYCLES.filter(
+    (cycle) =>
+      cycle === current.cycle ||
+      !form.terms.some((term) => term.cycle === cycle),
+  ).map((cycle) => ({ label: t(planCycleLabelKey(cycle)), value: cycle }))
+}
+
+function addTerm() {
+  const cycle = availableCycles.value[0]
+  if (!cycle) return
+  form.terms.push(emptyTerm(cycle))
+}
+
+function removeTerm(index: number) {
+  form.terms.splice(index, 1)
 }
 
 function openCreate() {
@@ -139,24 +223,51 @@ async function submitForm() {
     formError.value = t('adminPage.plan.requiredName')
     return
   }
-  const durationDays = toNumber(form.durationDays)
-  if (durationDays <= 0) {
-    formError.value = t('adminPage.plan.requiredDuration')
+  if (!form.terms.length) {
+    formError.value = t('adminPage.plan.requiredTerm')
     return
   }
 
-  const priceYuan = Number(form.priceYuan)
+  // 档位校验：周期不重复、天数 1..3650、价格非负，且至少保留一个启用档
+  const seen = new Set<PlanCycle>()
+  for (const term of form.terms) {
+    if (seen.has(term.cycle)) {
+      formError.value = t('adminPage.plan.duplicateTerm')
+      return
+    }
+    seen.add(term.cycle)
+    const days = toNumber(term.durationDays)
+    if (days < 1 || days > 3650) {
+      formError.value = t('adminPage.plan.invalidTermDays')
+      return
+    }
+    const priceYuan = Number(term.priceYuan)
+    if (!Number.isFinite(priceYuan) || priceYuan < 0) {
+      formError.value = t('adminPage.plan.invalidTermPrice')
+      return
+    }
+  }
+  if (!form.terms.some((term) => term.enabled)) {
+    formError.value = t('adminPage.plan.requiredEnabledTerm')
+    return
+  }
+
   const params: CreateAdminPlanParams = {
     code,
     name,
-    price: Math.max(
-      0,
-      Math.round(Number.isFinite(priceYuan) ? priceYuan * 100 : 0),
-    ),
-    durationDays,
+    // PATCH 时 terms 整体替换：停用档一并提交，避免被当成删除
+    terms: form.terms.map((term) => ({
+      cycle: term.cycle,
+      durationDays: toNumber(term.durationDays),
+      price: Math.max(0, Math.round(Number(term.priceYuan) * 100)),
+      enabled: term.enabled,
+      sortOrder: PLAN_CYCLES.indexOf(term.cycle) + 1,
+    })),
     sortOrder: toNumber(form.sortOrder),
     maxMonitors: toNumber(form.maxMonitors),
     maxProbes: toNumber(form.maxProbes),
+    maxProbesPerMonitor: toNumber(form.maxProbesPerMonitor),
+    maxApiKeys: toNumber(form.maxApiKeys),
     maxMembers: toNumber(form.maxMembers),
     maxChannels: toNumber(form.maxChannels),
     minInterval: toNumber(form.minInterval),
@@ -278,7 +389,7 @@ onMounted(() => {
           <div class="admin-plans__table-head">
             <span>{{ t('adminPage.plan.name') }}</span>
             <span>{{ t('adminPage.plan.price') }}</span>
-            <span>{{ t('adminPage.plan.durationDays') }}</span>
+            <span>{{ t('adminPage.plan.termDays') }}</span>
             <span>{{ t('adminPage.plan.quota') }}</span>
             <span>{{ t('adminPage.plan.features') }}</span>
             <span>{{ t('adminPage.plan.allowedMonitorTypes') }}</span>
@@ -295,12 +406,20 @@ onMounted(() => {
               <span class="admin-plans__name-text">{{ plan.name }}</span>
               <span class="admin-plans__code">{{ plan.code }}</span>
             </span>
-            <span class="admin-plans__price">{{
-              formatAmount(plan.price)
-            }}</span>
-            <span class="admin-plans__muted">{{
-              t('adminPage.plan.days', { days: plan.durationDays })
-            }}</span>
+            <span class="admin-plans__price">
+              {{ rowPrice(plan) }}
+              <span
+                v-if="plan.code.trim().toUpperCase() !== 'FREE'"
+                class="admin-plans__price-from"
+                >{{ t('adminPage.plan.priceFrom') }}</span
+              >
+            </span>
+            <span class="admin-plans__muted">
+              {{ rowTermDays(plan) }}
+              <span class="admin-plans__term-count">{{
+                rowTermCount(plan)
+              }}</span>
+            </span>
             <span class="admin-plans__muted">
               {{
                 t('adminPage.plan.quotaLine', {
@@ -341,7 +460,7 @@ onMounted(() => {
                 :content="
                   typeLabels(plan).length
                     ? typeLabels(plan).join(' · ')
-                    : t('adminPage.plan.allTypes')
+                    : t('adminPage.plan.noTypes')
                 "
               >
                 <span class="admin-plans__muted">{{ typeSummary(plan) }}</span>
@@ -453,24 +572,6 @@ onMounted(() => {
               :placeholder="t('adminPage.plan.namePlaceholder')"
             />
           </t-form-item>
-          <t-form-item :label="t('adminPage.plan.price')">
-            <t-input-number
-              v-model="form.priceYuan"
-              :min="0"
-              :step="1"
-              theme="normal"
-              :suffix="t('adminPage.plan.priceUnit')"
-            />
-          </t-form-item>
-          <t-form-item :label="t('adminPage.plan.durationDays')">
-            <t-input-number
-              v-model="form.durationDays"
-              :min="1"
-              :max="3650"
-              :step="1"
-              theme="normal"
-            />
-          </t-form-item>
           <t-form-item :label="t('adminPage.plan.sortOrder')">
             <t-input-number
               v-model="form.sortOrder"
@@ -489,6 +590,66 @@ onMounted(() => {
             :placeholder="t('adminPage.plan.descriptionPlaceholder')"
           />
         </t-form-item>
+
+        <div class="admin-plans__form-section">
+          {{ t('adminPage.plan.termsSection') }}
+        </div>
+        <p class="admin-plans__form-hint">
+          {{ t('adminPage.plan.termsHint') }}
+        </p>
+        <div class="admin-plans__terms">
+          <div
+            v-for="(term, index) in form.terms"
+            :key="index"
+            class="admin-plans__term-row"
+          >
+            <t-select
+              v-model="term.cycle"
+              class="admin-plans__term-cycle"
+              :options="cycleOptions(term)"
+              :aria-label="t('adminPage.plan.cycle')"
+            />
+            <t-input-number
+              v-model="term.durationDays"
+              :min="1"
+              :max="3650"
+              :step="1"
+              theme="normal"
+              :suffix="t('adminPage.plan.daySuffix')"
+              :aria-label="t('adminPage.plan.termDays')"
+            />
+            <t-input-number
+              v-model="term.priceYuan"
+              :min="0"
+              :step="1"
+              theme="normal"
+              :suffix="t('adminPage.plan.priceUnit')"
+              :aria-label="t('adminPage.plan.termPrice')"
+            />
+            <t-switch
+              v-model="term.enabled"
+              :aria-label="t('adminPage.plan.termEnabled')"
+            />
+            <t-button
+              variant="text"
+              theme="danger"
+              size="small"
+              :disabled="form.terms.length <= 1"
+              @click="removeTerm(index)"
+            >
+              {{ t('adminPage.plan.removeTerm') }}
+            </t-button>
+          </div>
+          <t-button
+            variant="outline"
+            size="small"
+            :disabled="!availableCycles.length"
+            @click="addTerm"
+          >
+            <template #icon><AppIcon :icon="PlusSignIcon" /></template>
+            {{ t('adminPage.plan.addTerm') }}
+          </t-button>
+        </div>
 
         <div class="admin-plans__form-section">
           {{ t('adminPage.plan.quotaSection') }}
@@ -510,6 +671,14 @@ onMounted(() => {
               theme="normal"
             />
           </t-form-item>
+          <t-form-item :label="t('adminPage.plan.maxProbesPerMonitor')">
+            <t-input-number
+              v-model="form.maxProbesPerMonitor"
+              :min="0"
+              :step="1"
+              theme="normal"
+            />
+          </t-form-item>
           <t-form-item :label="t('adminPage.plan.maxMembers')">
             <t-input-number
               v-model="form.maxMembers"
@@ -521,6 +690,14 @@ onMounted(() => {
           <t-form-item :label="t('adminPage.plan.maxChannels')">
             <t-input-number
               v-model="form.maxChannels"
+              :min="0"
+              :step="1"
+              theme="normal"
+            />
+          </t-form-item>
+          <t-form-item :label="t('adminPage.plan.maxApiKeys')">
+            <t-input-number
+              v-model="form.maxApiKeys"
               :min="0"
               :step="1"
               theme="normal"
@@ -716,6 +893,29 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 0 16px;
+  }
+
+  &__form-hint {
+    margin: 0 0 12px;
+    font-size: @beacon-font-size-base;
+    line-height: 20px;
+    color: @beacon-text-secondary;
+  }
+
+  &__terms {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 4px;
+  }
+
+  &__term-row {
+    display: grid;
+    grid-template-columns: 120px 140px 140px auto auto;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
   }
 
   &__form-switches {

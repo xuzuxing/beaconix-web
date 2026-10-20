@@ -5,7 +5,7 @@
 // ============================================================
 
 import type { MonitorType } from '../types'
-import type { Order, OrderStatus, Plan } from './billing'
+import type { Order, OrderStatus, Plan, PlanCycle, PlanTerm } from './billing'
 import type { AuditLog, AuditLogQuery } from './team'
 
 // ------------------------------------------------------------
@@ -255,42 +255,61 @@ export interface AdminOrderPage {
 // ------------------------------------------------------------
 
 /**
- * 管理端套餐：`PlanEntity` 的全字段，额外带上协议白名单。
- *
- * 用户侧 `Plan`（GET /plans）没有 `allowedMonitorTypes`，因为那里用不到；
- * 管理端要配置它，所以在这里补上。
+ * 管理端套餐：在用户侧 `Plan` 之上，把目录接口必然返回的字段收窄为必填。
+ * `terms` 含**停用档**（与用户侧目录只给启用档不同），便于运营恢复。
  */
 export interface AdminPlan extends Plan {
-  /** 该套餐允许创建的监控协议；空数组表示不限制 */
+  /** 允许创建的监控协议；空数组表示禁止创建任何监控 */
   allowedMonitorTypes: MonitorType[]
+  terms: PlanTerm[]
+}
+
+/** 单个计费周期档位（CreatePlanTermDto） */
+export interface CreatePlanTermParams {
+  /** 一个套餐每个周期只能有一档 */
+  cycle: PlanCycle
+  /** 该档位时长，1..3650 */
+  durationDays: number
+  /** 该档位价格，单位：分 */
+  price: number
+  /** 停用后不能再被购买 */
+  enabled?: boolean
+  sortOrder?: number
 }
 
 /**
  * 新建套餐（POST /admin/plans）。
- * 只有 code / name / price / durationDays 是必填，其余走后端默认值。
+ * `code` / `name` / `terms` 必填；不再接受 `price` / `durationDays`，价格由档位决定。
  */
 export interface CreateAdminPlanParams {
   /** 套餐编码，全局唯一，如 FREE / PRO / TEAM */
   code: string
   name: string
   description?: string | null
-  /** 价格，单位：分 */
-  price: number
-  durationDays: number
+  /** 可购买的计费周期，至少一个启用档；最便宜的启用档成为套餐对外展示价 */
+  terms: CreatePlanTermParams[]
   sortOrder?: number
   maxMonitors?: number
   maxProbes?: number
+  /** 单个监控项可挂的探针数，受 maxProbes 约束；0 表示不可手动挂载 */
+  maxProbesPerMonitor?: number
+  /** 0 表示不能创建任何 API Key */
+  maxApiKeys?: number
   maxMembers?: number
   maxChannels?: number
-  /** 最小检测间隔（秒） */
+  /** 最小检测间隔（秒），10..86400 */
   minInterval?: number
   allowTenantProbe?: boolean
   allowStatusPage?: boolean
+  /** 允许的监控协议；空数组表示禁止创建任何监控 */
   allowedMonitorTypes?: MonitorType[]
   enabled?: boolean
 }
 
-/** 更新套餐（PATCH /admin/plans/{id}）：整体或局部字段均可 */
+/**
+ * 更新套餐（PATCH /admin/plans/{id}）：整体或局部字段均可。
+ * 传入 `terms` 时是**整体替换**：请求里消失的周期会被停用（有订单引用）或删除。
+ */
 export type UpdateAdminPlanParams = Partial<CreateAdminPlanParams>
 
 // ------------------------------------------------------------

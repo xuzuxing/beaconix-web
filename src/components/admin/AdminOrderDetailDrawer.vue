@@ -2,7 +2,11 @@
 import { useI18n } from 'vue-i18n'
 
 import type { AdminOrder } from '@/api/types/admin'
-import { formatAmount, formatDateTime } from '@/utils/billing'
+import {
+  formatAmount,
+  formatDateTime,
+  planCycleLabelKey,
+} from '@/utils/billing'
 import {
   isOrderExpired,
   orderActions,
@@ -88,6 +92,10 @@ const actions = () => (props.order ? orderActions(props.order) : null)
               t('adminPage.order.durationDays', { days: order.durationDays })
             }}
           </dd>
+        </div>
+        <div>
+          <dt>{{ t('adminPage.order.cycle') }}</dt>
+          <dd>{{ t(planCycleLabelKey(order.cycle)) }}</dd>
         </div>
         <div>
           <dt>{{ t('adminPage.order.createdAt') }}</dt>

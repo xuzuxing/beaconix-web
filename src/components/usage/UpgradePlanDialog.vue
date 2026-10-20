@@ -4,7 +4,7 @@ import { computed, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { createOrder } from '@/api'
-import type { Plan } from '@/api/types/billing'
+import type { Plan, PlanCycle } from '@/api/types/billing'
 import AppIcon from '@/components/AppIcon.vue'
 import {
   Cancel01Icon,
@@ -15,7 +15,15 @@ import {
   UserIcon,
 } from '@/icons'
 import { useOrganizationStore } from '@/stores'
-import { formatAmount, planTagTheme, planTier } from '@/utils/billing'
+import {
+  cheapestTerm,
+  enabledTerms,
+  formatAmount,
+  planCycleLabelKey,
+  planTagTheme,
+  planTier,
+  termMonthlyPrice,
+} from '@/utils/billing'
 import {
   getWechatOpenid,
   isWechatBrowser,
@@ -24,10 +32,11 @@ import {
 } from '@/utils/wechat-pay'
 
 /**
- * 套餐升级弹窗：拉取套餐目录 → 选择套餐与时长 → 创建订单 → 调起微信支付 → 轮询订单转 PAID。
+ * 套餐升级弹窗：拉取套餐目录 → 选择套餐与计费周期 → 创建订单 → 调起微信支付 → 轮询订单转 PAID。
  *
- * 支付回调由后端处理，前端只负责轮询结果；若当前环境无法调起支付
- * （非微信浏览器 / 拿不到 openid），订单仍会保留，可在订单管理页继续支付。
+ * 金额与时长由后端按所选周期档位决定：前端只提交 `planId` + `cycle`，
+ * 不允许传价格或天数。支付回调由后端处理，前端只负责轮询结果；若当前环境
+ * 无法调起支付（非微信浏览器 / 拿不到 openid），订单仍会保留，可在订单管理页继续支付。
  */
 defineOptions({ name: 'UpgradePlanDialog' })
 
@@ -47,7 +56,7 @@ const orgStore = useOrganizationStore()
 const dialogId = useId()
 
 const selectedPlanId = ref('')
-const durationDays = ref(0)
+const selectedCycle = ref<PlanCycle | null>(null)
 const submitting = ref(false)
 const paying = ref(false)
 
@@ -70,52 +79,75 @@ const selectedPlan = computed(
     null,
 )
 
-const total = computed(() => formatAmount(selectedPlan.value?.price ?? 0))
+/** 选中套餐的可购买周期档位（目录接口只给启用档，这里再兜一层） */
+const selectedTerms = computed(() => enabledTerms(selectedPlan.value))
+
+/** 当前选中的档位；套餐没有可用档位时为 null */
+const selectedTerm = computed(
+  () =>
+    selectedTerms.value.find((term) => term.cycle === selectedCycle.value) ??
+    null,
+)
+
+/** 应付金额取自所选档位，不能用 plan.price（那是「起」价） */
+const total = computed(() => formatAmount(selectedTerm.value?.price ?? 0))
 
 const busy = computed(() => submitting.value || paying.value)
-const validDuration = computed(
-  () =>
-    Number.isInteger(durationDays.value) &&
-    durationDays.value >= 1 &&
-    durationDays.value <= 3650,
-)
 const canSubmit = computed(
   () =>
     !!selectedPlan.value &&
+    !!selectedTerm.value &&
     !!orgStore.currentOrganizationId &&
-    validDuration.value &&
     !props.loading,
 )
-const durationOptions = computed(() =>
-  [...new Set([selectedPlan.value?.durationDays ?? 30, 30, 90, 180, 365])]
-    .filter((days) => days >= 1 && days <= 3650)
-    .sort((left, right) => left - right),
-)
+
+/** 卡片主价格：最便宜启用档（后端把同值镜像到 plan.price，档位缺失时回退） */
+function displayPrice(plan: Plan): string {
+  return formatAmount(cheapestTerm(plan)?.price ?? plan.price)
+}
+
+/** 卡片价格后缀：最便宜档的周期名 */
+function displayCycle(plan: Plan): string {
+  const term = cheapestTerm(plan)
+  return term ? t(planCycleLabelKey(term.cycle)) : ''
+}
+
+/** 档位的折合月均价文案，仅作展示参考 */
+function monthlyHint(term: { price: number; durationDays: number }): string {
+  return formatAmount(termMonthlyPrice(term))
+}
 function abilities(plan: Plan) {
+  // limit 为 0 表示该资源在当前套餐下不可用（后端语义），因此 allowed 跟随上限
   return [
     {
       key: 'monitors',
       label: t('usage.package.limit.monitors'),
       value: plan.maxMonitors,
-      allowed: true,
+      allowed: plan.maxMonitors > 0,
     },
     {
       key: 'probes',
       label: t('usage.package.limit.probes'),
       value: plan.maxProbes,
-      allowed: true,
+      allowed: plan.maxProbes > 0,
+    },
+    {
+      key: 'apiKeys',
+      label: t('usage.package.limit.apiKeys'),
+      value: plan.maxApiKeys ?? 0,
+      allowed: (plan.maxApiKeys ?? 0) > 0,
     },
     {
       key: 'members',
       label: t('usage.package.limit.members'),
       value: plan.maxMembers,
-      allowed: true,
+      allowed: plan.maxMembers > 0,
     },
     {
       key: 'channels',
       label: t('usage.package.limit.channels'),
       value: plan.maxChannels,
-      allowed: true,
+      allowed: plan.maxChannels > 0,
     },
     {
       key: 'interval',
@@ -156,7 +188,8 @@ function selectPlan(plan: Plan) {
   if (busy.value || !purchasablePlans.value.some((item) => item.id === plan.id))
     return
   selectedPlanId.value = plan.id
-  durationDays.value = plan.durationDays
+  // 默认选中第一个档位（后端已按 sortOrder 排好）
+  selectedCycle.value = enabledTerms(plan)[0]?.cycle ?? null
 }
 
 function onPlanKeydown(event: KeyboardEvent, planId: string) {
@@ -192,7 +225,7 @@ async function submit() {
   try {
     const order = await createOrder(orgId, {
       planId: plan.id,
-      durationDays: durationDays.value,
+      cycle: selectedCycle.value ?? undefined,
     })
 
     const openid = getWechatOpenid()
@@ -240,7 +273,7 @@ watch(
   (list) => {
     if (!list.length) {
       selectedPlanId.value = ''
-      durationDays.value = 0
+      selectedCycle.value = null
       return
     }
     const first = list[0]
@@ -250,6 +283,13 @@ watch(
   },
   { immediate: true },
 )
+
+// 档位变化（切换套餐或目录刷新）后，落回第一个可用档位，避免提交空 cycle
+watch(selectedTerms, (terms) => {
+  if (!terms.some((term) => term.cycle === selectedCycle.value)) {
+    selectedCycle.value = terms[0]?.cycle ?? null
+  }
+})
 </script>
 
 <template>
@@ -353,10 +393,13 @@ watch(
             :id="`${dialogId}-price-${plan.id}`"
             class="upgrade__price"
           >
-            <strong>{{ formatAmount(plan.price) }}</strong>
-            <span v-if="plan.code.trim().toUpperCase() !== 'FREE'">
-              / {{ t('usage.upgrade.days', { days: plan.durationDays }) }}
-            </span>
+            <strong>{{ displayPrice(plan) }}</strong>
+            <template v-if="plan.code.trim().toUpperCase() !== 'FREE'">
+              <span class="upgrade__price-from">{{
+                t('usage.upgrade.priceFrom')
+              }}</span>
+              <span v-if="displayCycle(plan)">/ {{ displayCycle(plan) }}</span>
+            </template>
             <span v-else>{{ t('usage.package.freeBadge') }}</span>
           </div>
           <span
@@ -378,51 +421,72 @@ watch(
       >
         <div class="upgrade__form-row">
           <span
-            :id="`${dialogId}-duration-label`"
+            :id="`${dialogId}-cycle-label`"
             class="upgrade__form-label"
           >
-            {{ t('usage.upgrade.duration') }}
+            {{ t('usage.upgrade.cycle') }}
           </span>
-          <div class="upgrade__duration">
-            <p
-              class="upgrade__selection"
-              aria-live="polite"
-            >
-              {{
-                t('usage.upgrade.selectedDuration', { days: durationDays || 0 })
-              }}
-            </p>
-            <t-radio-group
-              v-model="durationDays"
-              class="upgrade__duration-options"
-              variant="outline"
-              :disabled="busy || loading"
-              :aria-labelledby="`${dialogId}-duration-label`"
-            >
-              <t-radio-button
-                v-for="days in durationOptions"
-                :key="days"
-                :value="days"
+          <div class="upgrade__cycle">
+            <t-alert
+              v-if="!selectedTerms.length"
+              theme="warning"
+              :message="t('usage.upgrade.cycleEmpty')"
+            />
+            <template v-else>
+              <p
+                class="upgrade__selection"
+                aria-live="polite"
               >
-                {{ t('usage.upgrade.days', { days }) }}
-              </t-radio-button>
-            </t-radio-group>
-            <div class="upgrade__custom">
-              <label :for="`${dialogId}-custom-duration`">{{
-                t('usage.upgrade.customDuration')
-              }}</label>
-              <t-input-number
-                v-model="durationDays"
-                :min="1"
-                :max="3650"
-                :step="1"
-                :decimal-places="0"
-                :allow-input-over-limit="false"
+                {{
+                  t('usage.upgrade.selectedTerm', {
+                    cycle: selectedTerm
+                      ? t(planCycleLabelKey(selectedTerm.cycle))
+                      : '',
+                    days: selectedTerm?.durationDays ?? 0,
+                  })
+                }}
+              </p>
+              <t-radio-group
+                v-if="selectedTerms.length > 1"
+                v-model="selectedCycle"
+                class="upgrade__cycle-options"
+                variant="outline"
                 :disabled="busy || loading"
-                :input-props="{ id: `${dialogId}-custom-duration` }"
-              />
-              <span>{{ t('usage.package.dayUnit') }}</span>
-            </div>
+                :aria-labelledby="`${dialogId}-cycle-label`"
+              >
+                <t-radio-button
+                  v-for="term in selectedTerms"
+                  :key="term.cycle"
+                  :value="term.cycle"
+                >
+                  <span class="upgrade__cycle-name">{{
+                    t(planCycleLabelKey(term.cycle))
+                  }}</span>
+                  <span class="upgrade__cycle-price">{{
+                    formatAmount(term.price)
+                  }}</span>
+                </t-radio-button>
+              </t-radio-group>
+              <ul
+                v-if="selectedTerm && selectedTerms.length > 1"
+                class="upgrade__cycle-meta"
+              >
+                <li>
+                  {{
+                    t('usage.upgrade.termDays', {
+                      days: selectedTerm.durationDays,
+                    })
+                  }}
+                </li>
+                <li>
+                  {{
+                    t('usage.upgrade.termMonthly', {
+                      price: monthlyHint(selectedTerm),
+                    })
+                  }}
+                </li>
+              </ul>
+            </template>
           </div>
         </div>
 
@@ -730,7 +794,12 @@ watch(
     color: @beacon-text-secondary;
   }
 
-  &__duration {
+  &__price-from {
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-secondary;
+  }
+
+  &__cycle {
     min-width: 0;
   }
 
@@ -741,7 +810,7 @@ watch(
     color: @beacon-text-primary;
   }
 
-  &__duration-options {
+  &__cycle-options {
     display: flex;
     flex-wrap: wrap;
     width: 100%;
@@ -751,22 +820,29 @@ watch(
       display: flex;
       flex: 1;
       justify-content: center;
-      min-width: 64px;
+      min-width: 96px;
       min-height: 36px;
     }
   }
 
-  &__custom {
+  &__cycle-name {
+    font-weight: 500;
+  }
+
+  &__cycle-price {
+    margin-left: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__cycle-meta {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 4px 16px;
+    padding: 0;
+    margin: 12px 0 0;
+    font-size: @beacon-font-size-base;
     color: @beacon-text-secondary;
-
-    :deep(.t-input-number) {
-      width: 140px;
-    }
+    list-style: none;
   }
 
   &__amount-row {
@@ -846,12 +922,8 @@ watch(
       gap: 8px;
     }
 
-    &__duration-options :deep(.t-radio-button) {
+    &__cycle-options :deep(.t-radio-button) {
       min-height: 44px;
-    }
-
-    &__custom :deep(.t-input) {
-      height: 44px;
     }
 
     &__buttons :deep(.t-button) {

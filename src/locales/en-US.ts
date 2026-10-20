@@ -107,6 +107,11 @@ export default {
     loading: 'Loading…',
     maintenanceBanner:
       'Maintenance in progress: some features may be unavailable. Contact an administrator if you need help.',
+    planCycle: {
+      MONTHLY: 'Monthly',
+      QUARTERLY: 'Quarterly',
+      YEARLY: 'Yearly',
+    },
   },
   home: {
     welcome: 'Welcome to Beaconix Web',
@@ -509,6 +514,7 @@ export default {
       freeBadge: 'Free',
       free: 'Free',
       dayUnit: 'days',
+      priceFrom: '{price} from / {days} days',
       validUntil: 'Plan valid until',
       noExpiry: 'The free plan has no expiry date',
       orders: 'Orders',
@@ -526,6 +532,7 @@ export default {
       limit: {
         monitors: 'Monitor limit',
         probes: 'Probe limit',
+        apiKeys: 'API key limit',
         members: 'Member limit',
         channels: 'Channel limit',
       },
@@ -553,16 +560,19 @@ export default {
     },
     upgrade: {
       title: 'Upgrade plan',
-      desc: 'Pick a plan and complete the payment; the new plan takes effect right away.',
+      desc: 'Pick a plan and a billing cycle, then pay; the new plan takes effect right away.',
       selectPlan: 'Select a plan',
       currentPlan: 'Current plan',
       includes: 'Included capabilities:',
-      days: '{days} days',
-      selectedDuration: 'Selected duration: {days} days',
-      customDuration: 'Custom duration',
+      cycle: 'Billing cycle',
+      cycleEmpty: 'This plan has no purchasable cycle yet — contact a platform admin',
+      selectedTerm: 'Selected {cycle} · {days} days',
+      termDays: 'About {days} days',
+      termMonthly: '≈ {price}/month',
+      priceFrom: 'from',
       loading: 'Loading plans…',
-      duration: 'Duration',
-      amountNote: 'The order amount is the selected plan price; the duration sets the plan period.',
+      amountNote:
+        'The order amount and period come from the selected cycle; the term length applies after payment.',
       total: 'Total',
       pay: 'Pay now',
       submitting: 'Creating order…',
@@ -575,7 +585,7 @@ export default {
     },
     orders: {
       empty: 'No orders yet',
-      duration: '{days} days',
+      cycle: '{cycle} · {days} days',
       createdAt: 'Created',
       paidAt: 'Paid',
       expiresAt: 'Pay before',

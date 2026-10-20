@@ -6,7 +6,11 @@ import { useI18n } from 'vue-i18n'
 import { cancelOrder, listOrders } from '@/api'
 import type { Order, OrderStatus } from '@/api/types/billing'
 import { useOrganizationStore } from '@/stores'
-import { formatAmount, formatDateTime } from '@/utils/billing'
+import {
+  formatAmount,
+  formatDateTime,
+  planCycleLabelKey,
+} from '@/utils/billing'
 import {
   getWechatOpenid,
   isWechatBrowser,
@@ -144,7 +148,10 @@ watch(orgId, load, { immediate: true })
             }}</span>
             <span class="orders__amount">{{ formatAmount(order.amount) }}</span>
             <span>{{
-              t('usage.orders.duration', { days: order.durationDays })
+              t('usage.orders.cycle', {
+                cycle: t(planCycleLabelKey(order.cycle)),
+                days: order.durationDays,
+              })
             }}</span>
           </div>
 
