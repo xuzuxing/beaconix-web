@@ -141,6 +141,7 @@ export default {
   installGuide: {
     title: '安装指引',
     scriptUrl: '安装脚本',
+    copy: '复制安装命令',
     requirements: '运行环境：Linux、systemd、Node.js 18+ 和 curl，安装需 root 或 sudo 权限。',
     enrollment:
       '下载并在目标服务器运行安装脚本，打开终端给出的登录链接，登录后填写探针信息并确认添加。',

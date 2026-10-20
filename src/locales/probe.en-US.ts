@@ -154,6 +154,7 @@ export default {
   installGuide: {
     title: 'Installation guide',
     scriptUrl: 'Installation script',
+    copy: 'Copy install command',
     requirements:
       'Requires Linux, systemd, Node.js 18+ and curl. Installation needs root or sudo privileges.',
     enrollment:
