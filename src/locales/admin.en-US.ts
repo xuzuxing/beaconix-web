@@ -275,6 +275,8 @@ export default {
     termDaysValue: '{days} days',
     termPrice: 'Price (CNY)',
     termEnabled: 'Enabled',
+    wechatProductId: 'WeChat product ID',
+    wechatProductIdPlaceholder: 'WeChat mini program virtual-payment product ID (optional)',
     addTerm: 'Add cycle',
     removeTerm: 'Remove',
     termCount: '{count} cycles',

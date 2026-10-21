@@ -4,11 +4,13 @@ import type {
   AdminSchedulerJob,
   AdminSchedulerQueue,
   AdminTenant,
+  CreatePlanTermParams,
   ProbeProvider,
   ProbeStatus,
   SystemProbe,
 } from '@/api/types/admin'
-import type { OrderStatus } from '@/api/types/billing'
+import type { OrderStatus, PlanCycle, PlanTerm } from '@/api/types/billing'
+import { PLAN_CYCLES } from './billing'
 
 /**
  * 管理后台页面的展现层纯函数：探针存活、租户筛选、订单可执行动作、调度健康度与数值压缩。
@@ -246,4 +248,51 @@ export function formatInterval(ms: number): string {
   if (ms % 60_000 === 0) return `${ms / 60_000}m`
   if (ms % 1000 === 0) return `${ms / 1000}s`
   return `${(ms / 1000).toFixed(1)}s`
+}
+
+// ============================================================
+// 套餐计费周期（管理端编辑表单 ⇄ 接口参数）
+// ============================================================
+
+/** 表单里的一个计费周期档；价格按「元」输入，提交时换算成后端使用的「分」 */
+export interface PlanTermDraft {
+  cycle: PlanCycle
+  durationDays: number
+  priceYuan: number
+  enabled: boolean
+  /** 微信小程序虚拟支付商品 ID；空串表示该周期不支持小程序内支付 */
+  wechatProductId: string
+}
+
+/** 后端档位 → 表单草稿：价格分转元，缺失的微信商品 ID 归一到空串 */
+export function toPlanTermDraft(term: PlanTerm): PlanTermDraft {
+  return {
+    cycle: term.cycle,
+    durationDays: term.durationDays,
+    priceYuan: term.price / 100,
+    enabled: term.enabled,
+    wechatProductId: term.wechatProductId ?? '',
+  }
+}
+
+/**
+ * 表单草稿 → 接口参数。
+ *
+ * 价格元转分并夹到非负整数；微信商品 ID 去空白后留空时提交 `null`——
+ * `terms` 在 PATCH 时是整体替换，只有显式传 `null` 才能清掉已配置的值。
+ */
+export function toPlanTermParams(draft: PlanTermDraft): CreatePlanTermParams {
+  const wechatProductId = draft.wechatProductId.trim()
+  const durationDays = Math.round(Number(draft.durationDays))
+  const price = Math.round(Number(draft.priceYuan) * 100)
+
+  return {
+    cycle: draft.cycle,
+    // 天数由表单校验保证在 1..3650，这里只做整数化与非负兜底
+    durationDays: Number.isFinite(durationDays) && durationDays > 0 ? durationDays : 0,
+    price: Number.isFinite(price) ? Math.max(0, price) : 0,
+    enabled: draft.enabled,
+    sortOrder: PLAN_CYCLES.indexOf(draft.cycle) + 1,
+    wechatProductId: wechatProductId || null,
+  }
 }

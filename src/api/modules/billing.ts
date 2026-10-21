@@ -1,11 +1,14 @@
 import type {
+  AlipayPayMethod,
+  AlipayPayParams,
   CreateOrderParams,
   CreatePaymentParams,
   Order,
+  OrderPaymentParams,
   Plan,
   QuotaSummary,
   SubscriptionStack,
-  WechatPayParams,
+  WechatVirtualPayParams,
 } from '../types/billing'
 import { get, post } from '@/utils/request'
 
@@ -49,7 +52,43 @@ export function cancelOrder(id: string) {
   return post<Order>(`/orders/${id}/cancel`)
 }
 
-/** 创建订单支付，返回 wx.requestPayment 所需的签名参数 */
-export function createOrderPayment(orderId: string, data: CreatePaymentParams) {
-  return post<WechatPayParams>(`/orders/${orderId}/pay`, data)
+/**
+ * 创建订单支付（按渠道返回不同结构）。
+ *
+ * - `WECHAT`：返回 `wx.requestPayment` 所需的 JSAPI 签名参数；
+ * - `ALIPAY`：返回 Native 预下单的支付链接，前端据此生成二维码。
+ *
+ * 返回类型由调用方按渠道指定，避免在页面里做运行时收窄。
+ */
+export function createOrderPayment<T extends OrderPaymentParams = OrderPaymentParams>(
+  orderId: string,
+  data: CreatePaymentParams,
+) {
+  return post<T>(`/orders/${orderId}/pay`, data)
+}
+
+/**
+ * 支付宝预下单（`channel=ALIPAY`）。
+ *
+ * 默认走 `alipay.trade.precreate`（扫码）：返回 `qrCode` 支付链接，交给二维码组件渲染；
+ * 传 `alipay.trade.page.pay` / `alipay.trade.wap.pay` 时后端返回收银台 `payUrl`。
+ */
+export function createAlipayPayment(
+  orderId: string,
+  payMethod: AlipayPayMethod = 'alipay.trade.precreate',
+) {
+  return createOrderPayment<AlipayPayParams>(orderId, { channel: 'ALIPAY', payMethod })
+}
+
+/**
+ * 微信小程序虚拟支付预下单（`channel=WECHAT_VIRTUAL`，仅小程序内可用）。
+ *
+ * `code` 必须来自当前会话的 `wx.login()`：服务端拿它换 session_key 计算用户签名，
+ * 旧 code 不可复用。返回值直接喂给 `wx.requestVirtualPayment`。
+ */
+export function createWechatVirtualPayment(orderId: string, code: string) {
+  return createOrderPayment<WechatVirtualPayParams>(orderId, {
+    channel: 'WECHAT_VIRTUAL',
+    code,
+  })
 }

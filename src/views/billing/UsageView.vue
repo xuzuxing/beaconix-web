@@ -3,7 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { getQuotaSummary, listPlans } from '@/api'
-import type { Plan, QuotaSummary } from '@/api/types/billing'
+import type { Order, Plan, QuotaSummary } from '@/api/types/billing'
+import AlipayQrPayDialog from '@/components/billing/AlipayQrPayDialog.vue'
 import PackageInfoCard from '@/components/usage/PackageInfoCard.vue'
 import QuotaUsageCard from '@/components/usage/QuotaUsageCard.vue'
 import UpgradePlanDialog from '@/components/usage/UpgradePlanDialog.vue'
@@ -20,6 +21,9 @@ const plans = ref<Plan[]>([])
 const quota = ref<QuotaSummary | null>(null)
 const loading = ref(false)
 const upgradeVisible = ref(false)
+/** 下单完成、等待扫码支付的订单 */
+const pendingOrder = ref<Order | null>(null)
+const payVisible = ref(false)
 
 /** 套餐来自 store（顶栏共用），套餐目录与用量单独拉取；切换团队时一并刷新 */
 async function load() {
@@ -44,7 +48,14 @@ async function load() {
 
 /** 升级成功：套餐已变更，重新拉取套餐与用量 */
 function onPaid() {
+  pendingOrder.value = null
   void load()
+}
+
+/** 下单完成：接管支付，用支付宝扫码弹窗完成付款 */
+function onPay(order: Order) {
+  pendingOrder.value = order
+  payVisible.value = true
 }
 
 watch(orgId, load, { immediate: true })
@@ -84,6 +95,12 @@ watch(orgId, load, { immediate: true })
       v-model:visible="upgradeVisible"
       :plans="plans"
       :loading="loading"
+      @pay="onPay"
+    />
+
+    <AlipayQrPayDialog
+      v-model:visible="payVisible"
+      :order="pendingOrder"
       @paid="onPaid"
     />
   </div>

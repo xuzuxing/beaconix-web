@@ -5,20 +5,16 @@ import { useI18n } from 'vue-i18n'
 
 import { cancelOrder, listOrders } from '@/api'
 import type { Order, OrderStatus } from '@/api/types/billing'
+import AlipayQrPayDialog from '@/components/billing/AlipayQrPayDialog.vue'
 import { useOrganizationStore } from '@/stores'
 import {
   formatAmount,
   formatDateTime,
   planCycleLabelKey,
 } from '@/utils/billing'
-import {
-  getWechatOpenid,
-  isWechatBrowser,
-  payOrder,
-  waitForOrderPaid,
-} from '@/utils/wechat-pay'
+import { isOrderPayable } from '@/utils/payment'
 
-/** 订单管理：当前团队的购买订单，支持对待支付订单发起微信支付或取消 */
+/** 订单管理：当前团队的购买订单，支持对待支付订单发起支付宝扫码支付或取消 */
 defineOptions({ name: 'OrdersView' })
 
 const { t } = useI18n()
@@ -27,8 +23,10 @@ const orgStore = useOrganizationStore()
 const orgId = computed(() => orgStore.currentOrganizationId)
 const orders = ref<Order[]>([])
 const loading = ref(false)
-const payingId = ref('')
 const cancellingId = ref('')
+/** 正在扫码支付的订单；由支付宝弹窗接管 */
+const payTarget = ref<Order | null>(null)
+const payVisible = ref(false)
 
 const STATUS_THEME: Record<OrderStatus, 'success' | 'warning' | 'default'> = {
   PENDING: 'warning',
@@ -52,38 +50,21 @@ async function load() {
   }
 }
 
-/** 发起微信支付：非微信环境或缺少 openid 时提示到微信内打开 */
-async function pay(order: Order) {
-  const openid = getWechatOpenid()
-  if (!isWechatBrowser() || !openid) {
-    MessagePlugin.warning(t('usage.orders.payUnavailable'))
+/** 打开支付宝扫码支付；已超时的订单需要重新下单 */
+function pay(order: Order) {
+  if (!isOrderPayable(order)) {
+    MessagePlugin.warning(t('usage.orders.expired'))
     return
   }
 
-  payingId.value = order.id
-  try {
-    const outcome = await payOrder(order.id, openid)
-    if (outcome === 'cancelled') {
-      MessagePlugin.info(t('usage.upgrade.cancelled'))
-      return
-    }
-    if (outcome !== 'success') {
-      MessagePlugin.warning(t('usage.orders.payUnavailable'))
-      return
-    }
+  payTarget.value = order
+  payVisible.value = true
+}
 
-    const paid = await waitForOrderPaid(order.id)
-    if (paid.status === 'PAID') {
-      MessagePlugin.success(t('usage.upgrade.success'))
-      await load()
-    } else {
-      MessagePlugin.warning(t('usage.upgrade.pendingConfirm'))
-    }
-  } catch {
-    // 请求层已统一提示错误
-  } finally {
-    payingId.value = ''
-  }
+/** 支付成功：弹窗已提示结果，这里只需刷新订单列表 */
+function onPaid() {
+  payTarget.value = null
+  void load()
 }
 
 async function cancel(order: Order) {
@@ -176,7 +157,6 @@ watch(orgId, load, { immediate: true })
             <t-button
               theme="primary"
               size="small"
-              :loading="payingId === order.id"
               @click="pay(order)"
             >
               {{ t('usage.orders.pay') }}
@@ -204,6 +184,12 @@ watch(orgId, load, { immediate: true })
         {{ t('usage.orders.empty') }}
       </p>
     </div>
+
+    <AlipayQrPayDialog
+      v-model:visible="payVisible"
+      :order="payTarget"
+      @paid="onPaid"
+    />
   </div>
 </template>
 

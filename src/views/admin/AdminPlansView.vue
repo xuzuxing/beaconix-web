@@ -21,6 +21,11 @@ import {
   planCycleLabelKey,
 } from '@/utils/billing'
 import { MONITOR_TYPE_OPTIONS } from '@/utils/monitor-config'
+import {
+  toPlanTermDraft,
+  toPlanTermParams,
+  type PlanTermDraft,
+} from '@/utils/admin-presenter'
 
 /**
  * 管理后台 · 套餐配置（仅 SUPER_ADMIN）。
@@ -96,13 +101,7 @@ const formVisible = ref(false)
 const editing = ref<AdminPlan | null>(null)
 const formError = ref('')
 
-/** 表单里的一个计费周期档；价格按「元」输入，提交时换算成后端使用的「分」 */
-interface TermDraft {
-  cycle: PlanCycle
-  durationDays: number
-  priceYuan: number
-  enabled: boolean
-}
+/** 计费周期表单草稿（PlanTermDraft）与接口参数的互转见 utils/admin-presenter */
 
 /** 新增档位时的天数预设（运营仍可改） */
 const DEFAULT_TERM_DAYS: Record<PlanCycle, number> = {
@@ -111,12 +110,13 @@ const DEFAULT_TERM_DAYS: Record<PlanCycle, number> = {
   YEARLY: 365,
 }
 
-function emptyTerm(cycle: PlanCycle = 'MONTHLY'): TermDraft {
+function emptyTerm(cycle: PlanCycle = 'MONTHLY'): PlanTermDraft {
   return {
     cycle,
     durationDays: DEFAULT_TERM_DAYS[cycle],
     priceYuan: 0,
     enabled: true,
+    wechatProductId: '',
   }
 }
 
@@ -136,17 +136,12 @@ const form = reactive({
   allowStatusPage: false,
   allowedMonitorTypes: [] as MonitorType[],
   enabled: true,
-  terms: [emptyTerm()] as TermDraft[],
+  terms: [emptyTerm()] as PlanTermDraft[],
 })
 
 function resetForm(plan: AdminPlan | null) {
   formError.value = ''
-  const terms = (plan?.terms ?? []).map((term) => ({
-    cycle: term.cycle,
-    durationDays: term.durationDays,
-    priceYuan: term.price / 100,
-    enabled: term.enabled,
-  }))
+  const terms = (plan?.terms ?? []).map(toPlanTermDraft)
   Object.assign(form, {
     code: plan?.code ?? '',
     name: plan?.name ?? '',
@@ -176,7 +171,7 @@ const availableCycles = computed(() =>
 )
 
 /** 某一行的周期选项：自身已选的周期 + 其余未占用的周期 */
-function cycleOptions(current: TermDraft) {
+function cycleOptions(current: PlanTermDraft) {
   return PLAN_CYCLES.filter(
     (cycle) =>
       cycle === current.cycle ||
@@ -256,13 +251,7 @@ async function submitForm() {
     code,
     name,
     // PATCH 时 terms 整体替换：停用档一并提交，避免被当成删除
-    terms: form.terms.map((term) => ({
-      cycle: term.cycle,
-      durationDays: toNumber(term.durationDays),
-      price: Math.max(0, Math.round(Number(term.priceYuan) * 100)),
-      enabled: term.enabled,
-      sortOrder: PLAN_CYCLES.indexOf(term.cycle) + 1,
-    })),
+    terms: form.terms.map(toPlanTermParams),
     sortOrder: toNumber(form.sortOrder),
     maxMonitors: toNumber(form.maxMonitors),
     maxProbes: toNumber(form.maxProbes),
@@ -639,6 +628,13 @@ onMounted(() => {
             >
               {{ t('adminPage.plan.removeTerm') }}
             </t-button>
+            <t-input
+              v-model="term.wechatProductId"
+              class="admin-plans__term-wechat"
+              :maxlength="64"
+              :placeholder="t('adminPage.plan.wechatProductIdPlaceholder')"
+              :aria-label="t('adminPage.plan.wechatProductId')"
+            />
           </div>
           <t-button
             variant="outline"
@@ -916,6 +912,11 @@ onMounted(() => {
     gap: 8px;
     align-items: center;
     width: 100%;
+  }
+
+  /** 微信商品 ID 独占一行：只在需要小程序支付时才填 */
+  &__term-wechat {
+    grid-column: 1 / -1;
   }
 
   &__form-switches {

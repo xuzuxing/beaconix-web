@@ -22,7 +22,6 @@ import {
   BookOpen01Icon,
   ComputerIcon,
   Copy01Icon,
-  FlashIcon,
   Folder01Icon,
   HelpCircleIcon,
   Moon01Icon,

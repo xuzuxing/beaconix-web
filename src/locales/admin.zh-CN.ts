@@ -265,6 +265,8 @@ export default {
     termDaysValue: '{days} 天',
     termPrice: '价格（元）',
     termEnabled: '启用该档',
+    wechatProductId: '微信商品 ID',
+    wechatProductIdPlaceholder: '微信小程序虚拟支付商品 ID（可选）',
     addTerm: '添加周期',
     removeTerm: '移除',
     termCount: '{count} 档',

@@ -275,6 +275,11 @@ export interface CreatePlanTermParams {
   /** 停用后不能再被购买 */
   enabled?: boolean
   sortOrder?: number
+  /**
+   * 微信小程序虚拟支付商品 ID（微信侧配置的商品标识）。
+   * 可选：留空表示该周期不支持小程序内支付；提交 `null` 表示清除已配置的值。
+   */
+  wechatProductId?: string | null
 }
 
 /**

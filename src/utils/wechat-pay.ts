@@ -4,9 +4,14 @@
  * 后端 `POST /orders/:id/pay` 只返回 wx.requestPayment 所需的签名参数，
  * 真正把支付调起来还需要两个前提：微信内置浏览器 + 付款人 openid。
  * 这里把环境检测、openid 获取与调起支付收敛到一处，页面只面对 payOrder()。
+ *
+ * 注意：当前 Web 端主支付路径是支付宝 Native 扫码（见 `utils/alipay-pay.ts`），
+ * 微信渠道暂未接入页面；本模块保留以备后续接入，不在 UI 中引用。
  */
-import { createOrderPayment, getOrder } from '@/api'
-import type { Order, WechatPayParams } from '@/api/types/billing'
+import { createOrderPayment } from '@/api'
+import type { Order, OrderPaymentParams, WechatPayParams } from '@/api/types/billing'
+
+export { waitForOrderPaid, type WaitForOrderPaidOptions } from './payment'
 
 /** wx.requestPayment 的最小类型声明（微信 JS-SDK 未随项目打包，按需注入） */
 interface WxPaymentOptions {
@@ -58,6 +63,11 @@ export function getWechatOpenid(): string | undefined {
   return localStorage.getItem(OPENID_STORAGE_KEY) ?? undefined
 }
 
+/** 是否为微信 JSAPI 的支付参数（而非支付宝 Native 的支付链接） */
+export function isWechatPayParams(params: OrderPaymentParams): params is WechatPayParams {
+  return 'paySign' in params && 'package' in params
+}
+
 /** 调起 wx.requestPayment；未加载微信 JS-SDK 时按环境不可用处理 */
 export function requestWechatPayment(params: WechatPayParams): Promise<WechatPayOutcome> {
   const wx = (window as unknown as { wx?: WxApi }).wx
@@ -85,36 +95,12 @@ export function requestWechatPayment(params: WechatPayParams): Promise<WechatPay
  * 订单状态由后端支付回调更新，前端需自行轮询（见 waitForOrderPaid）。
  */
 export async function payOrder(orderId: string, openid: string): Promise<WechatPayOutcome> {
-  const params = await createOrderPayment(orderId, {
+  const params = await createOrderPayment<WechatPayParams>(orderId, {
     openid,
     channel: 'WECHAT',
   })
   return requestWechatPayment(params)
 }
 
-export interface WaitForOrderPaidOptions {
-  /** 轮询间隔（毫秒），默认 2000 */
-  intervalMs?: number
-  /** 最长等待时间（毫秒），默认 60000 */
-  timeoutMs?: number
-}
-
-/**
- * 轮询订单直到转为 PAID（支付回调在服务端异步完成）。
- * 返回最终订单；超时或订单进入终态（CANCELLED/REFUNDED）时返回最后一次快照。
- */
-export async function waitForOrderPaid(
-  orderId: string,
-  options: WaitForOrderPaidOptions = {},
-): Promise<Order> {
-  const { intervalMs = 2000, timeoutMs = 60000 } = options
-  const deadline = Date.now() + timeoutMs
-
-  let order = await getOrder(orderId)
-  while (order.status === 'PENDING' && Date.now() < deadline) {
-    await new Promise((resolve) => setTimeout(resolve, intervalMs))
-    order = await getOrder(orderId)
-  }
-
-  return order
-}
+/** 兼容旧引用：订单类型在这里对页面可见 */
+export type WechatOrder = Order

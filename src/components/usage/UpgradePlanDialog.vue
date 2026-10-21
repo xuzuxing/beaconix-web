@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { MessagePlugin } from 'tdesign-vue-next'
 import { computed, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { createOrder } from '@/api'
-import type { Plan, PlanCycle } from '@/api/types/billing'
+import type { Order, Plan, PlanCycle } from '@/api/types/billing'
 import AppIcon from '@/components/AppIcon.vue'
 import {
   Cancel01Icon,
@@ -24,19 +23,12 @@ import {
   planTier,
   termMonthlyPrice,
 } from '@/utils/billing'
-import {
-  getWechatOpenid,
-  isWechatBrowser,
-  payOrder,
-  waitForOrderPaid,
-} from '@/utils/wechat-pay'
-
 /**
- * 套餐升级弹窗：拉取套餐目录 → 选择套餐与计费周期 → 创建订单 → 调起微信支付 → 轮询订单转 PAID。
+ * 套餐升级弹窗：拉取套餐目录 → 选择套餐与计费周期 → 创建订单 → 交给支付宝扫码支付。
  *
  * 金额与时长由后端按所选周期档位决定：前端只提交 `planId` + `cycle`，
- * 不允许传价格或天数。支付回调由后端处理，前端只负责轮询结果；若当前环境
- * 无法调起支付（非微信浏览器 / 拿不到 openid），订单仍会保留，可在订单管理页继续支付。
+ * 不允许传价格或天数。下单成功后本组件把订单抛给父页面，由父页面托管
+ * `AlipayQrPayDialog`；未支付的订单保留在订单管理页，可随时继续支付。
  */
 defineOptions({ name: 'UpgradePlanDialog' })
 
@@ -49,7 +41,7 @@ const props = defineProps<{
 
 const visible = defineModel<boolean>('visible', { required: true })
 
-const emit = defineEmits<{ paid: [] }>()
+const emit = defineEmits<{ pay: [order: Order] }>()
 
 const { t } = useI18n()
 const orgStore = useOrganizationStore()
@@ -58,7 +50,6 @@ const dialogId = useId()
 const selectedPlanId = ref('')
 const selectedCycle = ref<PlanCycle | null>(null)
 const submitting = ref(false)
-const paying = ref(false)
 
 const comparisonPlans = computed(() =>
   (props.plans ?? [])
@@ -92,7 +83,7 @@ const selectedTerm = computed(
 /** 应付金额取自所选档位，不能用 plan.price（那是「起」价） */
 const total = computed(() => formatAmount(selectedTerm.value?.price ?? 0))
 
-const busy = computed(() => submitting.value || paying.value)
+const busy = computed(() => submitting.value)
 const canSubmit = computed(
   () =>
     !!selectedPlan.value &&
@@ -178,11 +169,9 @@ function abilities(plan: Plan) {
   ]
 }
 
-const submitText = computed(() => {
-  if (paying.value) return t('usage.upgrade.paying')
-  if (submitting.value) return t('usage.upgrade.submitting')
-  return t('usage.upgrade.pay')
-})
+const submitText = computed(() =>
+  submitting.value ? t('usage.upgrade.submitting') : t('usage.upgrade.pay'),
+)
 
 function selectPlan(plan: Plan) {
   if (busy.value || !purchasablePlans.value.some((item) => item.id === plan.id))
@@ -215,7 +204,7 @@ function onPlanKeydown(event: KeyboardEvent, planId: string) {
     [next]?.focus()
 }
 
-/** 下单 + 发起支付；任何未完成的支付都提示用户可在订单管理页继续 */
+/** 下单成功后关闭本弹窗，把订单交给页面打开支付宝扫码支付 */
 async function submit() {
   const plan = selectedPlan.value
   const orgId = orgStore.currentOrganizationId
@@ -228,42 +217,12 @@ async function submit() {
       cycle: selectedCycle.value ?? undefined,
     })
 
-    const openid = getWechatOpenid()
-    if (!isWechatBrowser() || !openid) {
-      MessagePlugin.warning(t('usage.upgrade.manualPay'))
-      visible.value = false
-      return
-    }
-
-    submitting.value = false
-    paying.value = true
-    const outcome = await payOrder(order.id, openid)
-
-    if (outcome === 'cancelled') {
-      MessagePlugin.info(t('usage.upgrade.cancelled'))
-      visible.value = false
-      return
-    }
-    if (outcome !== 'success') {
-      MessagePlugin.warning(t('usage.upgrade.manualPay'))
-      visible.value = false
-      return
-    }
-
-    // 支付已调起，等后端回调把订单置为 PAID
-    const paid = await waitForOrderPaid(order.id)
-    if (paid.status === 'PAID') {
-      MessagePlugin.success(t('usage.upgrade.success'))
-      emit('paid')
-    } else {
-      MessagePlugin.warning(t('usage.upgrade.pendingConfirm'))
-    }
     visible.value = false
+    emit('pay', order)
   } catch {
     // 请求层已统一提示错误
   } finally {
     submitting.value = false
-    paying.value = false
   }
 }
 
