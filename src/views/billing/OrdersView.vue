@@ -5,7 +5,12 @@ import { useI18n } from 'vue-i18n'
 
 import { cancelOrder, listOrders } from '@/api'
 import type { Order, OrderStatus } from '@/api/types/billing'
+import type { Refund } from '@/api/types/refund'
 import AlipayQrPayDialog from '@/components/billing/AlipayQrPayDialog.vue'
+import RefundProgressDialog from '@/components/billing/RefundProgressDialog.vue'
+import RefundRequestDialog from '@/components/billing/RefundRequestDialog.vue'
+import { useOrderRefunds } from '@/composables/useOrderRefunds'
+import { useOrganizationRole } from '@/composables/useOrganizationRole'
 import { useOrganizationStore } from '@/stores'
 import {
   formatAmount,
@@ -13,12 +18,14 @@ import {
   planCycleLabelKey,
 } from '@/utils/billing'
 import { isOrderPayable } from '@/utils/payment'
+import { canManageRefunds, refundStatusTheme } from '@/utils/refund'
 
-/** 订单管理：当前团队的购买订单，支持对待支付订单发起支付宝扫码支付或取消 */
+/** 订单管理：当前团队的购买订单，支持支付、取消、申请退款与查看退款进度 */
 defineOptions({ name: 'OrdersView' })
 
 const { t } = useI18n()
 const orgStore = useOrganizationStore()
+const { role } = useOrganizationRole()
 
 const orgId = computed(() => orgStore.currentOrganizationId)
 const orders = ref<Order[]>([])
@@ -27,6 +34,17 @@ const cancellingId = ref('')
 /** 正在扫码支付的订单；由支付宝弹窗接管 */
 const payTarget = ref<Order | null>(null)
 const payVisible = ref(false)
+/** 退款申请弹窗的目标订单（试算与提交都在弹窗内完成） */
+const refundTarget = ref<Order | null>(null)
+const refundVisible = ref(false)
+/** 退款进度弹窗的目标订单 */
+const progressTarget = ref<Order | null>(null)
+const progressVisible = ref(false)
+
+const { loadMany, latest, clear: clearRefunds } = useOrderRefunds()
+
+/** 只有 OWNER / ADMIN 能提交自助退款；后端仍会二次校验 */
+const canRefund = computed(() => canManageRefunds(role.value))
 
 const STATUS_THEME: Record<OrderStatus, 'success' | 'warning' | 'default'> = {
   PENDING: 'warning',
@@ -39,15 +57,54 @@ async function load() {
   const id = orgId.value
   if (!id) {
     orders.value = []
+    clearRefunds()
     return
   }
 
   loading.value = true
   try {
     orders.value = await listOrders(id)
+    // 只有已支付/已退款订单可能有退款单；待支付与已取消不必查询
+    await loadMany(
+      orders.value
+        .filter(
+          (order) => order.status === 'PAID' || order.status === 'REFUNDED',
+        )
+        .map((order) => order.id),
+    )
   } finally {
     loading.value = false
   }
+}
+
+/** 该订单最近一条退款单；没有退款记录时返回 null */
+function refundOf(order: Order): Refund | null {
+  return latest(order.id)
+}
+
+function refundTagTheme(order: Order) {
+  const refund = refundOf(order)
+  return refund ? refundStatusTheme(refund.status) : 'default'
+}
+
+function refundLabel(order: Order): string {
+  const refund = refundOf(order)
+  return refund ? t(`usage.refund.status.${refund.status}`) : ''
+}
+
+function openRefund(order: Order) {
+  refundTarget.value = order
+  refundVisible.value = true
+}
+
+function openProgress(order: Order) {
+  progressTarget.value = order
+  progressVisible.value = true
+}
+
+/** 申请提交后订单或订阅可能已变化，整页重新加载 */
+function onRefundChanged() {
+  void load()
 }
 
 /** 打开支付宝扫码支付；已超时的订单需要重新下单 */
@@ -150,29 +207,64 @@ watch(orgId, load, { immediate: true })
             </span>
           </div>
 
-          <div
-            v-if="order.status === 'PENDING'"
-            class="orders__actions"
-          >
-            <t-button
-              theme="primary"
-              size="small"
-              @click="pay(order)"
-            >
-              {{ t('usage.orders.pay') }}
-            </t-button>
-            <t-popconfirm
-              :content="t('usage.orders.cancelConfirm')"
-              @confirm="cancel(order)"
-            >
+          <div class="orders__actions">
+            <template v-if="order.status === 'PENDING'">
               <t-button
+                theme="primary"
+                size="small"
+                @click="pay(order)"
+              >
+                {{ t('usage.orders.pay') }}
+              </t-button>
+              <t-popconfirm
+                :content="t('usage.orders.cancelConfirm')"
+                @confirm="cancel(order)"
+              >
+                <t-button
+                  variant="outline"
+                  size="small"
+                  :loading="cancellingId === order.id"
+                >
+                  {{ t('usage.orders.cancel') }}
+                </t-button>
+              </t-popconfirm>
+            </template>
+
+            <template v-else-if="order.status === 'PAID'">
+              <t-tag
+                v-if="refundOf(order)"
+                :theme="refundTagTheme(order)"
+                variant="light"
+                size="small"
+              >
+                {{ refundLabel(order) }}
+              </t-tag>
+              <t-button
+                v-if="refundOf(order)"
+                variant="text"
+                size="small"
+                @click="openProgress(order)"
+              >
+                {{ t('usage.refund.progress') }}
+              </t-button>
+              <t-button
+                v-else-if="canRefund"
                 variant="outline"
                 size="small"
-                :loading="cancellingId === order.id"
+                @click="openRefund(order)"
               >
-                {{ t('usage.orders.cancel') }}
+                {{ t('usage.refund.apply') }}
               </t-button>
-            </t-popconfirm>
+            </template>
+
+            <t-button
+              v-else-if="refundOf(order)"
+              variant="text"
+              size="small"
+              @click="openProgress(order)"
+            >
+              {{ t('usage.refund.progress') }}
+            </t-button>
           </div>
         </div>
       </div>
@@ -189,6 +281,18 @@ watch(orgId, load, { immediate: true })
       v-model:visible="payVisible"
       :order="payTarget"
       @paid="onPaid"
+    />
+
+    <RefundRequestDialog
+      v-model:visible="refundVisible"
+      :order="refundTarget"
+      @submitted="onRefundChanged"
+    />
+
+    <RefundProgressDialog
+      v-model:visible="progressVisible"
+      :order="progressTarget"
+      @settled="onRefundChanged"
     />
   </div>
 </template>

@@ -22,7 +22,11 @@ defineOptions({ name: 'AdminOrderDetailDrawer' })
 
 const visible = defineModel<boolean>('visible', { required: true })
 const props = defineProps<{ order: AdminOrder | null; busy?: boolean }>()
-const emit = defineEmits<{ act: [action: 'cancel' | 'markPaid' | 'refund'] }>()
+const emit = defineEmits<{
+  act: [action: 'cancel' | 'markPaid' | 'refund']
+  /** 打开后台发起退款（真实调用支付渠道），由页面跳转到退款管理 */
+  createRefund: []
+}>()
 const { t } = useI18n()
 
 const actions = () => (props.order ? orderActions(props.order) : null)
@@ -149,6 +153,14 @@ const actions = () => (props.order ? orderActions(props.order) : null)
           @click="emit('act', 'refund')"
         >
           {{ t('adminPage.order.refund') }}
+        </t-button>
+        <t-button
+          v-if="actions()?.canRefund"
+          theme="primary"
+          size="small"
+          @click="emit('createRefund')"
+        >
+          {{ t('adminPage.order.createRefund') }}
         </t-button>
       </div>
 

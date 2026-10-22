@@ -121,6 +121,14 @@ function paginate(info: { current: number; pageSize: number }) {
   changePage(info.current, info.pageSize)
 }
 
+/** 真实退款走退款管理的「发起退款」，这里带上订单 ID 直接跳转 */
+function onCreateRefund() {
+  const order = selected.value
+  if (!order) return
+  detailVisible.value = false
+  void router.push({ path: '/admin/refunds', query: { orderId: order.id } })
+}
+
 onMounted(() => {
   if (userStore.isSuperAdmin) void load()
 })
@@ -376,6 +384,7 @@ onMounted(() => {
       :order="selected"
       :busy="Boolean(selected && actingId === selected.id)"
       @act="(action: AdminOrderAction) => selected && ask(selected, action)"
+      @create-refund="onCreateRefund"
     />
 
     <t-dialog

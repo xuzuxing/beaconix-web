@@ -349,6 +349,17 @@ export const layoutChildren: RouteRecordRaw[] = [
     },
   },
   {
+    // 退款单：审批 / 重试 / 关闭 / 对账，操作会真实调用支付渠道
+    path: 'admin/refunds',
+    name: 'admin-refunds',
+    component: () => import('@/views/admin/AdminRefundsView.vue'),
+    meta: {
+      titleKey: 'submenu.admin.refunds',
+      group: 'admin',
+      roles: ADMIN_ROLES,
+    },
+  },
+  {
     // 跨账号工单：用户侧入口在顶栏「我的工单」，这里做全平台处理
     path: 'admin/tickets',
     name: 'admin-tickets',
