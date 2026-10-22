@@ -59,6 +59,7 @@ const GROUP_LABEL_KEYS: Record<string, string> = {
   smtp: 'adminPage.setting.group.smtp',
   wechat: 'adminPage.setting.group.wechat',
   alipay: 'adminPage.setting.group.alipay',
+  billing: 'adminPage.setting.group.billing',
 }
 
 function groupLabel(key: string) {
@@ -80,6 +81,7 @@ const SECTION_LABEL_KEYS: Record<string, string> = {
   officialAccount: 'adminPage.setting.section.officialAccount',
   work: 'adminPage.setting.section.work',
   http: 'adminPage.setting.section.http',
+  refund: 'adminPage.setting.section.refund',
 }
 
 function sectionLabel(key: string) {

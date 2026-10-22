@@ -521,6 +521,7 @@ export default {
       smtp: '邮件服务',
       wechat: '微信',
       alipay: '支付宝',
+      billing: '账单与退款',
     },
     groupHint: {
       system: '站点名称、Logo、页脚与系统邮件等对外展示的配置。',
@@ -536,6 +537,7 @@ export default {
       smtp: '自建 SMTP 发信通道的连接参数；当前系统邮件仍走 Resend。',
       wechat: '微信支付、小程序、网站应用、公众号与企业微信的凭证；留空会回退到对应的环境变量。',
       alipay: '支付宝开放平台的支付凭证；计费流程尚未接入该渠道，这里只做接入前的准备。',
+      billing: '退款总开关、冷静期、折算比例与手续费等计费策略。',
     },
     section: {
       pay: '微信支付',
@@ -545,6 +547,7 @@ export default {
       officialAccount: '公众号',
       work: '企业微信',
       http: '接口客户端',
+      refund: '退款',
     },
     sectionHint: {
       pay: '商户号、证书与回调地址；模拟支付开启时不会调用真实支付。',
@@ -554,6 +557,7 @@ export default {
       officialAccount: '公众号网页授权、模板消息与安全模式回调。',
       work: '企业微信应用消息与通讯录；当前业务尚未接入，仅作预留。',
       http: '调用微信接口的超时与重试，改动需重启生效。',
+      refund: '退款灰度开关、冷静期、按天折算与手续费；关闭总开关时所有退款接口直接拒绝。',
     },
   },
 }

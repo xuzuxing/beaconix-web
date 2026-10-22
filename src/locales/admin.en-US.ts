@@ -534,6 +534,7 @@ export default {
       smtp: 'Mail (SMTP)',
       wechat: 'WeChat',
       alipay: 'Alipay',
+      billing: 'Billing & refunds',
     },
     groupHint: {
       system: 'Site name, logo, footer and system email shown to the outside.',
@@ -552,6 +553,8 @@ export default {
         'WeChat Pay, mini program, website app, official account and WeCom credentials; leave a field empty to fall back to the matching environment variable.',
       alipay:
         'Alipay Open Platform payment credentials; the billing flow does not support this channel yet, so this is preparation only.',
+      billing:
+        'Refund master switch, cooling-off period, prorating and fee rate for the billing flow.',
     },
     section: {
       pay: 'WeChat Pay',
@@ -561,6 +564,7 @@ export default {
       officialAccount: 'Official account',
       work: 'WeCom',
       http: 'HTTP client',
+      refund: 'Refunds',
     },
     sectionHint: {
       pay: 'Merchant id, certificates and the callback URL; nothing is charged while mock pay is on.',
@@ -570,6 +574,8 @@ export default {
       officialAccount: 'Official account OAuth, template messages and safe-mode callbacks.',
       work: 'WeCom app messages and contact directory; reserved, not wired into business flows yet.',
       http: 'Timeout and retries for WeChat API calls; changes take effect after a restart.',
+      refund:
+        'Rollout switch, cooling-off window, prorating and fee rate; while the master switch is off every refund request is rejected.',
     },
   },
 }
