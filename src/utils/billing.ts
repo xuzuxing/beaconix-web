@@ -42,7 +42,7 @@ export function formatDateTime(value: string | null | undefined): string {
 export const PLAN_CYCLES: readonly PlanCycle[] = ['MONTHLY', 'QUARTERLY', 'YEARLY']
 
 /** 周期的 i18n 文案键（中英文顶层 `common.planCycle.*`，用户侧与管理端共用） */
-export function planCycleLabelKey(cycle: PlanCycle): string {
+export function planCycleLabelKey(cycle: PlanCycle = 'MONTHLY'): string {
   return `common.planCycle.${cycle}`
 }
 
