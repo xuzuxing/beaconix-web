@@ -1,0 +1,34 @@
+# 构建上下文精简：只保留打包所需文件（src / public / index.html / 各类配置）
+node_modules
+dist
+dist-ssr
+coverage
+test-results
+playwright-report
+__screenshots__
+
+.git
+.gitignore
+.gitattributes
+.git-blame-ignore-revs
+
+.vscode
+.idea
+.reasonix
+
+# 与前端构建无关的文档、脚本与容器文件（nginx.conf 必须保留，运行阶段要 COPY）
+docs
+test
+capture-online.mjs
+*.md
+Dockerfile
+.dockerignore
+
+# 本地环境与日志
+.env.local
+.env.*.local
+*.local
+*.log
+*.tsbuildinfo
+.eslintcache
+.DS_Store
