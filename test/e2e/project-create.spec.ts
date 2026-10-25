@@ -29,9 +29,9 @@ test('team admin creates a project from the header selector', async ({ page }) =
   ).toEqual({ name: 'Beacon Web', key: 'BEACONWEB' })
 
   await page.locator('.app-header__project').click()
-  await expect(
-    page.locator('.project-list__item').filter({ hasText: 'Beacon Web' }),
-  ).toHaveClass(/is-active/)
+  await expect(page.locator('.project-list__item').filter({ hasText: 'Beacon Web' })).toHaveClass(
+    /is-active/,
+  )
   await healthy(state)
 })
 

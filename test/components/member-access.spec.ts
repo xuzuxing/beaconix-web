@@ -22,7 +22,9 @@ vi.mock('@/api', () => ({
   replaceMemberProjectPermissions: vi.fn(),
   sendInvitation: vi.fn(),
 }))
-vi.mock('tdesign-vue-next', () => ({ MessagePlugin: { success: vi.fn(), error: vi.fn() } }))
+vi.mock('tdesign-vue-next', () => ({
+  MessagePlugin: { success: vi.fn(), error: vi.fn() },
+}))
 const snapshot = {
   ...ownerPermissions,
   organizationRole: 'MEMBER' as const,
@@ -115,7 +117,10 @@ describe('explicit invitation scopes', () => {
     const wrapper = await invite()
     const grants =
       reason === 'too many'
-        ? Array.from({ length: 101 }, (_, index) => ({ projectId: `p${index}`, role: 'VIEWER' }))
+        ? Array.from({ length: 101 }, (_, index) => ({
+            projectId: `p${index}`,
+            role: 'VIEWER',
+          }))
         : reason === 'duplicate'
           ? [
               { projectId: 'a', role: 'VIEWER' },

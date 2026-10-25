@@ -31,7 +31,9 @@ it('a replayed 403 is not mistaken for failed refresh or logged out', async () =
       config,
     })
   }
-  await expect(get('/projects/b/monitors')).rejects.toMatchObject({ status: 403 })
+  await expect(get('/projects/b/monitors')).rejects.toMatchObject({
+    status: 403,
+  })
   expect(calls).toBe(2)
   expect(logout).not.toHaveBeenCalled()
 })
@@ -94,7 +96,10 @@ it('an earlier account refresh failure cannot log out a newer account', async ()
   const request = get('/projects/a/monitors')
   await vi.waitFor(() => expect(fail).toBeTypeOf('function'))
   invalidateSession()
-  setupRequestAuth({ getAccessToken: () => 'u2', getRefreshToken: () => 'u2-refresh' })
+  setupRequestAuth({
+    getAccessToken: () => 'u2',
+    getRefreshToken: () => 'u2-refresh',
+  })
   fail(new Error('U1 refresh network failure'))
   await expect(request).rejects.toThrow('Request context changed')
   expect(logout).not.toHaveBeenCalled()

@@ -122,8 +122,16 @@ describe('authorized workspace and shared navigation', () => {
     const org = useOrganizationStore()
     await org.loadWorkspace()
     const routes = [
-      { path: 'monitor', redirect: '/monitor', meta: { titleKey: 'menu.monitor' } },
-      { path: 'channels', redirect: '/channels', meta: { titleKey: 'menu.channels' } },
+      {
+        path: 'monitor',
+        redirect: '/monitor',
+        meta: { titleKey: 'menu.monitor' },
+      },
+      {
+        path: 'channels',
+        redirect: '/channels',
+        meta: { titleKey: 'menu.channels' },
+      },
       { path: 'teams', redirect: '/teams', meta: { titleKey: 'menu.team' } },
       { path: 'admin', redirect: '/admin', meta: { titleKey: 'menu.admin' } },
     ]

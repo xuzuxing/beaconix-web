@@ -39,7 +39,10 @@ export async function mockWorkspace(
         : ['a', 'b'],
     membershipId: 'member-old',
     version: 7,
-    grants: [{ projectId: 'a', role: 'VIEWER' }] as { projectId: string; role: string }[],
+    grants: [{ projectId: 'a', role: 'VIEWER' }] as {
+      projectId: string
+      role: string
+    }[],
     projectNames: {} as Record<string, string>,
     monitorDrafts: {} as Record<string, Record<string, unknown>>,
     detailUnavailable: false,
@@ -134,7 +137,11 @@ export async function mockWorkspace(
     createdAt: now,
     updatedAt: now,
     organization: organization('o1'),
-    sentBy: { id: 'owner', name: 'Fixture Owner', email: 'owner@example.invalid' },
+    sentBy: {
+      id: 'owner',
+      name: 'Fixture Owner',
+      email: 'owner@example.invalid',
+    },
   })
   const monitor = (id: string) => ({
     id: `monitor-${id}`,
@@ -171,7 +178,10 @@ export async function mockWorkspace(
     availabilityStatus: 'UP',
     availableFailCount: 0,
     ...(state.roles[id] === 'ADMIN' || isOrgAdmin()
-      ? { config: { headers: { 'X-Private': 'hidden-config' } }, notificationChannelIds: [] }
+      ? {
+          config: { headers: { 'X-Private': 'hidden-config' } },
+          notificationChannelIds: [],
+        }
       : {}),
     ...state.monitorDrafts[id],
   })
@@ -206,10 +216,16 @@ export async function mockWorkspace(
       )
     if (path === '/auth/logout') return reply(route, null)
     if (path === '/notifications/stream')
-      return route.fulfill({ contentType: 'text/event-stream', body: ': fixture heartbeat\n\n' })
+      return route.fulfill({
+        contentType: 'text/event-stream',
+        body: ': fixture heartbeat\n\n',
+      })
     if (path === '/notifications/unread-count') return reply(route, { count: 0 })
     if (path === '/notifications')
-      return reply(route, { data: [], meta: { total: 0, page: 1, limit: 20, totalPages: 0 } })
+      return reply(route, {
+        data: [],
+        meta: { total: 0, page: 1, limit: 20, totalPages: 0 },
+      })
     if (path === '/invitations/pending')
       return reply(route, options.invitations && !state.accepted ? [invitation()] : [])
     if (path === '/invitations/by-id/inv1') return reply(route, invitation())
@@ -233,7 +249,11 @@ export async function mockWorkspace(
       )
     if (/^\/organizations\/o[12]\/projects$/.test(path)) {
       if (method === 'POST') {
-        const payload = body as { name: string; key: string; description?: string }
+        const payload = body as {
+          name: string
+          key: string
+          description?: string
+        }
         const id = `new-${state.projectIds.length + 1}`
         state.projectIds.push(id)
         state.projectNames[id] = payload.name
@@ -437,7 +457,12 @@ export async function mockWorkspace(
           joinedAt: now,
           updatedAt: now,
           invitedById: null,
-          user: { id: 'u2', name: 'Member Two', email: 'member2@example.invalid', avatarUrl: null },
+          user: {
+            id: 'u2',
+            name: 'Member Two',
+            email: 'member2@example.invalid',
+            avatarUrl: null,
+          },
         },
       ])
     if (path === '/organizations/o1/invitations')

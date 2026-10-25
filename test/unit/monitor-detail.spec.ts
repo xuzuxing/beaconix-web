@@ -12,8 +12,13 @@ let scope: EffectScope
 beforeEach(() => {
   vi.resetAllMocks()
   scope = effectScope()
-  vi.mocked(getMonitor).mockResolvedValue({ id: 'm1', name: 'Private old title' } as Monitor)
-  vi.mocked(getMonitorInsights).mockResolvedValue({ monitorId: 'm1' } as MonitorInsights)
+  vi.mocked(getMonitor).mockResolvedValue({
+    id: 'm1',
+    name: 'Private old title',
+  } as Monitor)
+  vi.mocked(getMonitorInsights).mockResolvedValue({
+    monitorId: 'm1',
+  } as MonitorInsights)
 })
 afterEach(() => scope.stop())
 describe('monitor resource lifecycle', () => {
@@ -42,7 +47,10 @@ describe('monitor resource lifecycle', () => {
     const state = scope.run(() =>
       useMonitorDetail(ref('a'), id, ref<MonitorDetailRange>('24h'), ref('UTC')),
     )!
-    vi.mocked(getMonitor).mockResolvedValue({ id: 'm2', name: 'Current title' } as Monitor)
+    vi.mocked(getMonitor).mockResolvedValue({
+      id: 'm2',
+      name: 'Current title',
+    } as Monitor)
     id.value = 'm2'
     finish({ id: 'm1', name: 'Private old title' } as Monitor)
     await flushPromises()
