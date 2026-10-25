@@ -133,9 +133,9 @@ jobs:
             exit 1
           fi
           kubectl apply -f deployment.yaml
-          kubectl -n beaconix rollout status deploy/beaconix-web-app --timeout=180s
+          kubectl -n beaconix rollout status deploy/beaconix-web --timeout=180s
 
       - name: Rollback on failure
         if: failure()
         run: |
-          kubectl -n beaconix rollout undo deploy/beaconix-web-app --timeout=180s
+          kubectl -n beaconix rollout undo deploy/beaconix-web --timeout=180s
