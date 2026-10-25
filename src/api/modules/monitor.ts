@@ -8,7 +8,11 @@ import type {
 } from '../types'
 import { del, get, patch, post } from '@/utils/request'
 import type { AxiosRequestConfig } from 'axios'
-import type { MonitorDetailRange, MonitorInsights } from '../types/monitor-detail'
+import type {
+  MonitorDetailRange,
+  MonitorInsights,
+  MonitorRound,
+} from '../types/monitor-detail'
 
 /** 项目下的监控项列表 */
 export function listMonitors(projectId: string, config?: AxiosRequestConfig) {
@@ -82,6 +86,20 @@ export function listMonitorChecks(
   params?: { limit?: number },
 ) {
   return get<CheckLog[]>(`/projects/${projectId}/monitors/${monitorId}/checks`, params)
+}
+
+/** 单次检查批次（round）详情：检查行、投票汇总与探针上报 */
+export function getMonitorRound(
+  projectId: string,
+  monitorId: string,
+  roundId: string,
+  config?: AxiosRequestConfig,
+) {
+  return get<MonitorRound>(
+    `/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(monitorId)}/rounds/${encodeURIComponent(roundId)}`,
+    undefined,
+    config,
+  )
 }
 
 /** 监控项当前状态（含近 24 小时摘要） */

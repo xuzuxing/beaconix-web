@@ -24,6 +24,7 @@ import MonitorActions from '@/components/monitor/MonitorActions.vue'
 import MonitorDetailCharts from '@/components/monitor/MonitorDetailCharts.vue'
 import MonitorEditorDialog from '@/components/monitor/MonitorEditorDialog.vue'
 import MonitorEvents from '@/components/monitor/MonitorEvents.vue'
+import MonitorRoundDialog from '@/components/monitor/MonitorRoundDialog.vue'
 import MonitorStatusTag from '@/components/monitor/MonitorStatusTag.vue'
 import RuleGroupEditorDialog from '@/components/rules/RuleGroupEditorDialog.vue'
 import RuleTreeView from '@/components/rules/RuleTreeView.vue'
@@ -153,6 +154,8 @@ const tab = ref('overview')
 const autoRefresh = ref(false)
 const dialog = ref(false)
 const checkPage = ref(1)
+const roundDialog = ref(false)
+const selectedRoundId = ref('')
 const { canManage, canCheck, canTestAlert } = useMonitorAccess()
 const { monitor, insights, loading, error, refresh } = useMonitorDetail(
   projectId,
@@ -379,6 +382,14 @@ const visibleChecks = computed(
       checkPage.value * 10,
     ) ?? [],
 )
+function openRound(check: { roundId?: string | null }) {
+  if (!check.roundId) {
+    MessagePlugin.warning(t('monitorPage.roundUnavailable'))
+    return
+  }
+  selectedRoundId.value = check.roundId
+  roundDialog.value = true
+}
 async function copy() {
   try {
     await navigator.clipboard.writeText(monitor.value?.target ?? '')
@@ -635,12 +646,15 @@ async function copy() {
                 <th>{{ t('monitorPage.latency') }}</th>
                 <th>{{ t('monitorPage.code') }}</th>
                 <th>{{ t('monitorPage.error') }}</th>
+                <th>{{ t('monitorPage.actions') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr
                 v-for="check in visibleChecks"
                 :key="check.id"
+                class="monitor-detail__check-row"
+                @click="openRound(check)"
               >
                 <td>{{ time(check.checkedAt) }}</td>
                 <td>
@@ -662,6 +676,15 @@ async function copy() {
                 <td>{{ metric(check.latency, ' ms') }}</td>
                 <td>{{ check.statusCode ?? '-' }}</td>
                 <td>{{ check.error || '-' }}</td>
+                <td>
+                  <t-button
+                    size="small"
+                    variant="text"
+                    theme="primary"
+                    @click.stop="openRound(check)"
+                    >{{ t('monitorPage.view') }}</t-button
+                  >
+                </td>
               </tr>
             </tbody>
           </table>
@@ -848,6 +871,13 @@ async function copy() {
         :monitor-type="monitor.type"
         @saved="loadRules"
       />
+      <MonitorRoundDialog
+        v-model:visible="roundDialog"
+        :project-id="projectId"
+        :monitor-id="monitorId"
+        :round-id="selectedRoundId"
+        :tz="tz"
+      />
     </template>
   </section>
 </template>
@@ -1028,6 +1058,12 @@ async function copy() {
       display: block;
       margin-top: 4px;
       color: @beacon-text-tertiary;
+    }
+  }
+  &__check-row {
+    cursor: pointer;
+    &:hover td {
+      background: @beacon-bg-page;
     }
   }
   :deep(.t-tabs) {

@@ -541,6 +541,8 @@ export interface CheckLog {
   statusCode: number | null
   source: CheckSource
   checkedAt: string
+  /** 所属检查批次（round）ID，格式 `<monitorId>:<epochMs>`；批次化之前的记录为 null */
+  roundId?: string | null
 }
 
 /** 监控概览（项目 / 组织两级共用结构） */
