@@ -211,7 +211,10 @@ test('project MEMBER can check but cannot manage or send test alerts', async ({ 
 test('project ADMIN monitor editor preserves shared template summaries and can unbind', async ({
   page,
 }) => {
-  const state = await mockWorkspace(page, { projectId: 'b', sharedBinding: true })
+  const state = await mockWorkspace(page, {
+    projectId: 'b',
+    sharedBinding: true,
+  })
   await page.goto('/monitor')
   await page.getByRole('button', { name: '编辑监控项', exact: true }).click()
   const dialog = page.locator('.t-dialog:visible')
@@ -447,7 +450,10 @@ test('English long names and 100 grants stay readable on mobile and preserve fil
       `${id} Production monitoring and regional service availability`.repeat(2),
     ]),
   )
-  state.grants = state.projectIds.map((projectId) => ({ projectId, role: 'VIEWER' }))
+  state.grants = state.projectIds.map((projectId) => ({
+    projectId,
+    role: 'VIEWER',
+  }))
   await page.goto('/teams/members')
   await page.getByRole('button', { name: 'Project permissions', exact: true }).click()
   const drawer = page.locator('.t-drawer--open')

@@ -95,7 +95,11 @@ const alert = defineComponent({
 export function componentOptions() {
   return {
     plugins: [
-      createI18n({ legacy: false, locale: 'zh-CN', messages: { 'zh-CN': zh, 'en-US': en } }),
+      createI18n({
+        legacy: false,
+        locale: 'zh-CN',
+        messages: { 'zh-CN': zh, 'en-US': en },
+      }),
     ],
     stubs: {
       TDialog: dialog,

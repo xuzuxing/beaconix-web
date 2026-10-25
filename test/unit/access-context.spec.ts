@@ -40,7 +40,11 @@ describe('permission and cache epochs', () => {
   })
   it('permission downgrade cannot reuse old body or 304', async () => {
     const cache = new MonitoringRequestState()
-    await cache.load('item', async () => ({ status: 200, body: 'admin', etag: 'admin-etag' }))
+    await cache.load('item', async () => ({
+      status: 200,
+      body: 'admin',
+      etag: 'admin-etag',
+    }))
     invalidatePermissions()
     const sent: (string | undefined)[] = []
     const result = await cache.load('item', async (etag) => {

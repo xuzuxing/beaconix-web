@@ -24,7 +24,11 @@ beforeEach(() => {
   setActivePinia(createPinia())
   scope = effectScope()
   const permissions = usePermissionsStore()
-  permissions.organizations.o1 = { state: 'ready', error: '', data: ownerPermissions }
+  permissions.organizations.o1 = {
+    state: 'ready',
+    error: '',
+    data: ownerPermissions,
+  }
   permissions.organizations.o2 = {
     state: 'ready',
     error: '',
@@ -73,7 +77,11 @@ describe('tenant probe lifecycle', () => {
     const state = scope.run(() => useProbeList(ref('o1')))!
     await flushPromises()
     expect(state.probes.value).toHaveLength(1)
-    usePermissionsStore().organizations.o1 = { state: 'ready', error: '', data: orgPermissions }
+    usePermissionsStore().organizations.o1 = {
+      state: 'ready',
+      error: '',
+      data: orgPermissions,
+    }
     invalidatePermissions()
     expect(state.probes.value).toEqual([])
     await flushPromises()
@@ -178,7 +186,12 @@ describe('probe presentation and DTO constraints', () => {
     expect(nodes).toHaveLength(3)
   })
   it('validates URLs, limits and different registration modes', () => {
-    const form = { name: 'Node', region: 'Shanghai', provider: 'CUSTOM' as const, callbackUrl: '' }
+    const form = {
+      name: 'Node',
+      region: 'Shanghai',
+      provider: 'CUSTOM' as const,
+      callbackUrl: '',
+    }
     expect(probeFormError(form, true)).toBe('')
     expect(probeFormError(form)).toBe('invalidUrl')
     expect(probeFormError({ ...form, callbackUrl: 'http://localhost/callback' })).toBe('')

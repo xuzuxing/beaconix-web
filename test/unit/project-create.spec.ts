@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useOrganizationStore } from '@/stores'
-import { createProject, getSubscriptionStack, listOrganizations, listProjects } from '@/api'
+import { createProject, listOrganizations, listProjects } from '@/api'
 import { getOrganizationPermissions, getProjectPermissions } from '@/api/modules/permissions'
 import { invalidateSession } from '@/utils/access-context'
 import type { Organization } from '@/api/types'
-import { orgPermissions, ownerPermissions, project, projectPermission } from '../fixtures/access'
+import { orgPermissions, project, projectPermission } from '../fixtures/access'
 
 vi.mock('@/api', async (original) => ({
   ...(await original<typeof import('@/api')>()),
@@ -52,7 +52,10 @@ describe('creating a project inside the workspace', () => {
 
     await org.createProject({ name: 'Project C', key: 'C1' })
 
-    expect(createProject).toHaveBeenCalledWith('o1', { name: 'Project C', key: 'C1' })
+    expect(createProject).toHaveBeenCalledWith('o1', {
+      name: 'Project C',
+      key: 'C1',
+    })
     expect(org.projects.map((item) => item.id)).toEqual(['a', 'b', 'c'])
     expect(org.currentProjectId).toBe('c')
     expect(org.currentProject?.name).toBe('Project C')

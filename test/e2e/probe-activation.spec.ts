@@ -24,7 +24,12 @@ async function setup(page: Page, options: Parameters<typeof mockWorkspace>[1] = 
     const url = new URL(request.url())
     const path = url.pathname.slice(4)
     const body = request.postData() ? request.postDataJSON() : undefined
-    workspace.requests.push({ method: request.method(), path, body, headers: request.headers() })
+    workspace.requests.push({
+      method: request.method(),
+      path,
+      body,
+      headers: request.headers(),
+    })
     if (path.endsWith('/activate'))
       return reply(
         route,
@@ -33,7 +38,11 @@ async function setup(page: Page, options: Parameters<typeof mockWorkspace>[1] = 
               userCode: url.searchParams.get('code'),
               status: state.status,
               requestedAt: '2026-10-14T00:00:00Z',
-              client: { hostname: state.hostname, platform: 'linux', runtime: 'node/22.0.0' },
+              client: {
+                hostname: state.hostname,
+                platform: 'linux',
+                runtime: 'node/22.0.0',
+              },
             }
           : { message: 'Fixture enrollment unavailable' },
         state.readStatus,
@@ -44,7 +53,11 @@ async function setup(page: Page, options: Parameters<typeof mockWorkspace>[1] = 
         await reply(
           route,
           state.approveStatus < 400
-            ? { probeId: 'new-probe', organizationId: body.organizationId, status: 'approved' }
+            ? {
+                probeId: 'new-probe',
+                organizationId: body.organizationId,
+                status: 'approved',
+              }
             : { message: 'Fixture approval unavailable' },
           state.approveStatus,
         )
@@ -165,7 +178,10 @@ for (const twoFactor of [false, true]) {
       }),
     )
     await page.route('**/api/auth/2fa/verify-login', (route) =>
-      route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: auth }) }),
+      route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({ data: auth }),
+      }),
     )
     await page.goto(`/activate?code=${USER_CODE}`)
     await expect(page).toHaveURL(/\/login\?redirect=/)

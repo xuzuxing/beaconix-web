@@ -14,7 +14,7 @@ import {
   getInvitationById,
   listPendingInvitations,
 } from '@/api/modules/invitation'
-import type { User, Organization, Paginated } from '@/api/types'
+import type { User, Organization, PageResult } from '@/api/types'
 import type { UserNotification } from '@/api/types/notification-center'
 import type { UserInvitation } from '@/api/types/invitation'
 import { invalidatePermissions } from '@/utils/access-context'
@@ -74,8 +74,11 @@ beforeEach(() => {
   user.setUser({ id: 'u1' } as User)
   vi.mocked(getUserNotificationUnreadCount).mockResolvedValue({ count: 1 })
   vi.mocked(listUserNotifications).mockResolvedValue({
-    data: [notification],
-    meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+    items: [notification],
+    total: 1,
+    page: 1,
+    limit: 20,
+    totalPages: 1,
   })
   vi.mocked(listPendingInvitations).mockResolvedValue([])
   vi.mocked(consumeNotificationStream).mockImplementation(
@@ -101,8 +104,11 @@ describe('notifications follow current authorization', () => {
   it('old connection callbacks cannot reinsert revoked content', async () => {
     const oldReceive = vi.mocked(consumeNotificationStream).mock.calls[0]![2]
     vi.mocked(listUserNotifications).mockResolvedValue({
-      data: [],
-      meta: { total: 0, page: 1, limit: 20, totalPages: 0 },
+      items: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
     })
     await store.refresh()
     invalidatePermissions()
@@ -112,7 +118,7 @@ describe('notifications follow current authorization', () => {
     expect(store.recent).toEqual([])
   })
   it('permission invalidation rejects old unread counts and list responses', async () => {
-    let finish!: (items: Paginated<UserNotification>) => void
+    let finish!: (items: PageResult<UserNotification>) => void
     vi.mocked(listUserNotifications).mockImplementationOnce(
       () =>
         new Promise((resolve) => {
@@ -121,11 +127,20 @@ describe('notifications follow current authorization', () => {
     )
     const old = store.loadRecent()
     vi.mocked(listUserNotifications).mockResolvedValue({
-      data: [],
-      meta: { total: 0, page: 1, limit: 20, totalPages: 0 },
+      items: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
     })
     invalidatePermissions()
-    finish({ data: [notification], meta: { total: 99, page: 1, limit: 20, totalPages: 5 } })
+    finish({
+      items: [notification],
+      total: 99,
+      page: 1,
+      limit: 20,
+      totalPages: 5,
+    })
     await old
     await Promise.resolve()
     expect(store.recent).toEqual([])
@@ -145,7 +160,10 @@ describe('notifications follow current authorization', () => {
     const loadOrganizations = vi.spyOn(org, 'loadOrganizations').mockResolvedValue([])
     const loadWorkspace = vi.spyOn(org, 'loadWorkspace').mockResolvedValue()
     vi.mocked(getInvitationById).mockResolvedValue(invitation)
-    vi.mocked(acceptInvitationById).mockResolvedValue({ ...invitation, status: 'ACCEPTED' })
+    vi.mocked(acceptInvitationById).mockResolvedValue({
+      ...invitation,
+      status: 'ACCEPTED',
+    })
     const item = {
       ...notification,
       type: 'INVITATION_RECEIVED' as const,

@@ -9,7 +9,10 @@ beforeEach(() => {
   setupRequestAuth({ getAccessToken: () => undefined })
 })
 it('preserves inner pagination through the response envelope', async () => {
-  const page = { data: [], meta: { total: 55, page: 2, limit: 20, totalPages: 3 } }
+  const page = {
+    data: [],
+    meta: { total: 55, page: 2, limit: 20, totalPages: 3 },
+  }
   service.defaults.adapter = async (config) => ({
     config,
     status: 200,
@@ -18,14 +21,25 @@ it('preserves inner pagination through the response envelope', async () => {
     data: { data: page, meta: { timestamp: '2026-10-13' } },
   })
   expect(
-    await api.listProbeResults('org/a', 'probe/b', { page: 2, target: 'https://target.invalid' }),
+    await api.listProbeResults('org/a', 'probe/b', {
+      page: 2,
+      target: 'https://target.invalid',
+    }),
   ).toEqual(page)
-  expect(await api.listProbeExecutions('org/a', 'probe/b', { page: 2, status: 'TIMEOUT' })).toEqual(
-    page,
-  )
+  expect(
+    await api.listProbeExecutions('org/a', 'probe/b', {
+      page: 2,
+      status: 'TIMEOUT',
+    }),
+  ).toEqual(page)
 })
 it('uses the actual encoded organization routes and mutation payloads', async () => {
-  const calls: { url?: string; method?: string; data: unknown; params: unknown }[] = []
+  const calls: {
+    url?: string
+    method?: string
+    data: unknown
+    params: unknown
+  }[] = []
   service.defaults.adapter = async (config) => {
     calls.push({
       url: config.url,
@@ -73,7 +87,12 @@ it('uses the actual encoded organization routes and mutation payloads', async ()
   expect(calls[8]?.data).toEqual({ name: 'Node' })
 })
 it('reads a device authorization and approves only through the dedicated confirmation endpoint', async () => {
-  const calls: { url?: string; method?: string; data: unknown; params: unknown }[] = []
+  const calls: {
+    url?: string
+    method?: string
+    data: unknown
+    params: unknown
+  }[] = []
   service.defaults.adapter = async (config) => {
     calls.push({
       url: config.url,
@@ -120,6 +139,11 @@ it('reads a device authorization and approves only through the dedicated confirm
       data: undefined,
       params: { code: 'WDJB-MJHT' },
     },
-    { url: '/probes/enroll/approve', method: 'post', data: payload, params: undefined },
+    {
+      url: '/probes/enroll/approve',
+      method: 'post',
+      data: payload,
+      params: undefined,
+    },
   ])
 })

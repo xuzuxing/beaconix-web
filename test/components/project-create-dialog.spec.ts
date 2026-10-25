@@ -10,7 +10,9 @@ import { componentOptions } from '../fixtures/components'
 import { project } from '../fixtures/access'
 
 vi.mock('@/api', () => ({ createProject: vi.fn() }))
-vi.mock('tdesign-vue-next', () => ({ MessagePlugin: { success: vi.fn(), error: vi.fn() } }))
+vi.mock('tdesign-vue-next', () => ({
+  MessagePlugin: { success: vi.fn(), error: vi.fn() },
+}))
 
 const textarea = defineComponent({
   props: ['modelValue'],
@@ -54,7 +56,10 @@ describe('creating a project from the header selector', () => {
     await wrapper.find('[data-confirm]').trigger('click')
     await flushPromises()
 
-    expect(createProject).toHaveBeenCalledWith('o1', { name: 'Beacon Web', key: 'BEACONWEB' })
+    expect(createProject).toHaveBeenCalledWith('o1', {
+      name: 'Beacon Web',
+      key: 'BEACONWEB',
+    })
     expect(wrapper.emitted('created')?.[0]).toEqual([project('c')])
     expect(wrapper.emitted('update:visible')?.at(-1)).toEqual([false])
     wrapper.unmount()

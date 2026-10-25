@@ -1,7 +1,11 @@
 import { expect, it, vi } from 'vitest'
 import { getInvitationById, getInvitationByToken } from '@/api/modules/invitation'
 import { get } from '@/utils/request'
-vi.mock('@/utils/request', () => ({ get: vi.fn(), post: vi.fn(), del: vi.fn() }))
+vi.mock('@/utils/request', () => ({
+  get: vi.fn(),
+  post: vi.fn(),
+  del: vi.fn(),
+}))
 it('authenticated invitation projection preserves grants but excludes credentials and issuer internals', async () => {
   vi.mocked(get).mockResolvedValue({
     id: 'invite',
