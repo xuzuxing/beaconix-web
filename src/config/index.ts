@@ -1,10 +1,10 @@
 import type { LocaleType } from '@/types'
 
 /** 应用标题 */
-export const APP_TITLE = import.meta.env.VITE_APP_TITLE || 'Beacon Web'
+export const APP_TITLE = import.meta.env.VITE_APP_TITLE || 'Beaconix Web'
 
 /** 登录后或访问根路径时跳转的首页 */
-export const HOME_PATH = '/overview'
+export const HOME_PATH = '/dashboard'
 
 /** 默认语言 */
 export const DEFAULT_LOCALE: LocaleType =

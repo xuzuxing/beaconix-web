@@ -7,29 +7,91 @@ import axios, {
 } from 'axios'
 import { MessagePlugin } from 'tdesign-vue-next'
 
-import type { ApiResult } from '@/api/types'
-import { REQUEST_TIMEOUT, SUCCESS_CODE } from '@/config'
+import { REQUEST_TIMEOUT } from '@/config'
+import { accessContext, isCurrentContext, StaleAccessError } from './access-context'
 
-/** 登录失效的业务状态码 */
-const UNAUTHORIZED_CODE = 401
-
-type TokenGetter = () => string | undefined
-type UnauthorizedHandler = () => void
-
-let getToken: TokenGetter = () => undefined
-let onUnauthorized: UnauthorizedHandler = () => undefined
-
-/**
- * 注入 token 来源（一般为 user store）。
- * 通过注入而非直接 import store，避免 store → api → request → store 的循环依赖。
- */
-export function setupRequestToken(getter: TokenGetter) {
-  getToken = getter
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status?: number,
+    public readonly path?: string,
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
 }
 
-/** 注入登录失效后的处理逻辑（清空登录态、跳转等） */
-export function setupRequestUnauthorized(handler: UnauthorizedHandler) {
-  onUnauthorized = handler
+type ContextConfig = InternalAxiosRequestConfig & {
+  __retried?: boolean
+  __context?: ReturnType<typeof accessContext>
+}
+function accountOnly(url = '') {
+  return !/^\/(?:organizations|projects|tasks|monitors|rule-groups)\//.test(url)
+}
+
+/**
+ * 后端统一响应包装：TransformInterceptor 把成功响应包成 { data, meta }。
+ * 请求层在内层解包出 data，业务代码只面对真实数据。
+ */
+export interface ApiEnvelope<T> {
+  data: T
+  meta?: {
+    timestamp?: string
+  }
+}
+
+/** 认证令牌对：/auth/login 与 /auth/refresh 的返回体 */
+export interface AuthTokens {
+  accessToken: string
+  refreshToken: string
+}
+
+interface RequestAuthHooks {
+  /** 读取当前 access token */
+  getAccessToken: () => string | undefined
+  /** 读取当前 refresh token */
+  getRefreshToken: () => string | undefined
+  /** 刷新成功后回写新的令牌对 */
+  setTokens: (tokens: AuthTokens) => void
+  /** 登录失效且无法刷新时的处理（清状态、跳登录） */
+  onUnauthorized: () => void
+  onAccessDenied: (status: number, path: string) => void
+}
+
+const hooks: RequestAuthHooks = {
+  getAccessToken: () => undefined,
+  getRefreshToken: () => undefined,
+  setTokens: () => undefined,
+  onUnauthorized: () => undefined,
+  onAccessDenied: () => undefined,
+}
+
+/**
+ * 由 main.ts 注入 store 侧实现。
+ * 通过注入而非直接 import store，避免 store → api → request → store 的循环依赖。
+ */
+export function setupRequestAuth(next: Partial<RequestAuthHooks>) {
+  Object.assign(hooks, next)
+}
+
+/**
+ * 这些接口的 401 属于业务结果（密码错误、验证码失效等），
+ * 不应触发 token 刷新，也不应把用户踢回登录页。
+ */
+const AUTH_ENDPOINTS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/verify-email',
+  '/auth/resend-verification',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/2fa/',
+  '/auth/wechat/',
+]
+
+function isAuthEndpoint(url?: string) {
+  return Boolean(url) && AUTH_ENDPOINTS.some((endpoint) => url!.includes(endpoint))
 }
 
 const service: AxiosInstance = axios.create({
@@ -38,20 +100,62 @@ const service: AxiosInstance = axios.create({
 })
 
 service.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getToken()
-  if (token) {
+  const contextual = config as ContextConfig
+  contextual.__context ??= accessContext()
+  if (!isCurrentContext(contextual.__context, accountOnly(config.url))) throw new StaleAccessError()
+  const token = hooks.getAccessToken()
+  if (token && !config.headers['X-Anonymous']) {
     config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })
 
-/** HTTP 状态码对应的兜底文案 */
-function getErrorMessage(error: AxiosError): string {
-  if (error.code === 'ECONNABORTED') {
-    return '请求超时，请稍后重试'
+/** 解包 { data, meta }；文件流等非包装响应原样返回 */
+function unwrap(response: AxiosResponse) {
+  const config = response.config as ContextConfig
+  if (config.__context && !isCurrentContext(config.__context, accountOnly(config.url))) {
+    throw new StaleAccessError()
+  }
+  if (response.config.headers['X-Monitoring-Conditional']) {
+    return {
+      status: response.status,
+      etag: response.headers.etag,
+      body: response.status === 304 ? undefined : response.data?.data,
+    }
+  }
+  const { responseType } = response.config
+  if (responseType === 'blob' || responseType === 'arraybuffer') {
+    return response
   }
 
-  switch (error.response?.status) {
+  const body = response.data
+  if (body && typeof body === 'object' && 'data' in body) {
+    return (body as ApiEnvelope<unknown>).data
+  }
+  return body
+}
+
+/** 从后端错误体里取可读文案（GlobalExceptionFilter 的 message 可能是数组） */
+function readErrorMessage(body: unknown): string | undefined {
+  if (typeof body === 'string' && body.trim()) {
+    return body.trim()
+  }
+  if (!body || typeof body !== 'object') {
+    return undefined
+  }
+
+  const record = body as Record<string, unknown>
+  const raw = record.message ?? record.error
+  if (Array.isArray(raw)) {
+    const messages = raw.filter((item): item is string => typeof item === 'string')
+    return messages.length ? messages.join('；') : undefined
+  }
+  return typeof raw === 'string' && raw.trim() ? raw : undefined
+}
+
+/** 无错误体时的兜底文案 */
+function fallbackMessage(status?: number): string {
+  switch (status) {
     case 400:
       return '请求参数有误'
     case 401:
@@ -60,6 +164,8 @@ function getErrorMessage(error: AxiosError): string {
       return '没有访问权限'
     case 404:
       return '请求的资源不存在'
+    case 429:
+      return '操作过于频繁，请稍后再试'
     case 500:
       return '服务器内部错误'
     case 502:
@@ -69,49 +175,94 @@ function getErrorMessage(error: AxiosError): string {
     case 504:
       return '网关超时'
     default:
-      return error.message || '网络异常，请稍后重试'
+      return '网络异常，请稍后重试'
   }
 }
 
+// ---------- access token 自动续期 ----------
+let refreshing: { session: number; promise: Promise<string> } | null = null
+
+async function requestNewAccessToken(): Promise<string> {
+  const refreshToken = hooks.getRefreshToken()
+  const context = accessContext()
+  if (!refreshToken) {
+    throw new Error('missing refresh token')
+  }
+
+  // 用裸 axios，避免再次经过本实例的拦截器
+  const response = await axios.post<ApiEnvelope<AuthTokens>>(
+    `${import.meta.env.VITE_API_BASE_URL}/auth/refresh`,
+    { refreshToken },
+    { timeout: REQUEST_TIMEOUT },
+  )
+  const tokens = response.data.data
+  if (!isCurrentContext(context, true) || hooks.getRefreshToken() !== refreshToken)
+    throw new StaleAccessError()
+  hooks.setTokens(tokens)
+  return tokens.accessToken
+}
+
+/** 并发 401 只发起一次刷新，其余请求共享同一个 Promise */
+function refreshAccessToken(): Promise<string> {
+  const session = accessContext().session
+  if (refreshing?.session === session) return refreshing.promise
+  const promise = requestNewAccessToken().finally(() => {
+    if (refreshing?.promise === promise) refreshing = null
+  })
+  refreshing = { session, promise }
+  return promise
+}
+
 service.interceptors.response.use(
-  (response: AxiosResponse) => {
-    const { responseType } = response.config
-    // 文件流交给调用方处理，不做业务解包
-    if (responseType === 'blob' || responseType === 'arraybuffer') {
-      return response
+  (response: AxiosResponse) => unwrap(response) as unknown as AxiosResponse,
+  async (error: AxiosError) => {
+    const config = error.config as ContextConfig | undefined
+    if (
+      error instanceof StaleAccessError ||
+      (config?.__context && !isCurrentContext(config.__context, accountOnly(config.url)))
+    )
+      return Promise.reject(new StaleAccessError())
+    const status = error.response?.status
+    const skipRefresh = isAuthEndpoint(config?.url) || Boolean(config?.headers['X-Anonymous'])
+
+    // access token 过期：刷新一次并重放原请求
+    if (status === 401 && config && !config.__retried && !skipRefresh && hooks.getRefreshToken()) {
+      config.__retried = true
+      let token: string
+      try {
+        token = await refreshAccessToken()
+      } catch (cause) {
+        if (cause instanceof StaleAccessError) return Promise.reject(cause)
+        if (config.__context && !isCurrentContext(config.__context, accountOnly(config.url)))
+          return Promise.reject(new StaleAccessError())
+        hooks.onUnauthorized()
+        return Promise.reject(new ApiError(fallbackMessage(401), 401, config.url))
+      }
+      config.headers.Authorization = `Bearer ${token}`
+      // Replay failures are business errors, not refresh failures.
+      return service.request(config)
     }
 
-    const result = response.data as ApiResult<unknown> | undefined
-    // 非统一结构的响应（如第三方接口）原样返回
-    if (!result || typeof result !== 'object' || !('code' in result)) {
-      return response.data as unknown as AxiosResponse
+    if (status === 401 && !skipRefresh) {
+      hooks.onUnauthorized()
     }
 
-    if (result.code === SUCCESS_CODE) {
-      return result.data as unknown as AxiosResponse
+    if (axios.isCancel(error)) return Promise.reject(error)
+    if (
+      (status === 403 || status === 404) &&
+      config?.url &&
+      !config.url.includes('my-permissions')
+    ) {
+      hooks.onAccessDenied(status, config.url)
     }
-
-    if (result.code === UNAUTHORIZED_CODE) {
-      onUnauthorized()
-    }
-
-    const message = result.message || '请求失败'
-    MessagePlugin.error(message)
-    return Promise.reject(new Error(message))
-  },
-  (error: AxiosError) => {
-    const message = getErrorMessage(error)
-    if (error.response?.status === UNAUTHORIZED_CODE) {
-      onUnauthorized()
-    }
-    MessagePlugin.error(message)
-    return Promise.reject(error)
+    const message = readErrorMessage(error.response?.data) ?? fallbackMessage(status)
+    if (!config?.headers['X-Silent-Error']) MessagePlugin.error(message)
+    return Promise.reject(new ApiError(message, status, config?.url))
   },
 )
 
 /** 通用请求方法，返回业务数据（响应拦截器已解包 data 字段） */
 export function request<T = unknown>(config: AxiosRequestConfig): Promise<T> {
-  // 拦截器已把 AxiosResponse 替换为业务数据，故此处断言为业务类型
   return service.request(config) as unknown as Promise<T>
 }
 
@@ -129,6 +280,14 @@ export function post<T = unknown>(
   config?: AxiosRequestConfig,
 ): Promise<T> {
   return request<T>({ url, method: 'post', data, ...config })
+}
+
+export function patch<T = unknown>(
+  url: string,
+  data?: unknown,
+  config?: AxiosRequestConfig,
+): Promise<T> {
+  return request<T>({ url, method: 'patch', data, ...config })
 }
 
 export function put<T = unknown>(

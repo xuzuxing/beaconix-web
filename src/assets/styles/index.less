@@ -29,6 +29,53 @@ a {
   text-decoration: none;
 }
 
+// 套餐色彩共用一组令牌，标签与对比卡保持一致。
+.beacon-plan--free {
+  --beacon-plan-color: #2156a5;
+  --beacon-plan-bg: #eaf2ff;
+  --beacon-plan-border: #b9d1f4;
+}
+
+.beacon-plan--pro {
+  --beacon-plan-color: #875700;
+  --beacon-plan-bg: #fff4db;
+  --beacon-plan-border: #e9cc85;
+}
+
+.beacon-plan--team {
+  --beacon-plan-color: #6541b4;
+  --beacon-plan-bg: #f0eaff;
+  --beacon-plan-border: #d0bdf2;
+}
+
+html[theme-mode='dark'] {
+  .beacon-plan--free {
+    --beacon-plan-color: #a9ccff;
+    --beacon-plan-bg: #202f46;
+    --beacon-plan-border: #405b80;
+  }
+
+  .beacon-plan--pro {
+    --beacon-plan-color: #f2d18b;
+    --beacon-plan-bg: #3b3120;
+    --beacon-plan-border: #736039;
+  }
+
+  .beacon-plan--team {
+    --beacon-plan-color: #d2baff;
+    --beacon-plan-bg: #322742;
+    --beacon-plan-border: #665083;
+  }
+}
+
+.beacon-plan-badge,
+.t-tag.beacon-plan-badge {
+  color: var(--beacon-plan-color);
+  background-color: var(--beacon-plan-bg);
+  border: 1px solid var(--beacon-plan-border);
+  border-radius: @beacon-radius-m;
+}
+
 ul,
 ol {
   margin: 0;

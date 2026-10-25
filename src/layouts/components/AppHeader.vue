@@ -1,51 +1,64 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import defaultIcon from '@/assets/logo/icon.png'
-import defaultLogo from '@/assets/logo/default.png'
-import whiteLogo from '@/assets/logo/white-logo.png'
 import whiteIcon from '@/assets/logo/wihte-icon.png'
 import AppIcon from '@/components/AppIcon.vue'
 import GuideDialog from '@/components/guide/GuideDialog.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import { APP_TITLE } from '@/config'
-import { envList, type EnvItem } from '@/config/env'
-import { userAccountRows, userMenuGroups } from '@/config/user'
+import NotificationDrawer from '@/components/notifications/NotificationDrawer.vue'
+import ProjectCreateDialog from '@/components/project/ProjectCreateDialog.vue'
+import GlobalSearch from '@/components/search/GlobalSearch.vue'
+import TeamCreateDialog from '@/components/team/TeamCreateDialog.vue'
+import UserMenu from '@/components/UserMenu.vue'
+import type { Organization, Project } from '@/api/types'
+import type { Plan } from '@/api/types/billing'
+import { useTeamPlans } from '@/composables/useTeamPlans'
+import { usePermissionsStore } from '@/stores/modules/permissions'
+import { useBrand } from '@/composables/useBrand'
 import {
   BookOpen01Icon,
   ComputerIcon,
   Copy01Icon,
-  FlashIcon,
+  Folder01Icon,
   HelpCircleIcon,
-  Invoice01Icon,
-  Archive02Icon,
   Moon01Icon,
   Notification03Icon,
   PlusSignIcon,
-  Settings01Icon,
+  ResourcesAddIcon,
   Search01Icon,
+  Settings01Icon,
   Sun01Icon,
   UserIcon,
   VerticalScrollPointIcon,
 } from '@/icons'
-import { useAppStore, useEnvStore } from '@/stores'
+import {
+  useAppStore,
+  useNotificationStore,
+  useOrganizationStore,
+} from '@/stores'
 import type { ThemeMode } from '@/types'
+import { planTagTheme, planTier } from '@/utils/billing'
 
 defineOptions({ name: 'AppHeader' })
 
 const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
-const envStore = useEnvStore()
+const orgStore = useOrganizationStore()
+const notificationStore = useNotificationStore()
+const permissions = usePermissionsStore()
 
 const collapsed = computed(() => appStore.collapsed)
+
+const { siteName, logoSrc: brandLogoSrc } = useBrand()
 
 /** 品牌 logo：展开时用整标、折叠时用方形图标，并随明暗主题选深浅两版 */
 const logoSrc = computed(() => {
   if (collapsed.value) return appStore.isDark ? whiteIcon : defaultIcon
-  return appStore.isDark ? whiteLogo : defaultLogo
+  return brandLogoSrc.value
 })
 
 /** 「接入指引」弹窗开关 */
@@ -68,74 +81,151 @@ function handleThemeSelect(data: { value?: string | number }) {
   appStore.setTheme((data.value as ThemeMode) ?? 'light')
 }
 
-/** 环境列表为静态占位，接入环境接口后替换 */
-// ---------- 个人信息 ----------
-/** 头像 hover 展开的个人信息面板 */
-const userVisible = ref(false)
-const accountRows = userAccountRows
-const userGroups = userMenuGroups
-const appVersion = __APP_VERSION__
+// ---------- 团队（组织） ----------
+/** 弹层：hover 显示团队信息卡，点击切到团队切换面板 */
+const teamVisible = ref(false)
+const teamMode = ref<'info' | 'list'>('info')
+const teamKeyword = ref('')
 
-function handleUserMenu(key: string) {
-  // 菜单项目前为占位：接入鉴权后，「切换账号」「退出登录」在此跳转
-  void key
-}
+const currentOrg = computed(() => orgStore.currentOrganization)
 
-// ---------- 环境 ----------
-/** 弹层：hover 显示信息卡，点击切到环境选择面板 */
-const envVisible = ref(false)
-const envMode = ref<'info' | 'list'>('info')
-const envKeyword = ref('')
+/** 当前团队套餐标签：无生效订阅时回退为免费版文案 */
+const planLabel = computed(
+  () => orgStore.currentPlan?.name ?? t('usage.package.freePlan'),
+)
 
-/** 当前环境来自全局 store：「选择环境」页切换后顶栏同步跟随 */
-const currentEnv = computed(() => envStore.current)
-
-interface EnvInfoRow {
-  labelKey: string
-  value: string
-  copyable?: boolean
-  status?: boolean
-  plan?: boolean
-}
-
-/** 信息卡的字段行 */
-const envInfoRows = computed<EnvInfoRow[]>(() => {
-  const env = currentEnv.value
-  return [
-    { labelKey: 'layout.envName', value: env.name, copyable: true },
-    { labelKey: 'layout.envId', value: env.id, copyable: true },
-    { labelKey: 'layout.envStatus', value: '', status: true },
-    { labelKey: 'layout.envCreatedAt', value: env.createdAt },
-    { labelKey: 'layout.envExpiredAt', value: env.expiredAt },
-    { labelKey: 'layout.envRegion', value: t(env.regionKey) },
-    { labelKey: 'layout.envPlan', value: '', plan: true },
-  ]
-})
-
-const filteredEnvs = computed(() => {
-  const keyword = envKeyword.value.trim().toLowerCase()
-  if (!keyword) return envList
-  return envList.filter(
-    (env) => env.name.toLowerCase().includes(keyword) || env.id.toLowerCase().includes(keyword),
+const filteredOrgs = computed(() => {
+  const keyword = teamKeyword.value.trim().toLowerCase()
+  if (!keyword) return orgStore.organizations
+  return orgStore.organizations.filter(
+    (org) =>
+      org.name.toLowerCase().includes(keyword) ||
+      org.slug.toLowerCase().includes(keyword),
   )
 })
 
-function selectEnv(env: EnvItem) {
-  envStore.setCurrent(env.id)
-  envMode.value = 'info'
-  envVisible.value = false
+interface InfoRow {
+  labelKey: string
+  value: string
+  copyable?: boolean
 }
 
-/** 打开控制台之外的选择环境整页 */
-function goManageEnv() {
-  void router.push('/env')
+/** 团队信息卡的字段行 */
+const teamInfoRows = computed<InfoRow[]>(() => {
+  const org = currentOrg.value
+  if (!org) return []
+  return [
+    { labelKey: 'layout.teamName', value: org.name, copyable: true },
+    { labelKey: 'layout.teamSlug', value: org.slug, copyable: true },
+    { labelKey: 'layout.teamId', value: org.id, copyable: true },
+    { labelKey: 'layout.teamCreatedAt', value: org.createdAt },
+  ]
+})
+
+/** 切换团队后刷新当前页；监控详情依赖团队数据，回落到监控列表 */
+async function reloadAfterTeamSwitch() {
+  if (router.currentRoute.value.name === 'monitor-detail')
+    await router.replace('/monitor')
+  else
+    await router.replace({
+      path: router.currentRoute.value.path,
+      query: router.currentRoute.value.query,
+    })
 }
 
-/** 套餐用量页在主布局内 */
-function goUsage() {
-  void router.push('/usage')
+async function selectOrg(org: Organization) {
+  await orgStore.switchOrganization(org.id)
+  teamMode.value = 'info'
+  teamVisible.value = false
+  await reloadAfterTeamSwitch()
 }
 
+/** 团队管理不进侧边栏，入口只放在这个下拉里；跳转到控制台之外的「选择团队」整页 */
+function goTeams() {
+  teamVisible.value = false
+  void router.push('/team')
+}
+
+/** 「新建团队」：入口在这个下拉里，弹窗复用团队选择页的同一个组件 */
+const createVisible = ref(false)
+
+function goCreateTeam() {
+  teamVisible.value = false
+  createVisible.value = true
+}
+
+/** 创建成功：先刷新团队列表，再切到新团队并留在当前页 */
+async function handleTeamCreated(org: Organization) {
+  teamMode.value = 'info'
+  await orgStore.loadOrganizations()
+  await orgStore.switchOrganization(org.id)
+  await reloadAfterTeamSwitch()
+}
+
+/** 各团队的套餐：当前团队复用 store，其余按需加载（与选择团队页共用同一实现） */
+const { planOf, loadTeamPlans } = useTeamPlans()
+
+/** 套餐标签文案：无生效订阅时回退为免费版 */
+function planLabelOf(plan: Plan | null) {
+  return plan?.name ?? t('usage.package.freePlan')
+}
+
+// 打开团队切换面板时补齐套餐标签
+watch([teamVisible, teamMode], ([visible, mode]) => {
+  if (visible && mode === 'list') void loadTeamPlans()
+})
+
+/** 进入某团队的成员页 / 团队管理页：先切到该团队，再跳转 */
+async function openTeamPage(org: Organization, path: string) {
+  teamVisible.value = false
+  await orgStore.switchOrganization(org.id)
+  await router.push(path)
+}
+
+// ---------- 项目 ----------
+const projectVisible = ref(false)
+const projectKeyword = ref('')
+
+const currentProject = computed(() => orgStore.currentProject)
+
+const filteredProjects = computed(() => {
+  const keyword = projectKeyword.value.trim().toLowerCase()
+  if (!keyword) return orgStore.projects
+  return orgStore.projects.filter(
+    (project) =>
+      project.name.toLowerCase().includes(keyword) ||
+      project.key.toLowerCase().includes(keyword),
+  )
+})
+
+async function selectProject(project: Project) {
+  await orgStore.switchProject(project.id)
+  projectVisible.value = false
+  if (router.currentRoute.value.name === 'monitor-detail')
+    await router.replace('/monitor')
+}
+
+/** 新建项目弹窗：只有组织管理员能创建（接口要求 ADMIN+） */
+const projectCreateVisible = ref(false)
+
+const canCreateProject = computed(
+  () =>
+    !!orgStore.currentOrganizationId &&
+    permissions.canOrganization(orgStore.currentOrganizationId),
+)
+
+function openProjectCreate() {
+  projectVisible.value = false
+  projectCreateVisible.value = true
+}
+
+/** store 已在创建成功后切到新项目，这里只补路由收尾（与 selectProject 一致） */
+async function onProjectCreated() {
+  if (router.currentRoute.value.name === 'monitor-detail')
+    await router.replace('/monitor')
+}
+
+/** 复制团队信息卡里的字段 */
 async function copyText(text: string) {
   try {
     await navigator.clipboard.writeText(text)
@@ -143,280 +233,421 @@ async function copyText(text: string) {
     // 剪贴板不可用时静默忽略
   }
 }
+
+/** 顶栏挂载即拉取团队与项目，保证选择器可用 */
+async function loadWorkspace() {
+  try {
+    if (orgStore.workspaceState !== 'ready') await orgStore.loadWorkspace()
+  } catch {
+    // 请求层已统一提示
+  }
+}
+
+onMounted(() => {
+  void loadWorkspace()
+  // 顶栏事项入口的角标：未读数与事项抽屉共用同一份状态
+  void notificationStore.refreshUnreadCount()
+})
 </script>
 
 <template>
   <header class="app-header">
     <!-- 品牌区：宽度与一级侧栏对齐 -->
-    <div class="app-header__brand" :class="{ 'app-header__brand--collapsed': collapsed }">
-      <img class="app-header__logo" :src="logoSrc" :alt="APP_TITLE" />
+    <div
+      class="app-header__brand"
+      :class="{ 'app-header__brand--collapsed': collapsed }"
+    >
+      <img
+        class="app-header__logo"
+        :src="logoSrc"
+        :alt="siteName"
+      />
     </div>
 
     <!-- 左侧功能组 -->
     <div class="app-header__main">
-      <!-- 环境：hover 看信息，点击切到选择面板 -->
-      <t-popup v-model:visible="envVisible" trigger="hover" placement="bottom-left" :show-arrow="false"
-        overlay-class-name="app-env-popup">
-        <button type="button" class="app-header__env" @mouseenter="envMode = 'info'"
-          @click="envMode = envMode === 'list' ? 'info' : 'list'">
-          <AppIcon class="app-header__env-icon" :icon="Archive02Icon" />
-          <span class="app-header__env-name">{{ currentEnv.name }}</span>
-          <span v-if="currentEnv.tagKey" class="app-header__env-tag">
-            {{ t(currentEnv.tagKey) }}
-          </span>
-          <AppIcon class="app-header__caret" :icon="VerticalScrollPointIcon" />
+      <!-- 团队：hover 看信息，点击切到团队列表 -->
+      <t-popup
+        v-model:visible="teamVisible"
+        trigger="hover"
+        placement="bottom-left"
+        :show-arrow="false"
+        overlay-class-name="app-team-popup"
+      >
+        <button
+          type="button"
+          class="app-header__team"
+          @mouseenter="teamMode = 'info'"
+          @click="teamMode = teamMode === 'list' ? 'info' : 'list'"
+        >
+          <AppIcon
+            class="app-header__team-icon"
+            :icon="ResourcesAddIcon"
+          />
+          <span class="app-header__team-name">{{
+            currentOrg?.name ?? t('layout.teamEmpty')
+          }}</span>
+          <t-tag
+            v-if="orgStore.subscription"
+            class="app-header__team-tag beacon-plan-badge"
+            :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+            :theme="planTagTheme(orgStore.currentPlan)"
+            variant="light"
+            size="small"
+          >
+            {{ planLabel }}
+          </t-tag>
+          <AppIcon
+            class="app-header__caret"
+            :icon="VerticalScrollPointIcon"
+          />
         </button>
 
         <template #content>
-          <!-- 环境信息卡 -->
-          <div v-if="envMode === 'info'" class="env-card">
-            <div v-for="row in envInfoRows" :key="row.labelKey" class="env-card__row">
-              <span class="env-card__label">{{ t(row.labelKey) }}</span>
+          <!-- 团队信息卡 -->
+          <div
+            v-if="teamMode === 'info'"
+            class="team-card"
+          >
+            <div
+              v-for="row in teamInfoRows"
+              :key="row.labelKey"
+              class="team-card__row"
+            >
+              <span class="team-card__label">{{ t(row.labelKey) }}</span>
+              <span class="team-card__value">
+                {{ row.value }}
+                <button
+                  v-if="row.copyable"
+                  type="button"
+                  class="team-card__copy"
+                  :aria-label="t('guide.copy')"
+                  @click="copyText(row.value)"
+                >
+                  <AppIcon
+                    :icon="Copy01Icon"
+                    :size="14"
+                  />
+                </button>
+              </span>
+            </div>
 
-              <span class="env-card__value">
-                <template v-if="row.copyable">
-                  {{ row.value }}
-                  <button type="button" class="env-card__copy" :aria-label="t('guide.copy')"
-                    @click="copyText(row.value)">
-                    <AppIcon :icon="Copy01Icon" :size="14" />
-                  </button>
-                </template>
-
-                <template v-else-if="row.status">
-                  <i class="env-card__dot" />
-                  {{ t(currentEnv.active ? 'layout.envStatusActive' : 'layout.envStatusInactive') }}
-                </template>
-
-                <template v-else-if="row.plan">
-                  <span class="env-card__tag">{{ t(currentEnv.planKey) }}</span>
-                  <a class="env-card__link" href="#">{{ t('layout.envViewUsage') }}</a>
-                  <span class="env-card__tag env-card__tag--warning">
-                    {{ t('badge.limited') }}
-                  </span>
-                </template>
-
-                <template v-else>{{ row.value }}</template>
+            <!-- 当前团队套餐标签 -->
+            <div
+              v-if="orgStore.subscription"
+              class="team-card__row"
+            >
+              <span class="team-card__label">{{ t('layout.teamPlan') }}</span>
+              <span class="team-card__value">
+                <t-tag
+                  class="beacon-plan-badge"
+                  :class="`beacon-plan--${planTier(orgStore.currentPlan)}`"
+                  :theme="planTagTheme(orgStore.currentPlan)"
+                  variant="light"
+                  size="small"
+                >
+                  {{ planLabel }}
+                </t-tag>
               </span>
             </div>
           </div>
 
-          <!-- 环境选择面板 -->
-          <div v-else class="env-list">
-            <label class="env-list__search">
-              <AppIcon class="env-list__search-icon" :icon="Search01Icon" :size="14" />
-              <input v-model="envKeyword" :placeholder="t('layout.envSearch')" />
+          <!-- 团队切换面板 -->
+          <div
+            v-else
+            class="team-list"
+          >
+            <label class="team-list__search">
+              <AppIcon
+                class="team-list__search-icon"
+                :icon="Search01Icon"
+                :size="14"
+              />
+              <input
+                v-model="teamKeyword"
+                :placeholder="t('layout.teamSearch')"
+              />
             </label>
 
-            <ul class="env-list__items">
-              <li v-for="env in filteredEnvs" :key="env.id">
-                <button type="button" class="env-list__item" :class="{ 'is-active': env.id === currentEnv.id }"
-                  @click="selectEnv(env)">
-                  <span class="env-list__name">
-                    {{ env.name }}
-                    <span v-if="env.tagKey" class="env-list__tag">{{ t(env.tagKey) }}</span>
-                  </span>
-                  <span class="env-list__id">{{ env.id }}</span>
-                </button>
+            <ul class="team-list__items">
+              <li
+                v-for="org in filteredOrgs"
+                :key="org.id"
+              >
+                <div
+                  class="team-list__item"
+                  :class="{
+                    'is-active': org.id === orgStore.currentOrganizationId,
+                  }"
+                >
+                  <button
+                    type="button"
+                    class="team-list__main"
+                    @click="selectOrg(org)"
+                  >
+                    <span class="team-list__name">{{ org.name }}</span>
+                    <t-tag
+                      v-if="planOf(org)"
+                      class="team-list__plan beacon-plan-badge"
+                      :class="`beacon-plan--${planTier(planOf(org))}`"
+                      :theme="planTagTheme(planOf(org))"
+                      variant="light"
+                      size="small"
+                    >
+                      {{ planLabelOf(planOf(org)) }}
+                    </t-tag>
+                  </button>
+
+                  <!-- 两个入口：该团队的成员页 / 团队管理页（都会先切到该团队） -->
+                  <div
+                    v-if="permissions.canOrganization(org.id)"
+                    class="team-list__entries"
+                  >
+                    <button
+                      type="button"
+                      class="team-list__entry"
+                      :title="t('submenu.team.members')"
+                      :aria-label="t('submenu.team.members')"
+                      @click="openTeamPage(org, '/teams/members')"
+                    >
+                      <AppIcon
+                        :icon="UserIcon"
+                        :size="14"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      class="team-list__entry"
+                      :title="t('menu.team')"
+                      :aria-label="t('menu.team')"
+                      @click="openTeamPage(org, '/teams')"
+                    >
+                      <AppIcon
+                        :icon="Settings01Icon"
+                        :size="14"
+                      />
+                    </button>
+                  </div>
+                </div>
               </li>
             </ul>
 
-            <div class="env-list__actions">
-              <button type="button" class="env-list__action" @click="goManageEnv">
+            <p
+              v-if="!filteredOrgs.length"
+              class="team-list__empty"
+            >
+              {{ t('layout.teamEmpty') }}
+            </p>
+
+            <div class="team-list__actions">
+              <button
+                type="button"
+                class="team-list__action"
+                @click="goTeams"
+              >
                 <AppIcon :icon="Settings01Icon" />
-                {{ t('layout.envManage') }}
+                {{ t('menu.team') }}
               </button>
-              <button type="button" class="env-list__action" @click="goUsage">
-                <AppIcon :icon="Invoice01Icon" />
-                {{ t('layout.envUsage') }}
-                <span class="env-list__badge">{{ t('badge.limited') }}</span>
-              </button>
-              <button type="button" class="env-list__action">
+              <button
+                type="button"
+                class="team-list__action"
+                @click="goCreateTeam"
+              >
                 <AppIcon :icon="PlusSignIcon" />
-                {{ t('layout.envCreate') }}
+                {{ t('layout.teamCreate') }}
               </button>
             </div>
           </div>
         </template>
       </t-popup>
 
+      <!-- 项目：点击切换当前项目 -->
+      <t-popup
+        v-model:visible="projectVisible"
+        trigger="click"
+        placement="bottom-left"
+        :show-arrow="false"
+        overlay-class-name="app-project-popup"
+      >
+        <button
+          type="button"
+          class="app-header__project"
+        >
+          <AppIcon
+            class="app-header__project-icon"
+            :icon="Folder01Icon"
+          />
+          <span class="app-header__project-name">
+            {{ currentProject?.name ?? t('layout.projectEmpty') }}
+          </span>
+          <AppIcon
+            class="app-header__caret"
+            :icon="VerticalScrollPointIcon"
+          />
+        </button>
+
+        <template #content>
+          <div class="project-list">
+            <label class="project-list__search">
+              <AppIcon
+                class="project-list__search-icon"
+                :icon="Search01Icon"
+                :size="14"
+              />
+              <input
+                v-model="projectKeyword"
+                :placeholder="t('layout.projectSearch')"
+              />
+            </label>
+
+            <ul class="project-list__items">
+              <li
+                v-for="project in filteredProjects"
+                :key="project.id"
+              >
+                <button
+                  type="button"
+                  class="project-list__item"
+                  :class="{
+                    'is-active': project.id === orgStore.currentProjectId,
+                  }"
+                  @click="selectProject(project)"
+                >
+                  <span class="project-list__name">{{ project.name }}</span>
+                  <span class="project-list__key">{{ project.key }}</span>
+                </button>
+              </li>
+            </ul>
+
+            <p
+              v-if="!filteredProjects.length"
+              class="project-list__empty"
+            >
+              {{ t('layout.projectEmpty') }}
+            </p>
+
+            <div
+              v-if="canCreateProject"
+              class="project-list__actions"
+            >
+              <button
+                type="button"
+                class="project-list__action"
+                @click="openProjectCreate"
+              >
+                <AppIcon :icon="PlusSignIcon" />
+                {{ t('layout.projectCreate') }}
+              </button>
+            </div>
+          </div>
+        </template>
+      </t-popup>
+
+      <!-- 导航：点击打开引导弹窗
       <button type="button" class="app-header__guide" @click="guideVisible = true">
         <AppIcon class="app-header__guide-icon" :icon="FlashIcon" :size="14" />
         {{ t('layout.guide') }}
         <span class="app-header__dot" />
-      </button>
+      </button> -->
     </div>
 
     <!-- 右侧功能组 -->
     <div class="app-header__extra">
-      <!-- 全局搜索：已就位，搜索逻辑待接入 -->
-      <label class="app-header__search">
-        <AppIcon class="app-header__search-icon" :icon="Search01Icon" />
-        <input class="app-header__search-input" type="search" :placeholder="t('layout.searchPlaceholder')" />
-        <span class="app-header__hotkey">/</span>
-      </label>
+      <!-- 全局搜索：输入框触发，结果面板在下方弹出 -->
+      <GlobalSearch />
 
-      <button type="button" class="app-header__pending">
-        <AppIcon class="app-header__pending-icon" :icon="Notification03Icon" />
-        {{ t('layout.pending') }}
-        <span class="app-header__dot" />
+      <button
+        type="button"
+        class="app-header__pending"
+        @click="notificationStore.toggleDrawer()"
+      >
+        <AppIcon
+          class="app-header__pending-icon"
+          :icon="Notification03Icon"
+        />
+        {{
+          notificationStore.hasUnread
+            ? t('layout.pending', { count: notificationStore.unreadCount })
+            : t('layout.pendingEmpty')
+        }}
+        <span
+          v-if="notificationStore.hasUnread"
+          class="app-header__dot"
+        />
       </button>
 
-      <t-tooltip :content="t('layout.docs')" placement="bottom">
-        <button type="button" class="app-header__icon-btn" :aria-label="t('layout.docs')">
+      <t-tooltip
+        :content="t('layout.docs')"
+        placement="bottom"
+      >
+        <button
+          type="button"
+          class="app-header__icon-btn"
+          :aria-label="t('layout.docs')"
+        >
           <AppIcon :icon="BookOpen01Icon" />
         </button>
       </t-tooltip>
 
-      <t-tooltip :content="t('layout.help')" placement="bottom">
-        <button type="button" class="app-header__icon-btn" :aria-label="t('layout.help')">
+      <t-tooltip
+        :content="t('layout.help')"
+        placement="bottom"
+      >
+        <button
+          type="button"
+          class="app-header__icon-btn"
+          :aria-label="t('layout.help')"
+        >
           <AppIcon :icon="HelpCircleIcon" />
         </button>
       </t-tooltip>
 
-      <t-dropdown trigger="click" :options="themeOptions" @click="handleThemeSelect">
-        <button type="button" class="app-header__icon-btn" :aria-label="t('layout.theme')">
+      <t-dropdown
+        trigger="click"
+        :options="themeOptions"
+        @click="handleThemeSelect"
+      >
+        <button
+          type="button"
+          class="app-header__icon-btn"
+          :aria-label="t('layout.theme')"
+        >
           <AppIcon :icon="themeIcon" />
         </button>
       </t-dropdown>
 
       <LanguageSwitcher />
 
-      <!-- 个人信息：hover 展开 -->
-      <t-popup v-model:visible="userVisible" trigger="hover" placement="bottom-right" :show-arrow="false"
-        overlay-class-name="app-user-popup">
-        <button type="button" class="app-header__user" :aria-label="t('layout.profile')">
-          <t-avatar size="32px">
-            <AppIcon :icon="UserIcon" />
-          </t-avatar>
-        </button>
-
-        <template #content>
-          <div class="user-panel">
-            <div class="user-panel__ids">
-              <div v-for="row in accountRows" :key="row.labelKey" class="user-panel__row">
-                <span class="user-panel__label">{{ t(row.labelKey) }}</span>
-                <span class="user-panel__value">{{ row.value }}</span>
-                <button type="button" class="user-panel__copy" :aria-label="t('guide.copy')"
-                  @click="copyText(row.value)">
-                  <AppIcon :icon="Copy01Icon" :size="14" />
-                </button>
-              </div>
-            </div>
-
-            <div v-for="(group, index) in userGroups" :key="index" class="user-panel__group">
-              <button v-for="item in group" :key="item.key" type="button" class="user-panel__item"
-                :class="{ 'user-panel__item--danger': item.danger }" @click="handleUserMenu(item.key)">
-                <AppIcon :icon="item.icon" :size="16" />
-                {{ t(item.labelKey) }}
-              </button>
-            </div>
-
-            <div class="user-panel__version">
-              {{ t('layout.userVersion') }}：{{ appVersion }}
-            </div>
-          </div>
-        </template>
-      </t-popup>
+      <!-- 个人信息：hover 展开（组件见 components/UserMenu.vue，与整页布局共用） -->
+      <UserMenu class="app-header__user" />
     </div>
 
     <GuideDialog v-model="guideVisible" />
+    <TeamCreateDialog
+      v-model:visible="createVisible"
+      @created="handleTeamCreated"
+    />
+    <ProjectCreateDialog
+      v-model:visible="projectCreateVisible"
+      @created="onProjectCreated"
+    />
+    <NotificationDrawer />
   </header>
 </template>
 
 <style lang="less">
-/* 个人信息弹层（头像 hover），同样 teleport 到 body 故用非 scoped 样式 */
-.app-user-popup {
+/* 团队弹层 teleport 到 body，样式需非 scoped，用 overlayClassName 限定作用域 */
+.app-team-popup {
   padding: 0;
 
-  .user-panel {
-    width: 260px;
-    background-color: @beacon-bg-container;
-  }
-
-  .user-panel__ids {
-    padding: 8px 0;
-  }
-
-  .user-panel__row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 28px;
-    padding: 0 16px;
-    font-size: @beacon-font-size-base;
-    line-height: 20px;
-  }
-
-  .user-panel__label {
-    flex: none;
-    color: @beacon-text-tertiary;
-  }
-
-  .user-panel__value {
-    color: @beacon-text-primary;
-  }
-
-  .user-panel__copy {
-    flex: none;
-    padding: 0;
-    color: @beacon-text-tertiary;
-    cursor: pointer;
-    background-color: transparent;
-    border: 0;
-
-    &:hover {
-      color: @beacon-brand;
-    }
-  }
-
-  .user-panel__group {
-    display: flex;
-    flex-direction: column;
-    padding: 4px 0;
-    border-top: 1px solid @beacon-border;
-  }
-
-  .user-panel__item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px;
-    font-family: inherit;
-    font-size: @beacon-font-size-menu;
-    color: @beacon-text-primary;
-    cursor: pointer;
-    background-color: transparent;
-    border: 0;
-
-    &:hover {
-      background-color: @beacon-bg-hover;
-    }
-
-    &--danger {
-      color: @beacon-error;
-    }
-  }
-
-  .user-panel__version {
-    padding: 8px 16px;
-    font-size: @beacon-font-size-base;
-    color: @beacon-text-disabled;
-    border-top: 1px solid @beacon-border;
-  }
-}
-
-/* 环境弹层 teleport 到 body，样式需非 scoped，用 overlayClassName 限定作用域 */
-.app-env-popup {
-  padding: 0;
-
-  // ---------- 环境信息卡（hover） ----------
-  .env-card {
+  // ---------- 团队信息卡（hover） ----------
+  .team-card {
     width: 360px;
     padding: 12px 16px;
     background-color: @beacon-bg-container;
   }
 
-  .env-card__row {
+  .team-card__row {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -425,13 +656,13 @@ async function copyText(text: string) {
     line-height: 20px;
   }
 
-  .env-card__label {
+  .team-card__label {
     flex: none;
     width: 64px;
     color: @beacon-text-tertiary;
   }
 
-  .env-card__value {
+  .team-card__value {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -440,7 +671,7 @@ async function copyText(text: string) {
     word-break: break-all;
   }
 
-  .env-card__copy {
+  .team-card__copy {
     flex: none;
     padding: 0;
     color: @beacon-text-tertiary;
@@ -453,46 +684,13 @@ async function copyText(text: string) {
     }
   }
 
-  .env-card__dot {
-    width: 8px;
-    height: 8px;
-    background-color: @beacon-success;
-    border-radius: 50%;
-  }
-
-  .env-card__tag {
-    flex: none;
-    padding: 0 6px;
-    font-size: @beacon-font-size-base;
-    line-height: 18px;
-    color: @beacon-text-tertiary;
-    background-color: @beacon-bg-page;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
-
-    &--warning {
-      color: var(--td-text-color-anti);
-      background-color: var(--td-warning-color);
-      border-color: var(--td-warning-color);
-    }
-  }
-
-  .env-card__link {
-    flex: none;
-    color: @beacon-brand;
-
-    &:hover {
-      color: @beacon-brand-hover;
-    }
-  }
-
-  // ---------- 环境选择面板（点击） ----------
-  .env-list {
-    width: 340px;
+  // ---------- 团队切换面板（点击） ----------
+  .team-list {
+    width: 380px;
     background-color: @beacon-bg-container;
   }
 
-  .env-list__search {
+  .team-list__search {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -521,16 +719,180 @@ async function copyText(text: string) {
     }
   }
 
-  .env-list__items {
+  .team-list__items {
     max-height: 220px;
     padding: 4px 0;
     overflow-y: auto;
   }
 
-  .env-list__item {
+  .team-list__item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 4px 8px 4px 12px;
+
+    &:hover {
+      background-color: @beacon-bg-hover;
+    }
+
+    &.is-active {
+      background-color: @beacon-brand;
+
+      .team-list__name {
+        color: var(--td-text-color-anti);
+      }
+
+      // 高亮底色上入口图标要反色，悬停底色同理，避免看不清
+      .team-list__entry {
+        color: var(--td-text-color-anti);
+
+        &:hover {
+          color: var(--td-text-color-anti);
+          background-color: rgb(255 255 255 / 16%);
+        }
+      }
+    }
+  }
+
+  // 名称 + 套餐标签：点击切换当前团队
+  .team-list__main {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 6px 0;
+    font-family: inherit;
+    font-size: @beacon-font-size-base;
+    text-align: left;
+    color: @beacon-text-primary;
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+  }
+
+  .team-list__name {
+    min-width: 0;
+    overflow: hidden;
+    font-size: @beacon-font-size-menu;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .team-list__plan {
+    flex: none;
+  }
+
+  // 右侧两个入口：团队成员 / 团队管理
+  .team-list__entries {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .team-list__entry {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    color: @beacon-text-secondary;
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+    border-radius: @beacon-radius-m;
+
+    &:hover {
+      color: @beacon-brand;
+      background-color: @beacon-bg-hover;
+    }
+  }
+
+  .team-list__empty {
+    margin: 0;
+    padding: 16px 12px;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-tertiary;
+    text-align: center;
+  }
+
+  .team-list__actions {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    padding: 4px 0;
+    border-top: 1px solid @beacon-border;
+  }
+
+  .team-list__action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: @beacon-font-size-menu;
+    color: @beacon-text-primary;
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+
+    &:hover {
+      background-color: @beacon-bg-hover;
+    }
+  }
+}
+
+/* 项目弹层：只有搜索 + 列表 */
+.app-project-popup {
+  padding: 0;
+
+  .project-list {
+    width: 300px;
+    background-color: @beacon-bg-container;
+  }
+
+  .project-list__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 12px 0;
+    padding: 4px 2px 8px;
+    color: @beacon-text-tertiary;
+    border-bottom: 1px solid @beacon-border;
+
+    &:focus-within {
+      border-bottom-color: @beacon-brand;
+    }
+
+    input {
+      flex: 1;
+      min-width: 0;
+      font-family: inherit;
+      font-size: @beacon-font-size-base;
+      color: @beacon-text-primary;
+      background-color: transparent;
+      border: 0;
+      outline: none;
+
+      &::placeholder {
+        color: @beacon-text-tertiary;
+      }
+    }
+  }
+
+  .project-list__items {
+    max-height: 240px;
+    padding: 4px 0;
+    overflow-y: auto;
+  }
+
+  .project-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     width: 100%;
     padding: 8px 12px;
     font-family: inherit;
@@ -549,50 +911,45 @@ async function copyText(text: string) {
       color: var(--td-text-color-anti);
       background-color: @beacon-brand;
 
-      .env-list__id {
+      .project-list__key {
         color: var(--td-text-color-anti);
-      }
-
-      .env-list__tag {
-        color: var(--td-text-color-anti);
-        border-color: rgb(255 255 255 / 40%);
       }
     }
   }
 
-  .env-list__name {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  .project-list__name {
+    min-width: 0;
+    overflow: hidden;
     font-size: @beacon-font-size-menu;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .env-list__tag {
+  .project-list__key {
     flex: none;
-    padding: 0 6px;
-    font-size: @beacon-font-size-base;
-    line-height: 16px;
-    color: @beacon-text-tertiary;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
-  }
-
-  .env-list__id {
     font-size: @beacon-font-size-base;
     color: @beacon-text-tertiary;
   }
 
-  .env-list__actions {
-    display: flex;
-    flex-direction: column;
+  .project-list__empty {
+    margin: 0;
+    padding: 16px 12px;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-tertiary;
+    text-align: center;
+  }
+
+  // 底部操作区：新建项目
+  .project-list__actions {
     padding: 4px 0;
     border-top: 1px solid @beacon-border;
   }
 
-  .env-list__action {
+  .project-list__action {
     display: flex;
     align-items: center;
     gap: 8px;
+    width: 100%;
     padding: 8px 12px;
     font-family: inherit;
     font-size: @beacon-font-size-menu;
@@ -604,16 +961,6 @@ async function copyText(text: string) {
     &:hover {
       background-color: @beacon-bg-hover;
     }
-  }
-
-  .env-list__badge {
-    flex: none;
-    padding: 0 6px;
-    font-size: @beacon-font-size-base;
-    line-height: 16px;
-    color: var(--td-text-color-anti);
-    background-color: var(--td-warning-color);
-    border-radius: @beacon-radius-m;
   }
 }
 </style>
@@ -682,12 +1029,14 @@ async function copyText(text: string) {
     }
   }
 
-  &__env {
+  // 团队与项目选择器：外观一致，只有图标与数据不同
+  &__team,
+  &__project {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     height: 32px;
-    padding: 4px;
+    padding: 4px 6px;
     font-family: inherit;
     font-size: @beacon-font-size-base;
     color: @beacon-text-primary;
@@ -701,7 +1050,16 @@ async function copyText(text: string) {
     }
   }
 
-  &__env-name {
+  &__team-icon {
+    color: @beacon-text-secondary;
+  }
+
+  &__project-icon {
+    color: @beacon-text-secondary;
+  }
+
+  &__team-name,
+  &__project-name {
     max-width: 140px;
     overflow: hidden;
     line-height: 28px;
@@ -709,18 +1067,9 @@ async function copyText(text: string) {
     white-space: nowrap;
   }
 
-  &__env-tag {
-    display: inline-flex;
+  // 团队名右侧的套餐标签，不参与收缩
+  &__team-tag {
     flex: none;
-    align-items: center;
-    height: 20px;
-    padding: 0 7px;
-    font-size: @beacon-font-size-base;
-    line-height: 18px;
-    color: @beacon-text-tertiary;
-    background-color: @beacon-bg-container;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
   }
 
   &__caret {
@@ -772,62 +1121,6 @@ async function copyText(text: string) {
     gap: 4px;
     margin-left: auto;
     padding-right: 8px;
-  }
-
-  &__search {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: 360px;
-    height: 30px;
-    margin: 0 8px;
-    padding: 0 12px 0 36px;
-    background-color: @beacon-bg-container;
-    border: 1px solid @beacon-border;
-    border-radius: @beacon-radius-m;
-
-    &:hover {
-      border-color: @beacon-brand-hover;
-    }
-  }
-
-  &__search-icon {
-    position: absolute;
-    left: 12px;
-    color: @beacon-text-tertiary;
-  }
-
-  &__search-input {
-    flex: 1;
-    min-width: 0;
-    font-family: inherit;
-    font-size: @beacon-font-size-base;
-    color: @beacon-text-primary;
-    background-color: transparent;
-    border: 0;
-    outline: none;
-
-    &::placeholder {
-      color: @beacon-text-tertiary;
-    }
-
-    &::-webkit-search-cancel-button {
-      display: none;
-    }
-  }
-
-  &__hotkey {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-    height: 20px;
-    padding: 0 7px;
-    font-size: @beacon-font-size-base;
-    line-height: 18px;
-    color: @beacon-text-tertiary;
-    background-color: @beacon-bg-container;
-    border: 1px solid @beacon-border-strong;
-    border-radius: @beacon-radius-m;
   }
 
   &__pending {

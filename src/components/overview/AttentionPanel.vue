@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 
 import AppIcon from '@/components/AppIcon.vue'
 import { CheckmarkCircle02Icon } from '@/icons'
@@ -9,6 +10,12 @@ import { CheckmarkCircle02Icon } from '@/icons'
 defineOptions({ name: 'AttentionPanel' })
 
 const { t } = useI18n()
+const router = useRouter()
+
+/** 首页只放概要，「查看全部」进事项列表页（顶栏抽屉里同样是这个入口） */
+function goNotifications() {
+  void router.push('/notifications')
+}
 
 const reminders = computed(() => [
   {
@@ -27,10 +34,18 @@ const reminders = computed(() => [
 </script>
 
 <template>
-  <t-card :bordered="false" class="attention">
+  <t-card
+    :bordered="false"
+    class="attention"
+  >
     <div class="attention__head">
       <h3 class="attention__heading">{{ t('overview.attention.title') }}</h3>
-      <t-button theme="primary" variant="text" size="small">
+      <t-button
+        theme="primary"
+        variant="text"
+        size="small"
+        @click="goNotifications"
+      >
         {{ t('overview.attention.viewAll') }}
       </t-button>
     </div>
@@ -38,16 +53,32 @@ const reminders = computed(() => [
     <div class="attention__grid">
       <div class="attention__panel">
         <div class="attention__panel-head">
-          <span class="attention__panel-title">{{ t('overview.attention.reminder') }}</span>
+          <span class="attention__panel-title">{{
+            t('overview.attention.reminder')
+          }}</span>
           <span class="attention__count">2</span>
         </div>
         <ul class="attention__list">
-          <li v-for="item in reminders" :key="item.key" class="attention__item">
-            <t-tag class="attention__tag" :theme="item.theme" variant="light" size="small">
+          <li
+            v-for="item in reminders"
+            :key="item.key"
+            class="attention__item"
+          >
+            <t-tag
+              class="attention__tag"
+              :theme="item.theme"
+              variant="light"
+              size="small"
+            >
               {{ item.tag }}
             </t-tag>
             <span class="attention__text">{{ item.text }}</span>
-            <t-button class="attention__detail" theme="primary" variant="text" size="small">
+            <t-button
+              class="attention__detail"
+              theme="primary"
+              variant="text"
+              size="small"
+            >
               {{ t('overview.attention.detail') }}
             </t-button>
           </li>
@@ -56,13 +87,21 @@ const reminders = computed(() => [
 
       <div class="attention__panel">
         <div class="attention__panel-head">
-          <span class="attention__panel-title">{{ t('overview.attention.health') }}</span>
+          <span class="attention__panel-title">{{
+            t('overview.attention.health')
+          }}</span>
         </div>
         <div class="attention__empty">
           <div class="attention__empty-illustration">
-            <AppIcon class="attention__empty-icon" :icon="CheckmarkCircle02Icon" :size="28" />
+            <AppIcon
+              class="attention__empty-icon"
+              :icon="CheckmarkCircle02Icon"
+              :size="28"
+            />
           </div>
-          <span class="attention__empty-text">{{ t('overview.attention.healthy') }}</span>
+          <span class="attention__empty-text">{{
+            t('overview.attention.healthy')
+          }}</span>
         </div>
       </div>
     </div>

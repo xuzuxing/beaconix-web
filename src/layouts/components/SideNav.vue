@@ -8,7 +8,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import { SidebarLeft01Icon, SidebarRight01Icon } from '@/icons'
 import { buildMenu } from '@/router/menu'
 import { layoutChildren } from '@/router/routes'
-import { useAppStore } from '@/stores'
+import { useAppStore, useUserStore } from '@/stores'
 
 import MenuContent from './MenuContent.vue'
 
@@ -16,12 +16,19 @@ defineOptions({ name: 'SideNav' })
 
 const route = useRoute()
 const appStore = useAppStore()
+const userStore = useUserStore()
 const { t } = useI18n()
 
 const collapsed = computed(() => appStore.collapsed)
-const collapseLabel = computed(() => t(collapsed.value ? 'layout.expand' : 'layout.collapse'))
-/** 菜单由主布局的路由表生成，见 src/router/menu.ts */
-const menu = buildMenu(layoutChildren)
+const collapseLabel = computed(() =>
+  t(collapsed.value ? 'layout.expand' : 'layout.collapse'),
+)
+/** 菜单由主布局的路由表生成、按当前角色过滤，见 src/router/menu.ts */
+const menu = computed(() =>
+  buildMenu(layoutChildren, {
+    roles: userStore.user ? [userStore.user.globalRole] : [],
+  }),
+)
 
 /** 已展开的父级菜单，用于刷新后保持当前路由所在层级展开 */
 const expanded = ref<string[]>([])
@@ -56,7 +63,10 @@ function handleExpand(value: (string | number)[]) {
 </script>
 
 <template>
-  <aside class="side-nav" :class="{ 'side-nav--collapsed': collapsed }">
+  <aside
+    class="side-nav"
+    :class="{ 'side-nav--collapsed': collapsed }"
+  >
     <t-menu
       class="side-nav__menu"
       theme="light"
@@ -72,7 +82,10 @@ function handleExpand(value: (string | number)[]) {
 
     <!-- 折叠按钮固定在侧边栏左下角 -->
     <div class="side-nav__footer">
-      <t-tooltip :content="collapseLabel" placement="right">
+      <t-tooltip
+        :content="collapseLabel"
+        placement="right"
+      >
         <button
           type="button"
           class="side-nav__collapse"

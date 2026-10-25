@@ -1,13 +1,21 @@
 <script setup lang="ts">
+import AppFooter from '@/components/AppFooter.vue'
+import AppMaintenanceBanner from '@/components/AppMaintenanceBanner.vue'
+
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import defaultLogo from '@/assets/logo/default.png'
-import whiteLogo from '@/assets/logo/white-logo.png'
 import AppIcon from '@/components/AppIcon.vue'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
-import { APP_TITLE } from '@/config'
-import { BookOpen01Icon, ComputerIcon, HelpCircleIcon, Moon01Icon, Sun01Icon, UserIcon } from '@/icons'
+import UserMenu from '@/components/UserMenu.vue'
+import { useBrand } from '@/composables/useBrand'
+import {
+  BookOpen01Icon,
+  ComputerIcon,
+  HelpCircleIcon,
+  Moon01Icon,
+  Sun01Icon,
+} from '@/icons'
 import { useAppStore } from '@/stores'
 import type { ThemeMode } from '@/types'
 
@@ -20,8 +28,8 @@ defineOptions({ name: 'PlainLayout' })
 const { t } = useI18n()
 const appStore = useAppStore()
 
-/** 品牌 logo 随明暗主题切换 */
-const logoSrc = computed(() => (appStore.isDark ? whiteLogo : defaultLogo))
+/** 品牌 logo 与站点名来自平台配置，没配则用内置双色 logo */
+const { siteName, logoSrc } = useBrand()
 
 const themeOptions = computed(() => [
   { content: t('layout.themeLight'), value: 'light' },
@@ -43,40 +51,65 @@ function handleThemeSelect(data: { value?: string | number }) {
 <template>
   <div class="plain-layout">
     <header class="plain-layout__header">
-      <img class="plain-layout__logo" :src="logoSrc" :alt="APP_TITLE" />
+      <img
+        class="plain-layout__logo"
+        :src="logoSrc"
+        :alt="siteName"
+      />
 
       <div class="plain-layout__extra">
-        <t-tooltip :content="t('layout.docs')" placement="bottom">
-          <button type="button" class="plain-layout__icon-btn" :aria-label="t('layout.docs')">
+        <t-tooltip
+          :content="t('layout.docs')"
+          placement="bottom"
+        >
+          <button
+            type="button"
+            class="plain-layout__icon-btn plain-layout__support"
+            :aria-label="t('layout.docs')"
+          >
             <AppIcon :icon="BookOpen01Icon" />
           </button>
         </t-tooltip>
 
-        <t-tooltip :content="t('layout.help')" placement="bottom">
-          <button type="button" class="plain-layout__icon-btn" :aria-label="t('layout.help')">
+        <t-tooltip
+          :content="t('layout.help')"
+          placement="bottom"
+        >
+          <button
+            type="button"
+            class="plain-layout__icon-btn plain-layout__support"
+            :aria-label="t('layout.help')"
+          >
             <AppIcon :icon="HelpCircleIcon" />
           </button>
         </t-tooltip>
 
-        <t-dropdown trigger="click" :options="themeOptions" @click="handleThemeSelect">
-          <button type="button" class="plain-layout__icon-btn" :aria-label="t('layout.theme')">
+        <t-dropdown
+          trigger="click"
+          :options="themeOptions"
+          @click="handleThemeSelect"
+        >
+          <button
+            type="button"
+            class="plain-layout__icon-btn"
+            :aria-label="t('layout.theme')"
+          >
             <AppIcon :icon="themeIcon" />
           </button>
         </t-dropdown>
 
         <LanguageSwitcher />
 
-        <button type="button" class="plain-layout__user" :aria-label="t('layout.profile')">
-          <t-avatar size="32px">
-            <AppIcon :icon="UserIcon" />
-          </t-avatar>
-        </button>
+        <UserMenu class="plain-layout__user" />
       </div>
     </header>
+    <AppMaintenanceBanner />
 
     <main class="plain-layout__body">
       <router-view />
     </main>
+
+    <AppFooter />
   </div>
 </template>
 
@@ -84,7 +117,7 @@ function handleThemeSelect(data: { value?: string | number }) {
 .plain-layout {
   display: flex;
   flex-direction: column;
-  min-width: @beacon-layout-min-width;
+  min-width: 0;
   height: 100vh;
   overflow: hidden;
 
@@ -143,9 +176,24 @@ function handleThemeSelect(data: { value?: string | number }) {
 
   &__body {
     flex: 1;
+    min-width: 0;
     min-height: 0;
     overflow-y: auto;
     background-color: @beacon-bg-page;
+  }
+
+  @media (max-width: 600px) {
+    &__header {
+      padding: 0 12px;
+    }
+
+    &__support {
+      display: none;
+    }
+
+    &__icon-btn {
+      padding: 0 8px;
+    }
   }
 }
 </style>

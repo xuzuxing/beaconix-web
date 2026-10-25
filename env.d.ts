@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_DEV_PORT?: string
   /** 开发服务器代理目标 */
   readonly VITE_PROXY_TARGET?: string
+  /** 公开状态页热力图演示数据开关：dev 默认开启，'0' 关闭，'1' 在非 dev 构建中也开启 */
+  readonly VITE_STATUS_PAGE_MOCK?: string
 }
 
 interface ImportMeta {

@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { finiteSegments } from '@/utils/monitoring-adapter'
+import { useI18n } from 'vue-i18n'
 
 /** 轻量折线图：纯 SVG 绘制，按百分比坐标自适应容器宽度 */
 defineOptions({ name: 'LineChart' })
@@ -7,33 +9,86 @@ defineOptions({ name: 'LineChart' })
 const props = withDefaults(
   defineProps<{
     /** 折线数据点 */
-    values: number[]
+    values: (number | null)[]
     /** X 轴标签 */
     labels: string[]
-    /** Y 轴刻度数量（含 0） */
+    /** Y 轴刻度数量（含基线） */
     tickCount?: number
+    /** 以数据最小值附近的整刻度为基线，用于可用率这类高位窄幅波动的指标 */
+    autoScale?: boolean
   }>(),
-  { tickCount: 6 },
+  { tickCount: 6, autoScale: false },
 )
 
-const max = computed(() => Math.max(...props.values, 1))
+/** 刻度档位：把 Y 轴上限抬到其中一个档位，避免出现 192.8 这类刻度 */
+const NICE_STEPS = [1, 1.2, 1.6, 2, 2.5, 3, 4, 5, 6, 8, 10]
+const { t } = useI18n()
+const finite = computed(() =>
+  props.values.filter((v): v is number => v !== null && Number.isFinite(v)),
+)
 
-/** 从最大值递减到 0 的刻度，y 为百分比位置 */
+function niceCeil(value: number): number {
+  const magnitude = 10 ** Math.floor(Math.log10(value))
+  const normalized = value / magnitude
+  const step = NICE_STEPS.find((item) => item >= normalized) ?? 10
+  return Number((step * magnitude).toFixed(6))
+}
+
+/** 整齐的步长（1 / 2 / 2.5 / 5 / 10 × 10ⁿ），用于自适应基线 */
+function niceStep(value: number): number {
+  const magnitude = 10 ** Math.floor(Math.log10(value))
+  const normalized = value / magnitude
+  const step = [1, 2, 2.5, 5, 10].find((item) => item >= normalized) ?? 10
+  return step * magnitude
+}
+
+const max = computed(() => niceCeil(Math.max(...finite.value, 1)))
+
+/** 基线：默认从 0 起；autoScale 时下移到数据附近，放大波动 */
+const min = computed(() => {
+  if (!props.autoScale) {
+    return 0
+  }
+  const span = Math.max(
+    max.value - (finite.value.length ? Math.min(...finite.value) : 0),
+    1e-6,
+  )
+  const step = niceStep(span / (props.tickCount - 1))
+  return Number((max.value - step * (props.tickCount - 1)).toFixed(6))
+})
+
+/** 从上限递减到基线的刻度，y 为百分比位置 */
 const ticks = computed(() =>
-  Array.from({ length: props.tickCount }, (_, index) => ({
-    y: (index * 100) / (props.tickCount - 1),
-    value: max.value * (1 - index / (props.tickCount - 1)),
-  })),
+  Array.from({ length: props.tickCount }, (_, index) => {
+    const ratio = index / (props.tickCount - 1)
+    return {
+      y: ratio * 100,
+      value: max.value - (max.value - min.value) * ratio,
+    }
+  }),
 )
+
+/** Keep full date/offset labels in tooltips while limiting compact axis ticks. */
+const labelStep = computed(() =>
+  Math.max(1, Math.ceil(props.labels.length / 4)),
+)
+const multipleDates = computed(
+  () => new Set(props.labels.map((label) => label.slice(0, 5))).size > 1,
+)
+const axisLabel = (label: string) =>
+  multipleDates.value ? label.slice(0, 5) : label.slice(6, 11)
+
+function isLabelVisible(index: number) {
+  return index % labelStep.value === 0
+}
 
 const linePath = computed(() => {
-  const step = props.values.length > 1 ? 100 / (props.values.length - 1) : 0
-  return props.values
-    .map((value, index) => {
-      const x = index * step
-      const y = 100 - (value / max.value) * 100
-      return `${index === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)}`
-    })
+  return finiteSegments(props.values, min.value, max.value)
+    .map((segment) =>
+      segment
+        .map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`)
+        .join(' '),
+    )
     .join(' ')
 })
 
@@ -43,14 +98,29 @@ function formatValue(value: number) {
 </script>
 
 <template>
-  <div class="line-chart">
+  <t-empty
+    v-if="!finite.length"
+    :description="t('dashboard.live.empty')"
+  />
+  <div
+    v-else
+    class="line-chart"
+  >
     <div class="line-chart__axis-y">
-      <span v-for="tick in ticks" :key="tick.y">{{ formatValue(tick.value) }}</span>
+      <span
+        v-for="tick in ticks"
+        :key="tick.y"
+        >{{ formatValue(tick.value) }}</span
+      >
     </div>
 
     <div class="line-chart__main">
       <div class="line-chart__plot">
-        <svg class="line-chart__svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <svg
+          class="line-chart__svg"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
           <line
             v-for="tick in ticks"
             :key="tick.y"
@@ -60,12 +130,25 @@ function formatValue(value: number) {
             x2="100"
             :y2="tick.y"
           />
-          <path class="line-chart__line" :d="linePath" />
+          <path
+            class="line-chart__line"
+            :d="linePath"
+          />
         </svg>
       </div>
 
       <div class="line-chart__axis-x">
-        <span v-for="label in labels" :key="label">{{ label }}</span>
+        <span
+          v-for="(label, index) in labels"
+          :key="`${label}-${index}`"
+          v-show="isLabelVisible(index)"
+          :title="label"
+          :style="{
+            left: `${labels.length > 1 ? (100 * index) / (labels.length - 1) : 50}%`,
+          }"
+        >
+          {{ axisLabel(label) }}
+        </span>
       </div>
     </div>
   </div>
@@ -125,14 +208,26 @@ function formatValue(value: number) {
   }
 
   &__axis-x {
-    display: flex;
+    position: relative;
     flex: none;
-    justify-content: space-between;
     height: 16px;
     padding-top: 4px;
     font-size: 10px;
     line-height: 12px;
     color: @beacon-text-tertiary;
+    span {
+      position: absolute;
+      white-space: nowrap;
+      transform: translateX(-50%);
+    }
+    span:first-child {
+      transform: none;
+    }
+  }
+
+  // 抽稀时保留占位，标签才继续与数据点对齐
+  &__label--hidden {
+    visibility: hidden;
   }
 }
 </style>

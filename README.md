@@ -1,6 +1,6 @@
-# Beacon Web
+# Beaconix Web
 
-Beacon Web 前端项目模板：Vue 3 全家桶 + TDesign + Hugeicons，开箱即用（请求封装、国际化、状态持久化、多环境构建均已接好）。
+Beaconix Web 前端项目模板：Vue 3 全家桶 + TDesign + Hugeicons，开箱即用（请求封装、国际化、状态持久化、多环境构建均已接好）。
 
 ## 技术栈
 
@@ -57,7 +57,16 @@ src/
 ├── stores/               # pinia 实例 + modules/ 下的 store
 ├── types/                # 全局共享类型
 ├── utils/request.ts      # axios 封装
-├── views/                # 页面组件
+├── views/                # 页面组件，按业务域分目录
+│   ├── dashboard/        # 概览：DashboardView、参考实现 OverviewView
+│   ├── monitor/          # 云监控：列表 / 详情 / 运行概览
+│   ├── channels/         # 通知渠道：管理 / 概览
+│   ├── rules/            # 告警规则
+│   ├── billing/          # 账单用量与订单
+│   ├── team/             # 选择团队（含遗留的选择环境整页）
+│   ├── account/          # 个人资料与安全
+│   ├── auth/             # 登录
+│   └── common/           # 通用页：404 / 占位 / 空白布局示例 / 关于
 ├── App.vue
 └── main.ts
 ```
@@ -81,24 +90,62 @@ src/
 | `subTitleKey` | 在二级菜单里显示的标题（默认取 `titleKey`）                      |
 | `subGroup`    | 二级菜单分组，值即分组标题的 i18n key，变化处渲染分组标签        |
 | `hideHeader`  | 为 `true` 时不渲染内容区标题栏（页面自带头部，如概览页）         |
+| `hideRating`  | 为 `true` 时不渲染标题栏右侧的评价卡（如监控页这类自带工具栏的） |
 | `badge`       | 菜单项右侧徽标，如 `{ textKey: 'badge.beta', theme: 'primary' }` |
 | `hidden`      | 为 `true` 时不出现在菜单里（如 404）                             |
 | `keepAlive`   | 为 `false` 时该页面不参与 keep-alive 缓存（默认缓存）            |
 
-新增主布局页面：在 `src/views/` 建组件，加进 `routes.ts` 的 `layoutChildren` 并写好 `meta`，菜单会自动出现：
+新增主布局页面：在 `src/views/<domain>/`（按业务域选目录）建组件，加进 `routes.ts` 的 `layoutChildren` 并写好 `meta`，菜单会自动出现：
 
 ```ts
 {
   path: 'system',
   name: 'system',
-  component: () => import('@/views/SystemView.vue'),
+  component: () => import('@/views/<domain>/SystemView.vue'),
   meta: { titleKey: 'menu.system', icon: 'setting', group: 'service' },
 }
 ```
 
 菜单顺序即路由声明顺序；该路由再挂 `children` 即可变成多级菜单（父级自动渲染为 `t-submenu`）。
-尚未接入的页面可先复用 `src/views/PlaceholderView.vue`。参考工程（腾讯云 CloudBase 控制台）的概览页实现见
-`src/views/OverviewView.vue` 与 `src/components/overview/`。
+尚未接入的页面可先复用 `src/views/common/PlaceholderView.vue`。参考工程（腾讯云 CloudBase 控制台）的概览页实现见
+`src/views/dashboard/OverviewView.vue` 与 `src/components/overview/`。
+
+### 页面标题栏
+
+内容区顶部是一条白底标题栏（`.layout__content-header`，底部 1px 分隔线），左右两组结构固定：
+
+```
+[返回按钮] 标题 [#layout-header-title-addon]        [评价卡] [#layout-header-actions]
+```
+
+- **标题**：优先取页面用 `usePageHeader` 声明的值，其次 `meta.subTitleKey`，最后 `meta.titleKey`
+- **返回按钮**：页面声明了返回目标时才渲染，样式为无文字的蓝色箭头
+- **注入区**：页面用 `Teleport` 把页内 Tab、类型标签、页面级操作按钮放进对应容器
+- **隐藏**：整条用 `meta.hideHeader`（自带头部的页面，如概览），只隐藏评价卡用 `meta.hideRating`
+
+下钻页面（详情页）用 `usePageHeader` 声明标题与返回目标，页面级操作 Teleport 进标题栏：
+
+```vue
+<script setup lang="ts">
+import { usePageHeader } from '@/composables/usePageHeader'
+
+// 标题取实体名，返回按钮回到列表并保留筛选条件
+const back = computed(() => ({ name: 'monitor', query: route.query }))
+usePageHeader({ title: () => monitor.value?.name, back })
+</script>
+
+<template>
+  <Teleport to="#layout-header-actions">
+    <t-button
+      variant="outline"
+      shape="square"
+      :loading="loading"
+      @click="refresh"
+      >刷新</t-button
+    >
+  </Teleport>
+</template>
+```
 
 ### 二级菜单
 
@@ -128,7 +175,10 @@ import { Search01Icon } from '@/icons'
 </script>
 
 <template>
-  <AppIcon :icon="Search01Icon" :size="16" />
+  <AppIcon
+    :icon="Search01Icon"
+    :size="16"
+  />
 </template>
 ```
 
@@ -236,6 +286,6 @@ persist 的 `key` 统一使用 `beacon-web:` 前缀；`pick` 只持久化需要�
 
 ## 目录约定与后续扩展
 
-- 新增页面：`src/views/` 下建单文件组件，加进 `src/router/routes.ts` 的 `layoutChildren`（主布局，自动进菜单）或其他布局路由下，`meta.titleKey` 填 i18n key
+- 新增页面：在 `src/views/<domain>/` 下建单文件组件（业务域目录见上方「目录结构」），加进 `src/router/routes.ts` 的 `layoutChildren`（主布局，自动进菜单）或其他布局路由下，`meta.titleKey` 填 i18n key
 - 新增 store：`src/stores/modules/` 下建文件，并在 `src/stores/index.ts` 导出
 - 新增接口模块：`src/api/modules/` 下建文件，并在 `src/api/index.ts` 导出

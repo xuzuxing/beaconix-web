@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
-import PageRating from '@/components/PageRating.vue'
-
-/** 概览页头部：欢迎标题 + 右侧评价卡 */
+/** 概览页头部：欢迎标题 */
 defineOptions({ name: 'OverviewHero' })
 
 const { t } = useI18n()
@@ -15,8 +13,6 @@ const { t } = useI18n()
       <span class="hero__wave">👋</span>
       {{ t('overview.hero.welcome') }}
     </h2>
-
-    <PageRating />
   </div>
 </template>
 

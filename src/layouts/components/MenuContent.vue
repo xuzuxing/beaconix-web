@@ -23,18 +23,38 @@ function renderBadgeText(item: MenuItem) {
 </script>
 
 <template>
-  <template v-for="item in items" :key="item.path">
-    <div v-if="item.type === 'divider'" class="menu-divider" />
+  <template
+    v-for="item in items"
+    :key="item.path"
+  >
+    <div
+      v-if="item.type === 'divider'"
+      class="menu-divider"
+    />
 
-    <t-submenu v-else-if="item.children?.length" :value="item.path" :title="renderTitle(item)">
-      <template v-if="item.icon" #icon>
+    <t-submenu
+      v-else-if="item.children?.length"
+      :value="item.path"
+      :title="renderTitle(item)"
+    >
+      <template
+        v-if="item.icon"
+        #icon
+      >
         <AppIcon :icon="item.icon" />
       </template>
       <MenuContent :items="item.children" />
     </t-submenu>
 
-    <t-menu-item v-else :value="item.path" :to="item.path">
-      <template v-if="item.icon" #icon>
+    <t-menu-item
+      v-else
+      :value="item.path"
+      :to="item.path"
+    >
+      <template
+        v-if="item.icon"
+        #icon
+      >
         <AppIcon :icon="item.icon" />
       </template>
       <span class="menu-label">{{ renderTitle(item) }}</span>
