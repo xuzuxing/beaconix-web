@@ -20,6 +20,19 @@ function renderBadgeText(item: MenuItem) {
   if (!badge) return ''
   return badge.textKey ? t(badge.textKey) : (badge.text ?? '')
 }
+
+/**
+ * 点击菜单项的落地页：有子菜单时优先进入它的第一个子页面
+ * （如「云监控」→ 监控概览），避免只停在模块自身的页面。
+ * 二级菜单的第一项由路由声明顺序决定；它是模块自身时落地页不变（如「账单」）。
+ */
+function targetPath(item: MenuItem) {
+  const submenu = item.children?.length ? item.children : item.submenu
+  const first = submenu?.find(
+    (sub) => sub.type !== 'group' && sub.type !== 'divider',
+  )
+  return first?.path ?? item.path
+}
 </script>
 
 <template>
@@ -49,7 +62,7 @@ function renderBadgeText(item: MenuItem) {
     <t-menu-item
       v-else
       :value="item.path"
-      :to="item.path"
+      :to="targetPath(item)"
     >
       <template
         v-if="item.icon"
