@@ -49,6 +49,8 @@ stages:
     jobs:
       - name: 准备 kubeconfig
         type: script
+        env:
+          KUBE_CONFIG: ${KUBE_CONFIG}
         script:
           image: alpine:3.18
           commands:
