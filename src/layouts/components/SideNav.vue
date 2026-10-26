@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router'
 
 import AppIcon from '@/components/AppIcon.vue'
 import { SidebarLeft01Icon, SidebarRight01Icon } from '@/icons'
-import { buildMenu } from '@/router/menu'
+import { buildMenu, resolveActiveMenuPath } from '@/router/menu'
 import { layoutChildren } from '@/router/routes'
 import { useAppStore, useUserStore } from '@/stores'
 
@@ -30,11 +30,21 @@ const menu = computed(() =>
   }),
 )
 
+/**
+ * 高亮的侧边菜单项：
+ * - 详情页这类不在菜单里的路由先用 meta.activeMenu 指回它所属的列表页
+ * - 再落到侧边栏里实际存在的那一项：侧栏只放一级菜单，/monitor/overview
+ *   这类子页面要点亮它的上级 /monitor，否则 value 匹配不到任何菜单项、整条侧栏都不亮
+ */
+const activeMenuPath = computed(() =>
+  resolveActiveMenuPath(menu.value, route.meta.activeMenu ?? route.path),
+)
+
 /** 已展开的父级菜单，用于刷新后保持当前路由所在层级展开 */
 const expanded = ref<string[]>([])
 
 watch(
-  () => route.path,
+  activeMenuPath,
   (path) => {
     const segments = path.split('/').filter(Boolean)
     const parents = segments
@@ -70,7 +80,7 @@ function handleExpand(value: (string | number)[]) {
     <t-menu
       class="side-nav__menu"
       theme="light"
-      :value="route.path"
+      :value="activeMenuPath"
       :collapsed="collapsed"
       :width="['190px', '48px']"
       :expanded="expanded"
