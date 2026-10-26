@@ -126,3 +126,40 @@ export function buildMenu(
 
   return items
 }
+
+/**
+ * 找出当前路由应该点亮的侧边菜单项。
+ * 子页面（如 /monitor/overview）由二级菜单导航，侧边栏里只有它所属的一级菜单
+ * （/monitor），所以按路径前缀取最长匹配；都不匹配时原样返回，侧栏不高亮。
+ * 只顺着 children 递归：侧边栏渲染的是 children 里的子菜单，而 submenu 是二级导航用的，
+ * 把它也算进来的话会匹配到侧栏根本不存在的项，反而整条侧栏都不亮。
+ */
+export function resolveActiveMenuPath(items: readonly MenuItem[], path: string): string {
+  let active = path
+  let score = -1
+
+  const visit = (list: readonly MenuItem[]) => {
+    list.forEach((item) => {
+      if (item.type === 'divider' || item.type === 'group') {
+        return
+      }
+      // 精确命中优先于前缀命中，前缀命中的取最长者（嵌套更深的一级项）
+      const current =
+        item.path === path
+          ? Number.MAX_SAFE_INTEGER
+          : path.startsWith(`${item.path}/`)
+            ? item.path.length
+            : -1
+      if (current > score) {
+        active = item.path
+        score = current
+      }
+      if (item.children?.length) {
+        visit(item.children)
+      }
+    })
+  }
+
+  visit(items)
+  return active
+}

@@ -1,0 +1,51 @@
+version: 1
+stages:
+  - id: stg_test
+    name: 项目测试
+    kind: build
+    jobs:
+      - name: jest-test
+        type: script
+        script:
+          image: node:22-alpine
+          commands:
+            - npm install -g pnpm
+            - pnpm install
+            - pnpm run test
+
+  - id: stg_build
+    name: 构建并推送镜像
+    kind: build
+    jobs:
+      - name: kaniko-build
+        type: script
+        script:
+          # 使用 Kaniko 的 debug 镜像，自带 shell，方便执行
+          image: gcr.io/kaniko-project/executor:v1.23.2-debug
+          # 必须清空 entrypoint，否则无法执行多条 shell 命令
+          entrypoint: ['']
+          commands:
+            # 直接执行 Kaniko 构建和推送
+            - /kaniko/executor
+              --context=.
+              --dockerfile=./Dockerfile
+              --destination=registry.xuzuxing.cn/beaconix/beaconix-web:${PIPEWRIGHT_RUN_ID}
+              --insecure
+              --skip-tls-verify
+              --cache=true
+              --cache-repo=registry.xuzuxing.cn/beaconix/beaconix-web-cache
+
+  - id: stg_deploy
+    name: 更新生产环境
+    kind: deploy
+    needs: [stg_build]
+    jobs:
+      - name: kubectl-set-image
+        type: script
+        script:
+          image: bitnami/kubectl:latest
+          commands:
+            # 更新 Deployment 的镜像
+            - kubectl set image deployment/beaconix-web web=registry.xuzuxing.cn/beaconix/beaconix-web:${PIPEWRIGHT_RUN_ID} -n beaconix
+            # 等待滚动更新完成
+            - kubectl rollout status deployment/beaconix-web -n beaconix --timeout=120s
