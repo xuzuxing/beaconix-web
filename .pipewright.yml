@@ -1,5 +1,11 @@
 version: 1
 stages:
+  - id: stg_src
+    name: 流水线源
+    kind: source
+    jobs:
+      - name: source
+        type: git_source
   - id: stg_test
     name: 项目测试
     kind: build
@@ -16,6 +22,7 @@ stages:
   - id: stg_build
     name: 构建并推送镜像
     kind: build
+    needs: [stg_test]
     jobs:
       - name: kaniko-build
         type: script
@@ -25,8 +32,8 @@ stages:
           # 必须清空 entrypoint，否则无法执行多条 shell 命令
           entrypoint: ['']
           commands:
-            # 直接执行 Kaniko 构建和推送
-            - /kaniko/executor
+            - >-
+              /kaniko/executor
               --context=.
               --dockerfile=./Dockerfile
               --destination=registry.xuzuxing.cn/beaconix/beaconix-web:${PIPEWRIGHT_RUN_ID}
