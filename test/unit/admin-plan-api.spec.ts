@@ -77,8 +77,7 @@ it('calls the /admin/plans CRUD routes with encoded ids and the given payloads',
   await api.createAdminPlan({
     code: 'PRO',
     name: '专业版',
-    price: 2900,
-    durationDays: 30,
+    terms: [{ cycle: 'MONTHLY', durationDays: 30, price: 2900 }],
   })
   await api.updateAdminPlan('plan/1', { enabled: false })
   await api.deleteAdminPlan('plan/1')
@@ -93,8 +92,7 @@ it('calls the /admin/plans CRUD routes with encoded ids and the given payloads',
   expect(calls[2]?.data).toEqual({
     code: 'PRO',
     name: '专业版',
-    price: 2900,
-    durationDays: 30,
+    terms: [{ cycle: 'MONTHLY', durationDays: 30, price: 2900 }],
   })
   expect(calls[3]?.data).toEqual({ enabled: false })
 })

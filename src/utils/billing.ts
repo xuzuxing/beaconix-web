@@ -49,8 +49,9 @@ const PLAN_CYCLE_SET: ReadonlySet<string> = new Set(PLAN_CYCLES)
  * 因此运行时做白名单校验，未知/缺失一律回退到 `common.planCycle.unknown`，
  * 避免把裸 i18n key 渲染到页面。
  */
-export function planCycleLabelKey(cycle: PlanCycle): string {
-  return `common.planCycle.${PLAN_CYCLE_SET.has(cycle) ? cycle : 'unknown'}`
+export function planCycleLabelKey(cycle: PlanCycle | null | undefined): string {
+  const label = cycle != null && PLAN_CYCLE_SET.has(cycle) ? cycle : 'unknown'
+  return `common.planCycle.${label}`
 }
 
 /**
