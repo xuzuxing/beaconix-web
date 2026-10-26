@@ -40,10 +40,17 @@ export function formatDateTime(value: string | null | undefined): string {
 
 /** 周期的固定展示顺序，与后端 `PlanCycle` 枚举一致 */
 export const PLAN_CYCLES: readonly PlanCycle[] = ['MONTHLY', 'QUARTERLY', 'YEARLY']
+const PLAN_CYCLE_SET: ReadonlySet<string> = new Set(PLAN_CYCLES)
 
-/** 周期的 i18n 文案键（中英文顶层 `common.planCycle.*`，用户侧与管理端共用） */
-export function planCycleLabelKey(cycle: PlanCycle = 'MONTHLY'): string {
-  return `common.planCycle.${cycle}`
+/**
+ * 周期的 i18n 文案键（中英文顶层 `common.planCycle.*`，用户侧与管理端共用）
+ *
+ * 后端 `OrderEntity.cycle` 为 nullable，且将来可能新增枚举值（如 `BIWEEKLY`），
+ * 因此运行时做白名单校验，未知/缺失一律回退到 `common.planCycle.unknown`，
+ * 避免把裸 i18n key 渲染到页面。
+ */
+export function planCycleLabelKey(cycle: PlanCycle): string {
+  return `common.planCycle.${PLAN_CYCLE_SET.has(cycle) ? cycle : 'unknown'}`
 }
 
 /**
