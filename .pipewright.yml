@@ -42,10 +42,24 @@ stages:
               --cache=true
               --cache-repo=registry.xuzuxing.cn/beaconix/beaconix-web-cache
 
+  - id: stg_kubeconfig
+    name: 准备凭据
+    kind: build
+    needs: [stg_build_push]
+    jobs:
+      - name: 准备 kubeconfig
+        type: script
+        script:
+          image: alpine:3.18
+          commands:
+            - mkdir -p ~/.kube
+            - echo "${KUBE_CONFIG}" | base64 -d > ~/.kube/config
+            - chmod 600 ~/.kube/config
+
   - id: stg_deploy
     name: 应用部署
     kind: deploy
-    needs: [stg_build_push]
+    needs: [stg_kubeconfig]
     jobs:
       - name: 更新应用镜像
         type: script
