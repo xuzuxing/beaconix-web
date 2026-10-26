@@ -14,7 +14,6 @@
     "preview": "vite preview",
     "build-only": "vite build --mode production",
     "type-check": "vue-tsc --build",
-    "typecheck": "vue-tsc --build",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",

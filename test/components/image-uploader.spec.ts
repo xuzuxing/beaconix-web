@@ -7,11 +7,12 @@ vi.mock('tdesign-vue-next', () => ({
 }))
 
 import { uploadAttachment } from '@/api'
+import type { UploadedObject } from '@/api/types/attachment'
 import ImageUploader from '@/components/upload/ImageUploader.vue'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { componentOptions } from '../fixtures/components'
 
-const uploaded = (overrides = {}) => ({
+const uploaded = (overrides: Partial<UploadedObject> = {}): UploadedObject => ({
   filename: 'shot.png',
   mimeType: 'image/png',
   size: 2048,
