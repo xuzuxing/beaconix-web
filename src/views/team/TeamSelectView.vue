@@ -7,6 +7,7 @@ import type { Organization } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import TeamCard from '@/components/team/TeamCard.vue'
 import TeamCreateDialog from '@/components/team/TeamCreateDialog.vue'
+import { useLeaveOrganization } from '@/composables/useLeaveOrganization'
 import { useRefreshOnActivate } from '@/composables/useRefreshOnActivate'
 import { useTeamPlans } from '@/composables/useTeamPlans'
 import { HOME_PATH } from '@/config'
@@ -31,6 +32,7 @@ const router = useRouter()
 const orgStore = useOrganizationStore()
 const userStore = useUserStore()
 const { planOf, loadTeamPlans } = useTeamPlans()
+const { confirmLeave } = useLeaveOrganization()
 
 /** 归属筛选：全部 / 我创建的 / 我加入的 */
 type TeamScope = 'all' | 'owned' | 'joined'
@@ -123,6 +125,13 @@ function clearFilters() {
 async function enter(org: Organization) {
   await orgStore.switchOrganization(org.id)
   await router.push(HOME_PATH)
+}
+
+/** 退出加入的组织：确认后刷新团队列表（store 已处理当前组织回落） */
+function handleLeave(org: Organization) {
+  void confirmLeave(org, async () => {
+    await load()
+  })
 }
 
 /** 卡片入口：先切到该团队，再进对应页面，避免看到别的团队的数据 */
@@ -238,6 +247,7 @@ async function onCreated(org: Organization) {
           @select="enter(org)"
           @members="openTeamPage(org, '/teams/members')"
           @manage="openTeamPage(org, '/teams')"
+          @leave="handleLeave(org)"
         />
       </div>
 

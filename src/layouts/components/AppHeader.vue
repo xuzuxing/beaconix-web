@@ -15,6 +15,7 @@ import TeamCreateDialog from '@/components/team/TeamCreateDialog.vue'
 import UserMenu from '@/components/UserMenu.vue'
 import type { Organization, Project } from '@/api/types'
 import type { Plan } from '@/api/types/billing'
+import { useLeaveOrganization } from '@/composables/useLeaveOrganization'
 import { useTeamPlans } from '@/composables/useTeamPlans'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { useBrand } from '@/composables/useBrand'
@@ -24,6 +25,7 @@ import {
   Copy01Icon,
   Folder01Icon,
   HelpCircleIcon,
+  Logout01Icon,
   Moon01Icon,
   Notification03Icon,
   PlusSignIcon,
@@ -38,6 +40,7 @@ import {
   useAppStore,
   useNotificationStore,
   useOrganizationStore,
+  useUserStore,
 } from '@/stores'
 import type { ThemeMode } from '@/types'
 import { planTagTheme, planTier } from '@/utils/billing'
@@ -48,8 +51,10 @@ const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
 const orgStore = useOrganizationStore()
+const userStore = useUserStore()
 const notificationStore = useNotificationStore()
 const permissions = usePermissionsStore()
+const { confirmLeave } = useLeaveOrganization()
 
 const collapsed = computed(() => appStore.collapsed)
 
@@ -138,6 +143,14 @@ async function selectOrg(org: Organization) {
   teamMode.value = 'info'
   teamVisible.value = false
   await reloadAfterTeamSwitch()
+}
+
+/** 退出加入的组织：先收起团队弹层，确认后若退出的是当前组织则刷新当前页 */
+function handleLeave(org: Organization) {
+  teamVisible.value = false
+  void confirmLeave(org, async (wasCurrent) => {
+    if (wasCurrent) await reloadAfterTeamSwitch()
+  })
 }
 
 /** 团队管理不进侧边栏，入口只放在这个下拉里；跳转到控制台之外的「选择团队」整页 */
@@ -398,32 +411,44 @@ onMounted(() => {
                     </t-tag>
                   </button>
 
-                  <!-- 两个入口：该团队的成员页 / 团队管理页（都会先切到该团队） -->
-                  <div
-                    v-if="permissions.canOrganization(org.id)"
-                    class="team-list__entries"
-                  >
+                  <!-- 右侧入口：成员页 / 团队管理页（有权限时），加入的组织额外显示退出按钮 -->
+                  <div class="team-list__entries">
+                    <template v-if="permissions.canOrganization(org.id)">
+                      <button
+                        type="button"
+                        class="team-list__entry"
+                        :title="t('submenu.team.members')"
+                        :aria-label="t('submenu.team.members')"
+                        @click="openTeamPage(org, '/teams/members')"
+                      >
+                        <AppIcon
+                          :icon="UserIcon"
+                          :size="14"
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        class="team-list__entry"
+                        :title="t('menu.team')"
+                        :aria-label="t('menu.team')"
+                        @click="openTeamPage(org, '/teams')"
+                      >
+                        <AppIcon
+                          :icon="Settings01Icon"
+                          :size="14"
+                        />
+                      </button>
+                    </template>
                     <button
+                      v-if="org.ownerId !== userStore.user?.id"
                       type="button"
-                      class="team-list__entry"
-                      :title="t('submenu.team.members')"
-                      :aria-label="t('submenu.team.members')"
-                      @click="openTeamPage(org, '/teams/members')"
+                      class="team-list__entry team-list__entry--danger"
+                      :title="t('workspace.team.leave')"
+                      :aria-label="t('workspace.team.leave')"
+                      @click="handleLeave(org)"
                     >
                       <AppIcon
-                        :icon="UserIcon"
-                        :size="14"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      class="team-list__entry"
-                      :title="t('menu.team')"
-                      :aria-label="t('menu.team')"
-                      @click="openTeamPage(org, '/teams')"
-                    >
-                      <AppIcon
-                        :icon="Settings01Icon"
+                        :icon="Logout01Icon"
                         :size="14"
                       />
                     </button>
@@ -807,6 +832,12 @@ onMounted(() => {
 
     &:hover {
       color: @beacon-brand;
+      background-color: @beacon-bg-hover;
+    }
+
+    // 退出组织是危险操作，hover 用错误色提示
+    &--danger:hover {
+      color: @beacon-error;
       background-color: @beacon-bg-hover;
     }
   }

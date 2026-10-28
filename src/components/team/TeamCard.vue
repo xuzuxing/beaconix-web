@@ -8,6 +8,7 @@ import type { Plan } from '@/api/types/billing'
 import AppIcon from '@/components/AppIcon.vue'
 import {
   CheckmarkCircle02Icon,
+  Logout01Icon,
   Settings01Icon,
   TeamWorkIcon,
   UserIcon,
@@ -35,7 +36,7 @@ const props = withDefaults(
   { selected: false, owned: false, mode: 'card' },
 )
 
-const emit = defineEmits<{ select: []; manage: []; members: [] }>()
+const emit = defineEmits<{ select: []; manage: []; members: []; leave: [] }>()
 const { t } = useI18n()
 const permissions = usePermissionsStore()
 
@@ -115,15 +116,30 @@ const planLabel = computed(
         </button>
       </div>
 
-      <span class="team-card__source">
-        {{
-          t(
-            owned
-              ? 'workspace.teamSelect.filterOwned'
-              : 'workspace.teamSelect.filterJoined',
-          )
-        }}
-      </span>
+      <div class="team-card__aside">
+        <span class="team-card__source">
+          {{
+            t(
+              owned
+                ? 'workspace.teamSelect.filterOwned'
+                : 'workspace.teamSelect.filterJoined',
+            )
+          }}
+        </span>
+        <button
+          v-if="!owned"
+          type="button"
+          class="team-card__leave"
+          :aria-label="t('workspace.team.leave')"
+          @click.stop="emit('leave')"
+        >
+          <AppIcon
+            :icon="Logout01Icon"
+            :size="14"
+          />
+          {{ t('workspace.team.leave') }}
+        </button>
+      </div>
     </div>
 
     <span
@@ -278,10 +294,34 @@ const planLabel = computed(
     }
   }
 
-  &__source {
+  &__aside {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-right: 20px;
+  }
+
+  &__source {
     font-size: @beacon-font-size-base;
     color: @beacon-text-tertiary;
+  }
+
+  &__leave {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    font-family: inherit;
+    font-size: @beacon-font-size-base;
+    color: @beacon-error;
+    cursor: pointer;
+    background-color: transparent;
+    border: 0;
+    border-radius: @beacon-radius;
+
+    &:hover {
+      background-color: @beacon-bg-hover;
+    }
   }
 
   // 选中勾：右下角（与来源文案留出间距，避免遮挡）

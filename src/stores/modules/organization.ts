@@ -11,6 +11,7 @@ import {
 import {
   createProject as createProjectRequest,
   getSubscriptionStack,
+  leaveOrganization as leaveOrganizationRequest,
   listOrganizations,
   listProjects,
 } from '@/api'
@@ -162,6 +163,34 @@ export const useOrganizationStore = defineStore(
       return project
     }
 
+    /**
+     * 退出组织（加入的组织）：成功后从列表移除；若退出的是当前组织，
+     * 切回默认（第一个）组织并重载工作区，避免停留在已无权限的上下文。
+     */
+    async function leaveOrganization(orgId: string) {
+      await leaveOrganizationRequest(orgId)
+      const wasCurrent = orgId === currentOrganizationId.value
+      organizations.value = organizations.value.filter((org) => org.id !== orgId)
+
+      if (!wasCurrent) return
+
+      const fallback = organizations.value[0]?.id ?? ''
+      if (fallback) {
+        await switchOrganization(fallback)
+        return
+      }
+      // 没有其它组织了：清空当前工作区
+      workspaceRevision.value++
+      invalidateWorkspace()
+      permissions.reset()
+      currentOrganizationId.value = ''
+      currentProjectId.value = ''
+      projects.value = []
+      subscription.value = null
+      workspaceState.value = 'ready'
+      workspaceError.value = ''
+    }
+
     /** Commit an authorized deep-link lookup without reviving older workspace requests. */
     function applyWorkspace(
       orgId: string,
@@ -260,6 +289,7 @@ export const useOrganizationStore = defineStore(
       switchOrganization,
       switchProject,
       createProject,
+      leaveOrganization,
       applyWorkspace,
       reset,
     }
