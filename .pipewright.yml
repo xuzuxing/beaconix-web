@@ -48,17 +48,16 @@ stages:
     kind: deploy
     needs: [stg_build_push]
     jobs:
-      - name: 计算镜像 tag
-        type: script
-        script:
-          image: alpine/git:latest
-          commands:
-            - 'echo "IMAGE_TAG=$(git rev-parse HEAD | cut -c1-7)" >> "$PIPEWRIGHT_ENV"'
       - name: 更新应用镜像
         type: script
         script:
-          image: bitnami/kubectl:latest
+          image: alpine/k8s:1.35.8
+          env:
+            KUBE_CONFIG: ${KUBE_CONFIG}
           commands:
+            - mkdir -p /root/.kube
+            - echo "$KUBE_CONFIG" > /root/.kube/config
+            - chmod 600 /root/.kube/config
             - kubectl set image deployment/beaconix-web web=registry.xuzuxing.cn/beaconix/beaconix-web:${IMAGE_TAG} -n beaconix
             - kubectl rollout status deployment/beaconix-web -n beaconix --timeout=120s
 
