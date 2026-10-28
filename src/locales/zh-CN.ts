@@ -1031,6 +1031,11 @@ export default {
       dangerConfirm: '注销团队',
       dangerDone: '团队已注销',
       dangerFailed: '注销失败，请稍后重试',
+      // ---------- 退出团队（加入的组织） ----------
+      leave: '退出团队',
+      leaveTitle: '退出团队',
+      leaveConfirm: '退出后你将失去该团队的访问权限，确认退出「{name}」？',
+      leaveDone: '已退出团队',
     },
     member: {
       tab: '成员',

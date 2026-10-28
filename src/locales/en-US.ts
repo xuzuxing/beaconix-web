@@ -654,7 +654,8 @@ export default {
         FAILED: 'Failed',
         CLOSED: 'Closed',
       },
-      reasonPlaceholder: 'Optional reason, e.g. we no longer need this subscription (200 chars max)',
+      reasonPlaceholder:
+        'Optional reason, e.g. we no longer need this subscription (200 chars max)',
       reasonText: 'Reason',
       reasonTooLong: 'The reason must be at most {max} characters',
       submit: 'Submit request',
@@ -1038,6 +1039,11 @@ export default {
       dangerConfirm: 'Delete team',
       dangerDone: 'Team deleted',
       dangerFailed: 'Could not delete the team, please try again',
+      // ---------- Leave a joined team ----------
+      leave: 'Leave team',
+      leaveTitle: 'Leave team',
+      leaveConfirm: 'Leaving removes your access to "{name}". Continue?',
+      leaveDone: 'Left the team',
     },
     member: {
       tab: 'Members',

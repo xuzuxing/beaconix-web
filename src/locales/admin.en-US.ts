@@ -535,6 +535,7 @@ export default {
       wechat: 'WeChat',
       alipay: 'Alipay',
       billing: 'Billing & refunds',
+      probe: 'Probes',
     },
     groupHint: {
       system: 'Site name, logo, footer and system email shown to the outside.',
@@ -555,6 +556,7 @@ export default {
         'Alipay Open Platform payment credentials; the billing flow does not support this channel yet, so this is preparation only.',
       billing:
         'Refund master switch, cooling-off period, prorating and fee rate for the billing flow.',
+      probe: 'Probe enrollment, heartbeat and callback endpoint settings.',
     },
     section: {
       pay: 'WeChat Pay',
@@ -565,6 +567,7 @@ export default {
       work: 'WeCom',
       http: 'HTTP client',
       refund: 'Refunds',
+      endpoint: 'Endpoint',
     },
     sectionHint: {
       pay: 'Merchant id, certificates and the callback URL; nothing is charged while mock pay is on.',
@@ -576,6 +579,7 @@ export default {
       http: 'Timeout and retries for WeChat API calls; changes take effect after a restart.',
       refund:
         'Rollout switch, cooling-off window, prorating and fee rate; while the master switch is off every refund request is rejected.',
+      endpoint: 'The server address probes report check results to and receive scheduling from.',
     },
   },
 }
