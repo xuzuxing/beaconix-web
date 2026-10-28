@@ -14,8 +14,7 @@ WORKDIR /app
 
 # 先只拷贝依赖清单，源码改动时可复用依赖安装层
 COPY package.json pnpm-lock.yaml ./
-RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
