@@ -58,8 +58,8 @@ stages:
             - mkdir -p /root/.kube
             - echo "$KUBE_CONFIG" > /root/.kube/config
             - chmod 600 /root/.kube/config
-            - kubectl set image deployment/beaconix-web web=registry.xuzuxing.cn/beaconix/beaconix-web:${IMAGE_TAG} -n beaconix
-            - kubectl rollout status deployment/beaconix-web -n beaconix --timeout=120s
+            - kubectl set image deployment/beaconix-web web=registry.xuzuxing.cn/beaconix/beaconix-web:${COMMIT_SHA} -n beaconix
+            - kubectl rollout status deployment/beaconix-web -n beaconix --timeout=600s
 
   - id: stg_check
     name: 通知

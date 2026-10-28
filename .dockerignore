@@ -15,6 +15,9 @@ __screenshots__
 .vscode
 .idea
 .reasonix
+.github
+.pipewright.yml
+deployment.yaml
 
 # 与前端构建无关的文档、脚本与容器文件（nginx.conf 必须保留，运行阶段要 COPY）
 docs
