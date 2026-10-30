@@ -3,14 +3,16 @@ import type {
   AlipayPayParams,
   CreateOrderParams,
   CreatePaymentParams,
+  MonitorCapacity,
   Order,
   OrderPaymentParams,
   Plan,
   QuotaSummary,
   SubscriptionStack,
+  SelectMonitorCapacityParams,
   WechatVirtualPayParams,
 } from '../types/billing'
-import { get, post } from '@/utils/request'
+import { get, patch, post } from '@/utils/request'
 
 /** 可购买的套餐目录（仅启用项，按 sortOrder 升序） */
 export function listPlans() {
@@ -30,6 +32,20 @@ export function getSubscriptionStack(orgId: string) {
 /** 当前套餐的使用量 / 可用量摘要 */
 export function getQuotaSummary(orgId: string) {
   return get<QuotaSummary>(`/organizations/${orgId}/quota`)
+}
+
+/** OWNER / ADMIN：读取降级周期和服务端计算的实际保留名单。 */
+export function getMonitorCapacity(orgId: string) {
+  return get<MonitorCapacity>(
+    `/organizations/${encodeURIComponent(orgId)}/subscription/monitor-capacity`,
+  )
+}
+
+export function selectMonitorCapacity(orgId: string, data: SelectMonitorCapacityParams) {
+  return patch<MonitorCapacity>(
+    `/organizations/${encodeURIComponent(orgId)}/subscription/monitor-capacity`,
+    data,
+  )
 }
 
 /** 创建购买订单（ADMIN+） */

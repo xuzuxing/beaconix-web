@@ -1,4 +1,5 @@
 import adminPage from './admin.en-US'
+import monitorCapacity from './capacity.en-US'
 import access from './access.en-US'
 import channelPage from './channel.en-US'
 import monitorPage from './monitor.en-US'
@@ -10,6 +11,7 @@ import ticketPage from './ticket.en-US'
 import upload from './upload.en-US'
 
 export default {
+  monitorCapacity,
   access,
   adminPage,
   monitorPage,

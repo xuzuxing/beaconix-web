@@ -11,11 +11,12 @@ import MonitorStatusTag from '@/components/monitor/MonitorStatusTag.vue'
 import { useMonitorAccess } from '@/composables/useMonitorAccess'
 import { useMonitorActions } from '@/composables/useMonitorActions'
 import { useMonitorList } from '@/composables/useMonitorList'
+import { useMonitorRuntime } from '@/composables/useMonitorRuntime'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
+import { usePermissionsStore } from '@/stores/modules/permissions'
 import {
   formatMonitorTime,
-  monitorStatus,
   selectMonitors,
   type MonitorSort,
 } from '@/utils/monitor-presenter'
@@ -25,6 +26,12 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const org = useOrganizationStore()
+const permissions = usePermissionsStore()
+const {
+  now,
+  status: monitorStatus,
+  restricted: monitorCapacityRestricted,
+} = useMonitorRuntime()
 const projectId = computed(() => org.currentProjectId)
 const { canManage, canCheck, canTestAlert } = useMonitorAccess()
 const { monitors, loading, error, load } = useMonitorList(projectId)
@@ -108,6 +115,7 @@ const filtered = computed(() =>
     status.value,
     type.value,
     sort.value,
+    now.value.getTime(),
   ),
 )
 const page = computed(() =>
@@ -292,11 +300,30 @@ function paginate({
                 {{ monitor.lastError }}
               </p>
               <p
-                v-if="monitor.executionEligible === false"
-                class="monitor-row__error"
+                v-if="
+                  monitor.executionEligible === false ||
+                  monitorCapacityRestricted(monitor)
+                "
+                class="monitor-row__error monitor-row__policy"
               >
-                {{ t('monitorPage.executionBlocked') }} ·
-                {{ monitor.executionBlockedReason }}
+                {{
+                  monitorCapacityRestricted(monitor)
+                    ? t('monitorCapacity.blocked')
+                    : `${t('monitorPage.executionBlocked')} · ${monitor.executionBlockedReason}`
+                }}
+                <RouterLink
+                  v-if="
+                    monitorCapacityRestricted(monitor) &&
+                    permissions.canOrganization(org.currentOrganizationId)
+                  "
+                  :to="{
+                    path: '/billing',
+                    hash: '#monitor-capacity',
+                    query: { organizationId: org.currentOrganizationId },
+                  }"
+                  @click.stop
+                  >{{ t('monitorCapacity.manage') }}</RouterLink
+                >
               </p>
             </div>
             <div class="monitor-row__latency">
@@ -447,6 +474,13 @@ function paginate({
   }
   &__error {
     color: @beacon-error;
+  }
+  &__policy {
+    white-space: normal;
+    a {
+      margin-left: 8px;
+      color: @beacon-brand;
+    }
   }
   &__latency {
     display: flex;

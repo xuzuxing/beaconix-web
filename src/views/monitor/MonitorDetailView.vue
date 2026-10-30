@@ -31,6 +31,7 @@ import RuleTreeView from '@/components/rules/RuleTreeView.vue'
 import { useMonitorAccess } from '@/composables/useMonitorAccess'
 import { useMonitorActions } from '@/composables/useMonitorActions'
 import { useMonitorDetail } from '@/composables/useMonitorDetail'
+import { useMonitorRuntime } from '@/composables/useMonitorRuntime'
 import { usePageHeader } from '@/composables/usePageHeader'
 import { Copy01Icon, RefreshIcon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
@@ -42,6 +43,8 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const org = useOrganizationStore()
+const { status: monitorStatus, restricted: monitorCapacityRestricted } =
+  useMonitorRuntime()
 const permissions = usePermissionsStore()
 const routeProject = computed(() => String(route.params.projectId ?? ''))
 const monitorId = computed(() => String(route.params.monitorId ?? ''))
@@ -472,19 +475,42 @@ async function copy() {
         :message="actionError"
       />
       <t-alert
-        v-if="monitor.executionEligible === false"
+        v-if="
+          monitor.executionEligible === false ||
+          monitorCapacityRestricted(monitor)
+        "
         theme="warning"
-        :message="`${t('monitorPage.executionBlocked')} · ${monitor.executionBlockedReason ?? '-'}`"
+        :message="
+          monitorCapacityRestricted(monitor)
+            ? t('monitorCapacity.blocked')
+            : `${t('monitorPage.executionBlocked')} · ${monitor.executionBlockedReason ?? '-'}`
+        "
       />
+      <RouterLink
+        v-if="
+          monitorCapacityRestricted(monitor) &&
+          permissions.canOrganization(org.currentOrganizationId)
+        "
+        :to="{
+          path: '/billing',
+          hash: '#monitor-capacity',
+          query: { organizationId: org.currentOrganizationId },
+        }"
+        >{{ t('monitorCapacity.manage') }}</RouterLink
+      >
       <t-card class="monitor-detail__card">
         <template #title>{{ t('monitorPage.status') }}</template>
         <div
           class="monitor-detail__status"
-          :class="`monitor-detail__status--${insights.latest.status.toLowerCase()}`"
+          :class="`monitor-detail__status--${monitorStatus({ ...monitor, status: insights.latest.status }).toLowerCase()}`"
         >
           <div>
             <span>{{ t('monitorPage.status') }}</span
-            ><MonitorStatusTag :status="insights.latest.status" />
+            ><MonitorStatusTag
+              :status="
+                monitorStatus({ ...monitor, status: insights.latest.status })
+              "
+            />
           </div>
           <div>
             <span>{{ t('monitorPage.lastCheck') }}</span

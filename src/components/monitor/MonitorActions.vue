@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import type { Monitor } from '@/api/types'
 import type { MonitorAction } from '@/composables/useMonitorActions'
+import { useMonitorRuntime } from '@/composables/useMonitorRuntime'
 import AppIcon from '@/components/AppIcon.vue'
 import {
   Delete02Icon,
@@ -21,6 +22,7 @@ defineProps<{
 }>()
 const emit = defineEmits<{ action: [action: MonitorAction]; edit: [] }>()
 const { t } = useI18n()
+const { restricted: monitorCapacityRestricted } = useMonitorRuntime()
 </script>
 
 <template>
@@ -38,7 +40,10 @@ const { t } = useI18n()
         :aria-label="t('workspace.monitor.checkNow')"
         :loading="pending"
         :disabled="
-          pending || !monitor.enabled || monitor.executionEligible === false
+          pending ||
+          !monitor.enabled ||
+          monitor.executionEligible === false ||
+          monitorCapacityRestricted(monitor)
         "
         @click="emit('action', 'check')"
         ><template #icon><AppIcon :icon="FlashIcon" /></template

@@ -1,7 +1,21 @@
 import type { Monitor, MonitorStatus, MonitorType } from '../api/types.ts'
 
-export const monitorStatus = (monitor: Pick<Monitor, 'enabled' | 'status'>): MonitorStatus =>
-  !monitor.enabled ? 'PAUSED' : monitor.status === 'PAUSED' ? 'UNKNOWN' : monitor.status
+export const monitorCapacityRestricted = (
+  monitor: Pick<Monitor, 'executionBlockedReason' | 'quotaGraceEndsAt'>,
+  now = Date.now(),
+) =>
+  monitor.executionBlockedReason === 'MONITOR_QUOTA_EXCEEDED' ||
+  (!!monitor.quotaGraceEndsAt && Date.parse(monitor.quotaGraceEndsAt) <= now)
+
+export const monitorStatus = (
+  monitor: Pick<Monitor, 'enabled' | 'status' | 'executionBlockedReason' | 'quotaGraceEndsAt'>,
+  now = Date.now(),
+): MonitorStatus =>
+  !monitor.enabled
+    ? 'PAUSED'
+    : monitorCapacityRestricted(monitor, now) || monitor.status === 'PAUSED'
+      ? 'UNKNOWN'
+      : monitor.status
 
 export const monitorStatusTheme: Record<
   MonitorStatus,
@@ -20,6 +34,7 @@ export function selectMonitors(
   status: MonitorStatus | 'all',
   type: MonitorType | 'all',
   sort: MonitorSort,
+  now = Date.now(),
 ) {
   const query = search.trim().toLocaleLowerCase()
   const rank: Record<MonitorStatus, number> = {
@@ -33,7 +48,7 @@ export function selectMonitors(
     .filter(
       (row) =>
         (!query || `${row.name} ${row.target}`.toLocaleLowerCase().includes(query)) &&
-        (status === 'all' || monitorStatus(row) === status) &&
+        (status === 'all' || monitorStatus(row, now) === status) &&
         (type === 'all' || row.type === type),
     )
     .sort((a, b) => {
@@ -41,14 +56,14 @@ export function selectMonitors(
         sort === 'name'
           ? a.name.localeCompare(b.name)
           : sort === 'status'
-            ? rank[monitorStatus(a)] - rank[monitorStatus(b)]
+            ? rank[monitorStatus(a, now)] - rank[monitorStatus(b, now)]
             : sort === 'latency'
               ? (b.lastLatency ?? -1) - (a.lastLatency ?? -1)
               : Date.parse(b.createdAt) - Date.parse(a.createdAt)
       return order || a.id.localeCompare(b.id)
     })
 }
-export function summarizeMonitors(rows: Monitor[]) {
+export function summarizeMonitors(rows: Monitor[], now = Date.now()) {
   const result = {
     total: rows.length,
     UP: 0,
@@ -58,7 +73,7 @@ export function summarizeMonitors(rows: Monitor[]) {
     UNKNOWN: 0,
   }
   rows.forEach((row) => {
-    result[monitorStatus(row)]++
+    result[monitorStatus(row, now)]++
   })
   return result
 }

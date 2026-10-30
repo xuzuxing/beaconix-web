@@ -52,6 +52,23 @@ router.beforeEach(async (to) => {
     const org = useOrganizationStore()
     const permissions = usePermissionsStore()
     if (org.workspaceState !== 'ready') await org.loadWorkspace()
+    // 邮件与容量通知携带组织提示；先确认访问权再切换，避免使用上次的组织。
+    const organizationHint =
+      typeof to.query.organizationId === 'string' ? to.query.organizationId : ''
+    if (organizationHint && (scope === 'organization' || to.path === '/dashboard')) {
+      const hintedAuthority = await permissions.ensureOrganization(
+        organizationHint,
+        true,
+        ENTRY_REFRESH_MAX_AGE_MS,
+      )
+      if (!hintedAuthority || session !== sessionEpoch.value) return { path: '/access-unavailable' }
+      if (organizationHint !== org.currentOrganizationId)
+        await org.switchOrganization(organizationHint)
+      if (org.currentOrganizationId !== organizationHint) return { path: '/access-unavailable' }
+      // 后端容量邮件的处理入口为站点根地址（重定向到 dashboard）。
+      if (to.path === '/dashboard')
+        return { path: '/billing', query: to.query, hash: '#monitor-capacity' }
+    }
     if (!org.currentOrganizationId) return { path: '/team' }
     const authority = await permissions.ensureOrganization(
       org.currentOrganizationId,

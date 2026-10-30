@@ -66,6 +66,10 @@ const TYPE_META: Record<UserNotificationType, NotificationTypeMeta> = {
   SUBSCRIPTION_RENEWED: { key: 'billing', theme: 'success' },
   SUBSCRIPTION_EXPIRING: { key: 'billing', theme: 'warning' },
   SUBSCRIPTION_EXPIRED: { key: 'billing', theme: 'danger' },
+  MONITOR_CAPACITY_GRACE_STARTED: { key: 'billing', theme: 'warning' },
+  MONITOR_CAPACITY_GRACE_ENDING: { key: 'billing', theme: 'warning' },
+  MONITOR_CAPACITY_LIMITED: { key: 'billing', theme: 'danger' },
+  MONITOR_CAPACITY_RESTORED: { key: 'billing', theme: 'success' },
   MONITOR_ALERT: { key: 'monitor', theme: 'danger' },
   MONITOR_RECOVERED: { key: 'monitor', theme: 'success' },
   API_KEY_CREATED: { key: 'credential', theme: 'primary' },
@@ -199,6 +203,16 @@ export function resolveNotificationTarget(
   const category = (TYPE_META[notification.type] ?? FALLBACK_META).key
   if (category === 'security') return { kind: 'route', to: '/security' }
   if (category === 'billing') {
+    if (notification.type.startsWith('MONITOR_CAPACITY_')) {
+      return {
+        kind: 'route',
+        to: {
+          path: '/billing',
+          hash: '#monitor-capacity',
+          query: { organizationId: notificationScope(notification).organizationId },
+        },
+      }
+    }
     return {
       kind: 'route',
       to: resourceType === 'ORDER' ? '/billing/orders' : '/billing',

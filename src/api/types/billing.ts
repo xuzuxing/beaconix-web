@@ -95,6 +95,27 @@ export interface SubscriptionStack {
   stack: SubscriptionStackEntry[]
 }
 
+/** 数量限制独立于 enabled；连续降级可能有多个截止批次。 */
+export interface MonitorCapacity {
+  cycleId: string | null
+  status: 'WITHIN_LIMIT' | 'GRACE' | 'LIMITED'
+  startsAt: string | null
+  graceEndsAt: string | null
+  limit: number
+  total: number
+  overLimit: boolean
+  excess: number
+  selectedMonitorIds: string[]
+  retainedMonitorIds: string[]
+  restrictedMonitorIds: string[]
+  monitorDeadlines: Array<{ id: string; quotaGraceEndsAt: string; enabled: boolean }>
+}
+
+export interface SelectMonitorCapacityParams {
+  cycleId: string
+  monitorIds: string[]
+}
+
 export type OrderStatus = 'PENDING' | 'PAID' | 'CANCELLED' | 'REFUNDED'
 
 /** 购买订单 */

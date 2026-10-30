@@ -208,6 +208,7 @@ export async function mockWorkspace(
     const method = request.method()
     const body = request.postData() ? request.postDataJSON() : undefined
     state.requests.push({ method, path, body, headers: request.headers() })
+    if (path === '/settings/public') return reply(route, {})
     if (path === '/auth/me')
       return reply(
         route,
@@ -237,6 +238,13 @@ export async function mockWorkspace(
     if (path === '/invitations/fixture-token')
       return reply(route, {
         organizationName: 'Fixture Team',
+        organizationSlug: 'fixture-team',
+        organizationLogoUrl: null,
+        inviterName: 'Fixture Owner',
+        role: 'MEMBER',
+        accessMode: 'SELECTED_PROJECTS',
+        projectCount: 2,
+        expiresAt: '2027-01-01T00:00:00Z',
         status: 'PENDING',
         requiresLogin: true,
       })
@@ -402,6 +410,7 @@ export async function mockWorkspace(
     if (/^\/projects\/[^/]+\/monitors\/[^/]+\/(?:check|pause|resume|test-alert)$/.test(path))
       return reply(route, monitor(path.split('/')[2]!))
     if (path === '/organizations/o1/rule-groups') return reply(route, [])
+    if (path === '/organizations/o1/notification-channels') return reply(route, [])
     if (path === '/rule-meta')
       return reply(route, {
         fields: ['success', 'latency', 'certDaysRemaining', 'statusCode', 'bodyContains'],
