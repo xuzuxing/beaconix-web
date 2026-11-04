@@ -7,6 +7,7 @@ import { getSubscriptionStack, listOrganizations, listProjects } from '@/api'
 import { getOrganizationPermissions, getProjectPermissions } from '@/api/modules/permissions'
 import { canVisitNavigation } from '@/utils/navigation-access'
 import { buildMenu } from '@/router/menu'
+import { layoutChildren } from '@/router/routes'
 import { buildFeatureEntries } from '@/utils/feature-search'
 import { invalidateSession } from '@/utils/access-context'
 import type { Organization, User } from '@/api/types'
@@ -54,6 +55,8 @@ describe('authorized workspace and shared navigation', () => {
     expect(org.subscription).toBeNull()
     expect(getSubscriptionStack).not.toHaveBeenCalled()
     expect(canVisitNavigation('/monitor', 'a')).toBe(true)
+    expect(canVisitNavigation('/rum', 'a')).toBe(true)
+    expect(canVisitNavigation('/rum', 'c')).toBe(false)
     expect(canVisitNavigation('/monitor', 'c')).toBe(false)
     expect(canVisitNavigation('/teams/members')).toBe(false)
     const permissions = usePermissionsStore()
@@ -142,6 +145,36 @@ describe('authorized workspace and shared navigation', () => {
     expect(menu.map((item) => item.path)).toEqual(['/monitor'])
     expect(search.map((item) => item.path)).toEqual(['/monitor'])
   })
+  it.each([
+    { app: true, rum: true, expected: ['/rum/overview', '/rum/errors', '/rum/events', '/rum'] },
+    { app: true, rum: false, expected: ['/rum'] },
+    { app: false, rum: true, expected: ['/rum/overview', '/rum/errors', '/rum/events'] },
+    { app: false, rum: false, expected: [] },
+  ])(
+    'filters RUM child navigation for independent capabilities: $app / $rum',
+    async ({ app, rum, expected }) => {
+      vi.mocked(getProjectPermissions).mockImplementation(async (id) => {
+        const permission = projectPermission(id, 'VIEWER')
+        permission.capabilities['app.read'] = app
+        permission.capabilities['rum.read'] = rum
+        return permission
+      })
+      const org = useOrganizationStore()
+      await org.loadWorkspace()
+      const parent = buildMenu(layoutChildren).find((item) => item.path === '/rum')
+      if (!expected.length) {
+        expect(parent).toBeUndefined()
+      } else {
+        expect(parent).toBeDefined()
+        const targets = parent?.submenu
+          ?.filter((item) => item.type !== 'group')
+          .map((item) => item.path) ?? [parent?.path]
+        expect(targets).toEqual(expected)
+      }
+      expect(canVisitNavigation('/rum')).toBe(app)
+      expect(canVisitNavigation('/rum/overview')).toBe(rum)
+    },
+  )
   it('persisted SUPER_ADMIN identity is not platform authorization', () => {
     const user = useUserStore()
     user.user = { id: 'stale-admin', globalRole: 'SUPER_ADMIN' } as User

@@ -37,7 +37,12 @@ const menu = computed(() =>
  *   这类子页面要点亮它的上级 /monitor，否则 value 匹配不到任何菜单项、整条侧栏都不亮
  */
 const activeMenuPath = computed(() =>
-  resolveActiveMenuPath(menu.value, route.meta.activeMenu ?? route.path),
+  resolveActiveMenuPath(
+    menu.value,
+    route.query.returnTo === 'project-errors' && route.path.startsWith('/rum/')
+      ? '/rum/errors'
+      : (route.meta.activeMenu ?? route.path),
+  ),
 )
 
 /** 已展开的父级菜单，用于刷新后保持当前路由所在层级展开 */

@@ -40,6 +40,9 @@ describe('current capability store', () => {
         'monitor.check': true,
         'monitor.test-alert': true,
         'rule.manage': true,
+        'app.read': true,
+        'app.manage': true,
+        'rum.read': true,
       },
     })
     const store = usePermissionsStore()

@@ -4,6 +4,7 @@ import type { GlobalRole } from '@/api/types'
 import { HOME_PATH } from '@/config'
 import {
   Analytics01Icon,
+  CodeIcon,
   ApiIcon,
   CustomerServiceIcon,
   DashboardSquare01Icon,
@@ -50,6 +51,69 @@ export const layoutChildren: RouteRecordRaw[] = [
       icon: DashboardSquare01Icon,
       group: 'main',
       hideHeader: true,
+    },
+  },
+
+  // ---------- RUM ----------
+  // Declare overview first so the primary item opens the first accessible page.
+  ...(['overview', 'errors', 'events'] as const).map((section) => ({
+    path: `rum/${section}`,
+    name: `rum-project-${section}`,
+    component: () => import('@/views/rum/RumProjectView.vue'),
+    props: { section },
+    meta: {
+      titleKey: `rumProject.${section}`,
+      hideHeader: true,
+      keepAlive: false,
+    },
+  })),
+  {
+    path: 'rum',
+    name: 'rum-apps',
+    component: () => import('@/views/rum/RumAppsView.vue'),
+    meta: {
+      titleKey: 'productNav.rum',
+      subTitleKey: 'rumProject.apps',
+      icon: CodeIcon,
+      group: 'main',
+      hideHeader: true,
+      keepAlive: false,
+    },
+  },
+  {
+    path: 'rum/:projectId/:appId',
+    name: 'rum-app-detail',
+    component: () => import('@/views/rum/RumAppDetailView.vue'),
+    meta: {
+      titleKey: 'rumProject.appDetail',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/rum',
+      keepAlive: false,
+    },
+  },
+  {
+    path: 'rum/:projectId/:appId/errors/:errorId',
+    name: 'rum-error-detail',
+    component: () => import('@/views/rum/RumErrorDetailView.vue'),
+    meta: {
+      titleKey: 'rum.errorMessage',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/rum',
+      keepAlive: false,
+    },
+  },
+  {
+    path: 'rum/:projectId/:appId/replays/:replayId',
+    name: 'rum-replay-detail',
+    component: () => import('@/views/rum/RumReplayView.vue'),
+    meta: {
+      titleKey: 'rum.replayTitle',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/rum',
+      keepAlive: false,
     },
   },
 

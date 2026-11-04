@@ -44,6 +44,12 @@ const current = computed(() => {
   return matched
 })
 
+const activePath = computed(() =>
+  route.query.returnTo === 'project-errors' && route.path.startsWith('/rum/')
+    ? '/rum/errors'
+    : (route.meta.activeMenu ?? route.path),
+)
+
 function renderTitle(item: MenuItem) {
   return item.titleKey ? t(item.titleKey) : item.path
 }
@@ -77,8 +83,7 @@ function renderTitle(item: MenuItem) {
             <router-link
               class="secondary-nav__link"
               :class="{
-                'secondary-nav__link--active':
-                  (route.meta.activeMenu ?? route.path) === item.path,
+                'secondary-nav__link--active': activePath === item.path,
               }"
               :to="item.path"
             >

@@ -82,6 +82,9 @@ export const usePermissionsStore = defineStore('permissions', () => {
                 'monitor.manage',
                 'monitor.test-alert',
                 'rule.manage',
+                'app.read',
+                'app.manage',
+                'rum.read',
               ]
         if (
           !data ||

@@ -49,11 +49,13 @@ const showPageHeader = computed(
         route.name === 'dashboard' ||
         route.name === 'monitor' ||
         route.name === 'monitor-detail' ||
+        route.path.startsWith('/rum') ||
         route.path.startsWith('/probes') ||
         route.path.startsWith('/teams'),
       'layout--monitor':
         route.name === 'monitor' || route.name === 'monitor-detail',
       'layout--probes': route.path.startsWith('/probes'),
+      'layout--rum': route.path.startsWith('/rum'),
       'layout--notifications':
         route.name === 'notifications' || route.name === 'notification-detail',
     }"
@@ -214,6 +216,64 @@ const showPageHeader = computed(
     @media (max-width: 900px) {
       :deep(.secondary-nav) {
         display: none;
+      }
+
+      .layout__content-body {
+        padding: 16px;
+      }
+    }
+  }
+
+  &--rum {
+    .layout__content-body {
+      padding: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .layout__main {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+      }
+
+      :deep(.side-nav) {
+        grid-column: 1;
+        grid-row: 1 / 3;
+      }
+
+      :deep(.secondary-nav) {
+        grid-column: 2;
+        width: auto;
+        height: auto;
+        min-width: 0;
+        border-right: 0;
+        border-bottom: 1px solid @beacon-border;
+      }
+
+      :deep(.secondary-nav__header) {
+        display: none;
+      }
+
+      :deep(.secondary-nav__body) {
+        padding: 4px 8px;
+        overflow-x: auto;
+      }
+
+      :deep(.secondary-nav__list) {
+        display: flex;
+        gap: 8px;
+        width: max-content;
+        padding: 0;
+      }
+
+      :deep(.secondary-nav__link) {
+        padding: 6px 8px;
+        white-space: nowrap;
+      }
+
+      .layout__content {
+        grid-column: 2;
+        grid-row: 2;
       }
 
       .layout__content-body {

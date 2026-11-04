@@ -1,3 +1,5 @@
+import rumProject from './rum-project.en-US'
+import rum from './rum.en-US'
 import adminPage from './admin.en-US'
 import access from './access.en-US'
 import channelPage from './channel.en-US'
@@ -10,6 +12,31 @@ import ticketPage from './ticket.en-US'
 import upload from './upload.en-US'
 
 export default {
+  rum,
+  rumProject,
+  rumApps: {
+    title: 'Applications',
+    subtitle: 'Manage frontend monitoring applications in this project',
+    create: 'Create application',
+    edit: 'Edit',
+    name: 'Application name',
+    namePlaceholder: 'Enter application name',
+    save: 'Save',
+    cancel: 'Cancel',
+    empty: 'No frontend monitoring applications in this project',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    enable: 'Enable',
+    disable: 'Disable',
+    enableConfirm: 'Enable {name} and resume collection?',
+    disableConfirm: 'Disable {name}? New telemetry will no longer be accepted.',
+    publicKey: 'Public key',
+    copy: 'Copy',
+    copied: 'Copied',
+    loadFailed: 'Failed to load applications',
+    operationFailed: 'Operation failed. Please try again.',
+  },
+  productNav: { label: 'Switch monitoring product', cloud: 'Cloud', rum: 'Frontend Monitoring' },
   access,
   adminPage,
   monitorPage,

@@ -8,12 +8,13 @@ import { useUserStore } from '@/stores'
 import type { User } from '@/api/types'
 import { componentOptions } from '../fixtures/components'
 
-const routeState: { path: string; meta: Record<string, unknown> } = {
-  path: '/monitor/overview',
-  meta: {},
-}
+const routeState: { path: string; meta: Record<string, unknown>; query?: Record<string, string> } =
+  {
+    path: '/monitor/overview',
+    meta: {},
+  }
 
-vi.mock('vue-router', () => ({ useRoute: () => routeState }))
+vi.mock('vue-router', () => ({ useRoute: () => routeState, useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/utils/navigation-access', () => ({ canVisitNavigation: () => true }))
 
 const user = {
@@ -64,9 +65,34 @@ function menuTarget(wrapper: ReturnType<typeof mountNav>, label: string) {
 beforeEach(() => {
   routeState.path = '/monitor/overview'
   routeState.meta = {}
+  routeState.query = {}
 })
 
 describe('side nav', () => {
+  it('shows cloud and frontend monitoring as separate primary entries', () => {
+    routeState.path = '/rum/overview'
+    const wrapper = mountNav()
+    expect(menuEntry(wrapper, '前端监控')?.classes()).toContain('t-is-active')
+    expect(menuEntry(wrapper, '云监控')).toBeDefined()
+    expect(menuEntry(wrapper, '错误列表')).toBeUndefined()
+    expect(menuEntry(wrapper, '通知渠道')).toBeDefined()
+    expect(menuTarget(wrapper, '前端监控')).toBe('/rum/overview')
+    expect(wrapper.find('.side-nav__products').exists()).toBe(false)
+  })
+
+  it('highlights frontend monitoring on app detail and legacy shared links do not hide cloud monitoring', () => {
+    routeState.path = '/rum/p/a/errors/e'
+    routeState.meta = { activeMenu: '/rum' }
+    let wrapper = mountNav()
+    expect(menuEntry(wrapper, '前端监控')?.classes()).toContain('t-is-active')
+    wrapper.unmount()
+    routeState.path = '/channels'
+    routeState.meta = {}
+    routeState.query = { product: 'rum' }
+    wrapper = mountNav()
+    expect(menuEntry(wrapper, '云监控')).toBeDefined()
+    expect(menuEntry(wrapper, '前端监控')).toBeDefined()
+  })
   it('子页面点亮它所属的一级菜单', () => {
     const wrapper = mountNav()
     const entry = menuEntry(wrapper, '云监控')
