@@ -60,16 +60,19 @@ export function buildMenu(
   }
 
   routes.forEach((route) => {
+    const path = resolvePath(basePath, route.path)
+    const canVisit = canVisitNavigation(path)
+    // The navigation container is visible when either RUM capability is granted.
+    const isRumContainer = path === '/rum' && canVisitNavigation('/rum/overview')
     if (
       route.meta?.menuExcluded ||
       (!includeHidden && route.meta?.hidden) ||
       !isVisible(route) ||
-      !canVisitNavigation(resolvePath(basePath, route.path))
+      (!canVisit && !isRumContainer)
     ) {
       return
     }
 
-    const path = resolvePath(basePath, route.path)
     const segments = route.path.split('/').filter(Boolean)
 
     // 二级项：归到第一段对应的一级项
@@ -107,7 +110,7 @@ export function buildMenu(
     })
 
     // 一级项自身作为二级菜单的第一项（有子路由时才会真正显示二级菜单）
-    if (route.meta?.titleKey) {
+    if (route.meta?.titleKey && canVisit) {
       pushSub(
         path,
         { path, titleKey: route.meta.subTitleKey ?? route.meta.titleKey },
@@ -119,7 +122,8 @@ export function buildMenu(
   // 只有一个「自身」项时不渲染二级菜单
   items.forEach((item) => {
     const submenu = submenus.get(item.path)
-    if (submenu && submenu.filter((sub) => sub.type !== 'group').length > 1) {
+    const pages = submenu?.filter((sub) => sub.type !== 'group') ?? []
+    if (submenu && (pages.length > 1 || (pages.length === 1 && pages[0]?.path !== item.path))) {
       item.submenu = submenu
     }
   })

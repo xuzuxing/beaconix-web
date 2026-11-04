@@ -1,3 +1,5 @@
+import rumProject from './rum-project.zh-CN'
+import rum from './rum.zh-CN'
 import adminPage from './admin.zh-CN'
 import monitorCapacity from './capacity.zh-CN'
 import access from './access.zh-CN'
@@ -12,6 +14,31 @@ import upload from './upload.zh-CN'
 
 export default {
   monitorCapacity,
+  rum,
+  rumProject,
+  rumApps: {
+    title: '应用管理',
+    subtitle: '管理当前项目的前端监控应用',
+    create: '新建应用',
+    edit: '编辑',
+    name: '应用名称',
+    namePlaceholder: '请输入应用名称',
+    save: '保存',
+    cancel: '取消',
+    empty: '当前项目暂无前端监控应用',
+    enabled: '已启用',
+    disabled: '已停用',
+    enable: '启用',
+    disable: '停用',
+    enableConfirm: '确认启用 {name} 并恢复采集吗？',
+    disableConfirm: '停用 {name} 后将停止接收采集数据，确定继续吗？',
+    publicKey: '公开 Key',
+    copy: '复制',
+    copied: '已复制',
+    loadFailed: '加载应用失败',
+    operationFailed: '操作失败，请重试',
+  },
+  productNav: { label: '切换监控产品', cloud: '云监控', rum: '前端监控' },
   access,
   adminPage,
   monitorPage,

@@ -40,6 +40,9 @@ export function projectPermission(
       'monitor.manage': role === 'ADMIN',
       'monitor.test-alert': role === 'ADMIN',
       'rule.manage': role === 'ADMIN',
+      'app.read': true,
+      'app.manage': role === 'ADMIN',
+      'rum.read': true,
     },
   }
 }

@@ -68,6 +68,7 @@ export async function mockWorkspace(
   })
   await page.addInitScript(
     ({ user, options }) => {
+      if (window !== window.top) return
       if (!options.anonymous) {
         localStorage.setItem(
           'beacon-vue3:user',
@@ -307,7 +308,9 @@ export async function mockWorkspace(
               capabilities: Object.fromEntries(
                 Object.entries(projection.capabilities).map(([key, allowed]) => [
                   key,
-                  key === 'monitor.read' ? allowed : allowed && !state.archived.includes(id),
+                  ['monitor.read', 'app.read', 'rum.read'].includes(key)
+                    ? allowed
+                    : allowed && !state.archived.includes(id),
                 ]),
               ),
             }

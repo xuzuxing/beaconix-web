@@ -80,6 +80,12 @@ router.beforeEach(async (to) => {
     if (scope === 'project' && id) {
       const project = await permissions.ensureProject(id, true, ENTRY_REFRESH_MAX_AGE_MS)
       if (!project) return { path: '/access-unavailable' }
+      if (
+        to.path.startsWith('/rum/') &&
+        (project.organizationId !== org.currentOrganizationId ||
+          !org.projects.some((item) => item.id === id))
+      )
+        return { path: '/access-unavailable' }
       if (project.organizationId !== org.currentOrganizationId) {
         await org.switchOrganization(project.organizationId)
         if (!org.projects.some((item) => item.id === id)) return { path: '/access-unavailable' }
