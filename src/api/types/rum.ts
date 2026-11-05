@@ -39,6 +39,12 @@ export interface RumErrorGroup {
   replaySessionId: string | null
   sourceMapApplied: boolean
   count: number
+  status: RumErrorStatus
+  ignoredUntil: string | null
+  assigneeId: string | null
+  resolvedAt: string | null
+  resolvedBy: string | null
+  reopenedAt: string | null
   firstSeenAt: string
   lastSeenAt: string
   firstOccurredAt: string | null
@@ -47,6 +53,23 @@ export interface RumErrorGroup {
   updatedAt: string
 }
 export type RumErrorCategory = 'JAVASCRIPT' | 'PROMISE' | 'RESOURCE' | 'HTTP' | 'VUE' | 'MANUAL'
+export type RumErrorStatus = 'UNRESOLVED' | 'RESOLVED' | 'IGNORED'
+export type RumErrorStatusFilter = RumErrorStatus | 'ALL'
+export interface RumErrorUpdateInput {
+  status?: RumErrorStatus
+  ignoredUntil?: string | null
+  assigneeId?: string | null
+}
+export interface RumErrorNote {
+  id: string
+  appId: string
+  groupId: string
+  authorId: string | null
+  author?: { id: string; name: string; email: string } | null
+  body: string
+  createdAt: string
+  updatedAt: string
+}
 export type RumErrorLevel = 'INFO' | 'WARNING' | 'ERROR' | 'FATAL'
 export interface RumBreadcrumb {
   type: string
@@ -141,13 +164,20 @@ export interface RumSourceMap {
   createdAt: string
   updatedAt: string
 }
+export type RumAlertMetric = 'ERROR_COUNT' | 'EVENT_COUNT' | 'NEW_ERROR' | 'ERROR_RATE' | 'SPIKE'
+export type RumAlertScope = 'APP' | 'ERROR_GROUP'
 export interface RumAlertRule {
   id: string
   name: string
-  metric: 'ERROR_COUNT' | 'EVENT_COUNT'
+  metric: RumAlertMetric
+  scope: RumAlertScope
+  groupId: string | null
   eventName: string | null
   threshold: number
   windowMinutes: number
+  confirmWindows: number
+  consecutiveHits: number
+  silenceUntil: string | null
   channelIds: string[]
   enabled: boolean
   active: boolean
@@ -156,12 +186,114 @@ export interface RumAlertRule {
 }
 export interface RumAlertInput {
   name: string
-  metric: 'ERROR_COUNT' | 'EVENT_COUNT'
+  metric: RumAlertMetric
+  scope?: RumAlertScope
+  groupId?: string
   eventName?: string
   threshold: number
   windowMinutes: number
+  confirmWindows?: number
+  silenceUntil?: string | null
   channelIds: string[]
   enabled: boolean
+}
+
+export interface RumReleaseSummary {
+  release: string | null
+  isUnknown: boolean
+  firstSeenAt: string | null
+  lastSeenAt: string | null
+  errorGroups: number
+  occurrences: number
+  events: number
+  replays: number
+}
+export interface RumReleaseGroup {
+  id: string
+  type: string
+  category: RumErrorCategory | null
+  level: RumErrorLevel | null
+  message: string
+  page: string | null
+  release: string | null
+  status: RumErrorStatus
+  count: number
+  firstSeenAt: string
+  lastSeenAt: string
+}
+export interface RumReleaseCompare {
+  base: { release: string | null; isUnknown: boolean }
+  target: { release: string | null; isUnknown: boolean }
+  baseStartedAt: string | null
+  new: RumReleaseGroup[]
+  fixed: RumReleaseGroup[]
+  regressed: RumReleaseGroup[]
+  counts: { new: number; fixed: number; regressed: number }
+}
+
+export type RumPerfMetric =
+  'LCP' | 'CLS' | 'INP' | 'FCP' | 'TTFB' | 'PAGE_LOAD' | 'RESOURCE' | 'HTTP'
+export type RumPerfRating = 'GOOD' | 'NEEDS_IMPROVEMENT' | 'POOR'
+export interface RumPerformanceStats {
+  metric: RumPerfMetric
+  count: number
+  average: number | null
+  p75: number | null
+  good: number
+  needsImprovement: number
+  poor: number
+  failures: number
+  rating: RumPerfRating | null
+  goodRate?: number | null
+  poorRate?: number | null
+  changePercent?: number | null
+}
+export interface RumPerformanceSeries {
+  metric: RumPerfMetric
+  points: { bucketStart: string; count: number; average: number | null; p75: number | null }[]
+  current: RumPerformanceStats
+  previous: RumPerformanceStats
+}
+export interface RumPerformanceResponse {
+  from: string
+  to: string
+  series: RumPerformanceSeries[]
+}
+export interface RumPerformanceSummary {
+  from: string
+  to: string
+  metrics: RumPerformanceStats[]
+}
+export interface RumPerformancePage {
+  page: string
+  samples: number
+  p75: number | null
+  errors: number
+  errorRate: number | null
+}
+export interface RumPerformanceResource {
+  dimension: string
+  samples: number
+  p75: number | null
+  failures: number
+  failureRate: number | null
+}
+
+export type RumMaintenanceJobType = 'PURGE' | 'SUBJECT_DELETION'
+export type RumMaintenanceJobStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED'
+export interface RumMaintenanceJob {
+  id: string
+  appId: string
+  organizationId: string
+  type: RumMaintenanceJobType
+  status: RumMaintenanceJobStatus
+  payload: Record<string, unknown> | null
+  result: Record<string, unknown> | null
+  error: string | null
+  requestedById: string | null
+  createdAt: string
+  startedAt: string | null
+  completedAt: string | null
 }
 export interface RumAlertIncident {
   id: string

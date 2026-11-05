@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import '@/assets/styles/rum-filters.css'
 import { onScopeDispose, ref, watch } from 'vue'
-import { MessagePlugin } from 'tdesign-vue-next'
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next'
 import { useI18n } from 'vue-i18n'
 import {
   deleteRumSourceMap,
@@ -22,6 +21,15 @@ const file = ref<File | null>(null)
 const release = ref('')
 const artifactPath = ref('')
 const submitting = ref(false)
+const columns = [
+  { colKey: 'release', title: t('rum.release'), width: 140 },
+  { colKey: 'artifactPath', title: t('rum.artifactPath'), ellipsis: true },
+  { colKey: 'checksum', title: t('rum.checksum'), width: 150 },
+  { colKey: 'sizeBytes', title: t('rum.size'), width: 110 },
+  { colKey: 'uploadedById', title: t('rum.uploadedBy'), width: 150 },
+  { colKey: 'createdAt', title: t('rum.created'), width: 190 },
+  { colKey: 'action', title: '', width: 90 },
+]
 watch(
   [p, a],
   () => {
@@ -43,38 +51,23 @@ const resource = useRumResource(
 function choose(event: Event) {
   file.value = (event.target as HTMLInputElement).files?.[0] ?? null
 }
-async function uploadMap() {
-  if (submitting.value) return
-  const f = file.value
-  const r = release.value.trim()
-  const path = artifactPath.value.trim()
-  if (
-    !f ||
-    f.size > 5 * 1024 * 1024 ||
-    !/\.(map|json)$/i.test(f.name) ||
-    !r ||
-    r.length > 100 ||
-    !path ||
-    path.length > 2048 ||
-    !/\.m?js(?:[?#].*)?$/i.test(path)
-  ) {
-    void MessagePlugin.error(t('rum.invalid'))
-    return
-  }
-  const normalized = (() => {
-    try {
-      return new URL(path).pathname
-    } catch {
-      return path.split(/[?#]/)[0]?.replace(/^([^/])/, '/$1') ?? ''
-    }
-  })()
-  if (
-    resource.data.value?.some(
-      (x) => x.release === r && x.artifactPath === normalized,
-    ) &&
-    !window.confirm(t('rum.mapReplace'))
-  )
-    return
+/** 覆盖/删除都不可回滚，统一走 TDesign 确认弹窗 */
+function confirmAction(header: string, body: string, onConfirm: () => void) {
+  const dialog = DialogPlugin.confirm({
+    header,
+    body,
+    theme: 'warning',
+    confirmBtn: t('common.confirm'),
+    cancelBtn: t('common.cancel'),
+    onConfirm: () => {
+      dialog.destroy()
+      onConfirm()
+    },
+    onCancel: () => dialog.destroy(),
+    onClose: () => dialog.destroy(),
+  })
+}
+async function applyUpload(f: File, r: string, path: string) {
   const ctx = accessContext()
   const project = p.value
   const app = a.value
@@ -101,8 +94,43 @@ async function uploadMap() {
     submitting.value = false
   }
 }
-async function remove(id: string) {
-  if (submitting.value || !window.confirm(t('rum.mapDelete'))) return
+function uploadMap() {
+  if (submitting.value) return
+  const f = file.value
+  const r = release.value.trim()
+  const path = artifactPath.value.trim()
+  if (
+    !f ||
+    f.size > 5 * 1024 * 1024 ||
+    !/\.(map|json)$/i.test(f.name) ||
+    !r ||
+    r.length > 100 ||
+    !path ||
+    path.length > 2048 ||
+    !/\.m?js(?:[?#].*)?$/i.test(path)
+  ) {
+    void MessagePlugin.error(t('rum.invalid'))
+    return
+  }
+  const normalized = (() => {
+    try {
+      return new URL(path).pathname
+    } catch {
+      return path.split(/[?#]/)[0]?.replace(/^([^/])/, '/$1') ?? ''
+    }
+  })()
+  const replacing = resource.data.value?.some(
+    (x) => x.release === r && x.artifactPath === normalized,
+  )
+  if (replacing) {
+    confirmAction(t('rum.upload'), t('rum.mapReplace'), () => {
+      void applyUpload(f, r, path)
+    })
+    return
+  }
+  void applyUpload(f, r, path)
+}
+async function applyRemove(id: string) {
   const ctx = accessContext()
   const project = p.value
   const app = a.value
@@ -117,80 +145,103 @@ async function remove(id: string) {
     submitting.value = false
   }
 }
+function remove(id: string) {
+  if (submitting.value) return
+  confirmAction(t('rum.remove'), t('rum.mapDelete'), () => {
+    void applyRemove(id)
+  })
+}
 </script>
 <template>
-  <p>{{ t('rum.mapHint') }}</p>
-  <form
-    v-if="canManage"
-    class="upload rum-filter"
-    @submit.prevent="uploadMap"
-  >
-    <t-input
-      class="rum-filter__field"
-      v-model="release"
-      maxlength="100"
-      :placeholder="t('rum.release')"
-    /><t-input
-      class="rum-filter__field"
-      v-model="artifactPath"
-      maxlength="2048"
-      :placeholder="t('rum.artifactPath')"
-    /><input
-      class="rum-filter__field"
-      type="file"
-      accept=".map,.json,application/json"
-      @change="choose"
-    /><t-button
-      type="submit"
-      :loading="submitting"
-      >{{ t('rum.upload') }}</t-button
+  <t-card class="rum-maps">
+    <template #title>{{ t('rum.maps') }}</template>
+    <p class="rum-maps__hint">{{ t('rum.mapHint') }}</p>
+    <form
+      v-if="canManage"
+      class="upload rum-filter"
+      @submit.prevent="uploadMap"
     >
-  </form>
-  <RumState
-    :loading="resource.loading.value"
-    :error="resource.error.value"
-    @retry="resource.reload"
-    ><t-empty
-      v-if="!resource.data.value?.length"
-      :description="t('rum.empty')"
-    />
-    <article
-      v-for="item in resource.data.value"
-      :key="item.id"
-    >
-      <strong>{{ item.release }}</strong
-      ><code>{{ item.artifactPath }}</code
-      ><span
-        >{{ t('rum.checksum') }}: {{ item.checksum.slice(0, 12) }} ·
-        {{ item.sizeBytes }} B</span
-      ><span
-        >{{ t('rum.uploadedBy') }}: {{ item.uploadedById || '—' }} ·
-        {{ t('rum.created') }}: {{ item.createdAt }} ? {{ t('rum.updated') }}:
-        {{ item.updatedAt }}</span
-      ><t-button
-        v-if="canManage"
-        variant="text"
-        :disabled="submitting"
-        @click="remove(item.id)"
-        >{{ t('rum.remove') }}</t-button
+      <t-input
+        v-model="release"
+        class="rum-filter__field"
+        maxlength="100"
+        :placeholder="t('rum.release')"
+      /><t-input
+        v-model="artifactPath"
+        class="rum-filter__field"
+        maxlength="2048"
+        :placeholder="t('rum.artifactPath')"
+      /><input
+        class="rum-filter__field rum-maps__file"
+        type="file"
+        accept=".map,.json,application/json"
+        @change="choose"
+      /><t-button
+        type="submit"
+        :loading="submitting"
+        >{{ t('rum.upload') }}</t-button
       >
-    </article></RumState
-  >
+    </form>
+    <RumState
+      :loading="resource.loading.value"
+      :error="resource.error.value"
+      @retry="resource.reload"
+    >
+      <t-table
+        row-key="id"
+        :data="resource.data.value ?? []"
+        :columns="columns"
+        :empty="t('rum.empty')"
+        hover
+      >
+        <template #artifactPath="{ row }"
+          ><code class="rum-maps__path">{{ row.artifactPath }}</code></template
+        >
+        <template #checksum="{ row }"
+          ><span class="rum-maps__muted"
+            >{{ row.checksum.slice(0, 12) }}…</span
+          ></template
+        >
+        <template #sizeBytes="{ row }"
+          ><span class="rum-maps__muted">{{ row.sizeBytes }} B</span></template
+        >
+        <template #uploadedById="{ row }"
+          ><span class="rum-maps__muted">{{
+            row.uploadedById || '—'
+          }}</span></template
+        >
+        <template #action="{ row }"
+          ><t-link
+            v-if="canManage"
+            theme="danger"
+            :disabled="submitting"
+            @click="remove(row.id)"
+            >{{ t('rum.remove') }}</t-link
+          ></template
+        >
+      </t-table>
+    </RumState>
+  </t-card>
 </template>
-<style scoped>
-article {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 14px;
-  border-bottom: 1px solid var(--td-border-level-1-color);
-  overflow-wrap: anywhere;
-}
-code {
-  overflow-wrap: anywhere;
-}
-span {
-  color: var(--td-text-color-secondary);
+<style scoped lang="less">
+.rum-maps {
+  min-width: 0;
+
+  &__hint {
+    margin: 0 0 @beacon-gap-l;
+    color: @beacon-text-secondary;
+  }
+
+  &__file {
+    padding-top: 6px;
+  }
+
+  &__path {
+    overflow-wrap: anywhere;
+  }
+
+  &__muted {
+    color: @beacon-text-secondary;
+  }
 }
 </style>

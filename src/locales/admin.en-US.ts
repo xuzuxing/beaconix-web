@@ -252,6 +252,7 @@ export default {
   },
   refund: {
     title: 'Refunds',
+    range: 'Time range',
     subtitle:
       'Refund requests across tenants. Approve, retry and close drive real payment-channel refunds; “Mark as refunded” only records the result on the order.',
     search: 'Search',

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import '@/assets/styles/rum-filters.css'
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -180,19 +179,7 @@ function paginate(info: { current: number; pageSize: number }) {
 </script>
 
 <template>
-  <section class="project-page">
-    <header>
-      <h1>{{ t(`rumProject.${kind}`) }}</h1>
-      <p>
-        {{
-          t(
-            kind === 'errors'
-              ? 'rumProject.errorsDesc'
-              : 'rumProject.eventsDesc',
-          )
-        }}
-      </p>
-    </header>
+  <section class="rum-project">
     <t-alert
       v-if="!projectId"
       theme="info"
@@ -203,134 +190,146 @@ function paginate(info: { current: number; pageSize: number }) {
       theme="warning"
       :message="t('rum.noPermission')"
     />
-    <template v-else>
-      <t-card
-        :bordered="false"
-        class="content"
-      >
-        <div class="filters rum-filter">
-          <t-select
-            class="rum-filter__field"
-            v-model="draft.appId"
-            :options="options"
-            :aria-label="t('rumProject.appName')"
-            :loading="apps.loading.value"
-          />
-          <t-input
-            class="rum-filter__field"
-            v-model="draft.type"
-            :placeholder="
-              t(
-                kind === 'errors'
-                  ? 'rumProject.typeHint'
-                  : 'rumProject.eventHint',
-              )
-            "
-            clearable
-            @enter="apply"
-          />
-          <t-date-range-picker
-            class="rum-filter__field rum-filter__range"
-            v-model="draft.range"
-            allow-input
-            enable-time-picker
-            format="YYYY-MM-DD HH:mm:ss"
-            clearable
-            :aria-label="t('rumProject.dateRange')"
-          />
-          <t-button
-            theme="primary"
-            @click="apply"
-            >{{ t('rumProject.apply') }}</t-button
-          >
-          <t-button
-            variant="outline"
-            @click="reset"
-            >{{ t('rumProject.reset') }}</t-button
-          >
-        </div>
-        <t-alert
-          v-if="apps.error.value"
-          theme="warning"
-          :message="t('rum.loadFailed')"
+    <t-card
+      v-else
+      class="rum-project__card"
+    >
+      <template #title>{{ t(`rumProject.${kind}`) }}</template>
+      <template #actions>
+        <span class="rum-project__scope">
+          {{ org.currentOrganization?.name ?? '-' }} /
+          {{ org.currentProject?.name ?? '-' }}
+        </span>
+      </template>
+      <div class="filters rum-filter">
+        <t-select
+          v-model="draft.appId"
+          class="rum-filter__field"
+          :options="options"
+          :aria-label="t('rumProject.appName')"
+          :loading="apps.loading.value"
         />
-        <RumState
-          :loading="resource.loading.value"
-          :error="resource.error.value"
-          @retry="resource.reload"
+        <t-input
+          v-model="draft.type"
+          class="rum-filter__field"
+          :placeholder="
+            t(
+              kind === 'errors'
+                ? 'rumProject.typeHint'
+                : 'rumProject.eventHint',
+            )
+          "
+          clearable
+          @enter="apply"
+        />
+        <t-date-range-picker
+          v-model="draft.range"
+          class="rum-filter__field rum-filter__range"
+          allow-input
+          enable-time-picker
+          format="YYYY-MM-DD HH:mm:ss"
+          clearable
+          :aria-label="t('rumProject.dateRange')"
+        />
+        <t-button
+          theme="primary"
+          @click="apply"
+          >{{ t('rumProject.apply') }}</t-button
         >
-          <template v-if="resource.data.value">
-            <t-table
-              row-key="id"
-              :data="resource.data.value.items"
-              :columns="columns"
-              :empty="t('rum.empty')"
-              hover
-            >
-              <template #message="{ row }"
-                ><t-link
-                  theme="primary"
-                  @click="viewError(row)"
-                  >{{ row.message }}</t-link
-                ></template
-              >
-              <template #app="{ row }">{{ row.app.name }}</template>
-              <template #lastSeenAt="{ row }">{{
-                formatTime(row.lastSeenAt)
-              }}</template>
-              <template #receivedAt="{ row }">{{
-                formatTime(row.receivedAt)
-              }}</template>
-              <template #action="{ row }"
-                ><t-link
-                  theme="primary"
-                  @click="selectedEvent = row"
-                  >{{ t('rum.properties') }}</t-link
-                ></template
-              >
-            </t-table>
-            <t-pagination
-              :current="page"
-              :page-size="size"
-              :total="resource.data.value.total"
-              :page-size-options="[10, 20, 50, 100]"
-              @change="paginate"
-            />
-          </template>
-        </RumState>
-      </t-card>
-      <t-dialog
-        :visible="!!selectedEvent"
-        :header="t('rum.properties')"
-        :footer="false"
-        @close="selectedEvent = null"
+        <t-button
+          variant="outline"
+          @click="reset"
+          >{{ t('rumProject.reset') }}</t-button
+        >
+      </div>
+      <t-alert
+        v-if="apps.error.value"
+        theme="warning"
+        :message="t('rum.loadFailed')"
+      />
+      <RumState
+        :loading="resource.loading.value"
+        :error="resource.error.value"
+        @retry="resource.reload"
       >
-        <pre>{{ JSON.stringify(selectedEvent?.properties, null, 2) }}</pre>
-      </t-dialog>
-    </template>
+        <template v-if="resource.data.value">
+          <t-table
+            row-key="id"
+            :data="resource.data.value.items"
+            :columns="columns"
+            :empty="t('rum.empty')"
+            hover
+          >
+            <template #message="{ row }"
+              ><t-link
+                theme="primary"
+                @click="viewError(row)"
+                >{{ row.message }}</t-link
+              ></template
+            >
+            <template #app="{ row }">{{ row.app.name }}</template>
+            <template #lastSeenAt="{ row }">{{
+              formatTime(row.lastSeenAt)
+            }}</template>
+            <template #receivedAt="{ row }">{{
+              formatTime(row.receivedAt)
+            }}</template>
+            <template #action="{ row }"
+              ><t-link
+                theme="primary"
+                @click="selectedEvent = row"
+                >{{ t('rum.properties') }}</t-link
+              ></template
+            >
+          </t-table>
+          <t-pagination
+            class="rum-project__pager"
+            :current="page"
+            :page-size="size"
+            :total="resource.data.value.total"
+            :page-size-options="[10, 20, 50, 100]"
+            @change="paginate"
+          />
+        </template>
+      </RumState>
+    </t-card>
+    <t-dialog
+      :visible="!!selectedEvent"
+      :header="t('rum.properties')"
+      :footer="false"
+      @close="selectedEvent = null"
+    >
+      <pre class="rum-project__properties">{{
+        JSON.stringify(selectedEvent?.properties, null, 2)
+      }}</pre>
+    </t-dialog>
   </section>
 </template>
-<style scoped>
-.project-page {
+
+<style scoped lang="less">
+.rum-project {
   min-width: 0;
-}
-header {
-  margin-bottom: 24px;
-}
-h1 {
-  margin: 0 0 8px;
-  font-size: 24px;
-}
-header p {
-  color: var(--td-text-color-secondary);
-}
-:deep(.t-pagination) {
-  margin-top: 20px;
-}
-pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  max-height: 55vh;
-  overflow: auto;
+
+  &__scope {
+    color: @beacon-text-secondary;
+  }
+
+  &__pager {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: @beacon-gap-l;
+  }
+
+  &__properties {
+    max-height: 55vh;
+    margin: 0;
+    padding: 12px;
+    overflow: auto;
+    font-family: @beacon-font-family-code;
+    font-size: @beacon-font-size-base;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: @beacon-bg-active;
+  }
 }
 </style>

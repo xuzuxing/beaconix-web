@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   getRumEventStats,
@@ -8,6 +9,7 @@ import {
 } from '@/api/modules/rum'
 import { useRumContext } from '@/composables/useRumContext'
 import { useRumResource } from '@/composables/useRumResource'
+import RumKpiGrid from './RumKpiGrid.vue'
 import RumState from './RumState.vue'
 const { t } = useI18n()
 const { projectId: p, appId: a } = useRumContext()
@@ -41,50 +43,53 @@ const alerts = useRumResource(
     ),
   sources,
 )
+const resources = [errors, events, replays, alerts]
+const loading = computed(() => resources.some((item) => item.loading.value))
+const failed = computed(() => resources.some((item) => item.error.value))
+function retryAll() {
+  resources.forEach((item) => item.reload())
+}
+const kpis = computed(() => [
+  {
+    key: 'errors',
+    label: t('rum.errors'),
+    value: errors.data.value?.total,
+    hint: t('rum.retained'),
+  },
+  {
+    key: 'events',
+    label: t('rum.events'),
+    value: events.data.value?.total,
+    hint: t('rum.recent7'),
+  },
+  {
+    key: 'replays',
+    label: t('rum.replays'),
+    value: replays.data.value?.total,
+    hint: t('rum.retained'),
+  },
+  {
+    key: 'openAlerts',
+    label: t('rum.openAlerts'),
+    value: alerts.data.value?.total,
+    hint: t('rum.retained'),
+  },
+])
 </script>
 <template>
-  <div class="metrics">
-    <article
-      v-for="item in [
-        { key: 'errors', sub: 'retained', resource: errors },
-        { key: 'events', sub: 'recent7', resource: events },
-        { key: 'replays', sub: 'retained', resource: replays },
-        { key: 'openAlerts', sub: 'retained', resource: alerts },
-      ]"
-      :key="item.key"
+  <t-card class="rum-overview">
+    <template #title>{{ t('rum.overview') }}</template>
+    <RumState
+      :loading="loading"
+      :error="failed"
+      @retry="retryAll"
     >
-      <h3>{{ t('rum.' + item.key) }}</h3>
-      <RumState
-        :loading="item.resource.loading.value"
-        :error="item.resource.error.value"
-        @retry="item.resource.reload"
-        ><strong>{{ item.resource.data.value?.total ?? '—' }}</strong></RumState
-      ><small>{{ t('rum.' + item.sub) }}</small>
-    </article>
-  </div>
+      <RumKpiGrid :items="kpis" />
+    </RumState>
+  </t-card>
 </template>
-<style scoped>
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
-}
-.metrics article {
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 6px;
-  padding: 18px;
-  background: var(--td-bg-color-container);
-}
-h3 {
-  margin: 0 0 14px;
-  font-size: 14px;
-}
-strong {
-  font-size: 28px;
-}
-small {
-  display: block;
-  color: var(--td-text-color-secondary);
-  margin-top: 8px;
+<style scoped lang="less">
+.rum-overview {
+  min-width: 0;
 }
 </style>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { MessagePlugin } from 'tdesign-vue-next'
+import dayjs from 'dayjs'
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next'
 import {
   createRumApp,
   listRumApps,
@@ -9,6 +10,9 @@ import {
   updateRumApp,
 } from '@/api/modules/rum'
 import type { RumApp } from '@/api/types/rum'
+import AppIcon from '@/components/AppIcon.vue'
+import HeaderActions from '@/components/HeaderActions.vue'
+import { PlusSignIcon, RefreshIcon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import {
@@ -17,6 +21,8 @@ import {
   permissionEpoch,
   workspaceEpoch,
 } from '@/utils/access-context'
+
+defineOptions({ name: 'RumAppsView' })
 
 const { t } = useI18n()
 const org = useOrganizationStore()
@@ -37,6 +43,15 @@ const canManage = computed(
 let disposed = false
 let generation = 0
 let controller: AbortController | undefined
+
+const columns = computed(() => [
+  { colKey: 'name', title: t('rumProject.appName') },
+  { colKey: 'platform', title: t('rumApps.platform'), width: 120 },
+  { colKey: 'publicKey', title: t('rumApps.publicKey'), width: 240 },
+  { colKey: 'enabled', title: t('rumProject.status'), width: 110 },
+  { colKey: 'updatedAt', title: t('rum.updated'), width: 190 },
+  ...(canManage.value ? [{ colKey: 'action', title: '', width: 160 }] : []),
+])
 
 async function reload() {
   const token = ++generation
@@ -109,16 +124,8 @@ async function save() {
     submitting.value = false
   }
 }
-async function toggle(app: RumApp) {
+async function applyToggle(app: RumApp) {
   if (submitting.value) return
-  if (
-    !window.confirm(
-      t(app.enabled ? 'rumApps.disableConfirm' : 'rumApps.enableConfirm', {
-        name: app.name,
-      }),
-    )
-  )
-    return
   const id = projectId.value
   const context = accessContext()
   submitting.value = true
@@ -133,6 +140,25 @@ async function toggle(app: RumApp) {
     submitting.value = false
   }
 }
+/** 启停是可逆但影响采集的开关，用与团队管理一致的确认弹窗代替原生 confirm */
+function toggle(app: RumApp) {
+  if (submitting.value) return
+  const dialog = DialogPlugin.confirm({
+    header: t(app.enabled ? 'rumApps.disable' : 'rumApps.enable'),
+    body: t(app.enabled ? 'rumApps.disableConfirm' : 'rumApps.enableConfirm', {
+      name: app.name,
+    }),
+    theme: app.enabled ? 'warning' : 'default',
+    confirmBtn: t('common.confirm'),
+    cancelBtn: t('common.cancel'),
+    onConfirm: async () => {
+      dialog.destroy()
+      await applyToggle(app)
+    },
+    onCancel: () => dialog.destroy(),
+    onClose: () => dialog.destroy(),
+  })
+}
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text)
@@ -141,88 +167,107 @@ async function copy(text: string) {
     void MessagePlugin.error(t('rumApps.operationFailed'))
   }
 }
+function formatTime(value?: string | null) {
+  return value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '—'
+}
+function detail(app: RumApp) {
+  return {
+    name: 'rum-app-detail',
+    params: { projectId: projectId.value, appId: app.id },
+  }
+}
 </script>
 
 <template>
   <section class="rum-apps">
-    <header class="rum-apps__header">
-      <div>
-        <h1>{{ t('rumApps.title') }}</h1>
-        <p>{{ t('rumApps.subtitle') }}</p>
-      </div>
+    <HeaderActions>
+      <t-tooltip :content="t('rum.refresh')">
+        <t-button
+          variant="outline"
+          shape="square"
+          :loading="loading"
+          :disabled="!projectId"
+          :aria-label="t('rum.refresh')"
+          @click="reload"
+          ><template #icon><AppIcon :icon="RefreshIcon" /></template
+        ></t-button>
+      </t-tooltip>
       <t-button
         v-if="canManage"
-        theme="primary"
         @click="edit()"
+        ><template #icon><AppIcon :icon="PlusSignIcon" /></template
         >{{ t('rumApps.create') }}</t-button
       >
-    </header>
-    <t-loading :loading="loading">
+    </HeaderActions>
+    <t-card class="rum-apps__card">
+      <template #title>{{ t('rumApps.title') }}</template>
+      <template #actions>
+        <span class="rum-apps__scope">
+          {{ org.currentOrganization?.name ?? '-' }} /
+          {{ org.currentProject?.name ?? '-' }}
+        </span>
+      </template>
       <t-alert
         v-if="error"
         theme="error"
         :message="t('rumApps.loadFailed')"
-      />
-      <t-empty
-        v-else-if="!loading && apps.length === 0"
-        :description="t('rumApps.empty')"
-      />
-      <div
-        v-else
-        class="rum-apps__list"
       >
-        <article
-          v-for="app in apps"
-          :key="app.id"
-          class="rum-apps__item"
+        <t-button @click="reload">{{ t('rum.retry') }}</t-button>
+      </t-alert>
+      <t-table
+        row-key="id"
+        :data="apps"
+        :columns="columns"
+        :loading="loading"
+        :empty="t('rumApps.empty')"
+        hover
+      >
+        <template #name="{ row }"
+          ><router-link
+            class="rum-apps__name"
+            :to="detail(row)"
+            >{{ row.name }}</router-link
+          ></template
         >
-          <div class="rum-apps__main">
-            <router-link
-              :to="{
-                name: 'rum-app-detail',
-                params: { projectId, appId: app.id },
-              }"
-              ><strong>{{ app.name }}</strong></router-link
-            ><t-tag
-              :theme="app.enabled ? 'success' : 'default'"
-              variant="light"
-              >{{
-                t(app.enabled ? 'rumApps.enabled' : 'rumApps.disabled')
-              }}</t-tag
-            ><span>{{ app.platform }}</span>
-          </div>
-          <div class="rum-apps__key">
-            {{ t('rumApps.publicKey') }}:
-            <code>{{ app.publicKey.slice(0, 8) }}…</code
+        <template #publicKey="{ row }"
+          ><span class="rum-apps__key"
+            ><code>{{ row.publicKey.slice(0, 8) }}…</code
             ><t-button
               size="small"
               variant="text"
-              @click="copy(app.publicKey)"
+              @click="copy(row.publicKey)"
               >{{ t('rumApps.copy') }}</t-button
-            >
-          </div>
-          <span>{{ t('rum.updated') }}: {{ app.updatedAt }}</span>
-          <div
-            v-if="canManage"
-            class="rum-apps__actions"
-          >
-            <t-button
-              variant="text"
-              :disabled="submitting"
-              @click="edit(app)"
-              >{{ t('rumApps.edit') }}</t-button
-            ><t-button
-              variant="text"
-              :disabled="submitting"
-              @click="toggle(app)"
-              >{{
-                t(app.enabled ? 'rumApps.disable' : 'rumApps.enable')
-              }}</t-button
-            >
-          </div>
-        </article>
-      </div>
-    </t-loading>
+            ></span
+          ></template
+        >
+        <template #enabled="{ row }"
+          ><t-tag
+            :theme="row.enabled ? 'success' : 'default'"
+            variant="light"
+            >{{
+              t(row.enabled ? 'rumApps.enabled' : 'rumApps.disabled')
+            }}</t-tag
+          ></template
+        >
+        <template #updatedAt="{ row }">{{
+          formatTime(row.updatedAt)
+        }}</template>
+        <template #action="{ row }"
+          ><t-link
+            theme="primary"
+            :disabled="submitting"
+            @click="edit(row)"
+            >{{ t('rumApps.edit') }}</t-link
+          ><t-link
+            class="rum-apps__toggle"
+            theme="primary"
+            :disabled="submitting"
+            @click="toggle(row)"
+            >{{ t(row.enabled ? 'rumApps.disable' : 'rumApps.enable') }}</t-link
+          ></template
+        >
+      </t-table>
+    </t-card>
     <t-dialog
       v-model:visible="editorOpen"
       :header="t(edited ? 'rumApps.edit' : 'rumApps.create')"
@@ -231,7 +276,10 @@ async function copy(text: string) {
       :confirm-loading="submitting"
       @confirm="save"
     >
-      <label for="rum-name">{{ t('rumApps.name') }}</label
+      <label
+        class="rum-apps__field"
+        for="rum-name"
+        >{{ t('rumApps.name') }}</label
       ><t-input
         id="rum-name"
         v-model="name"
@@ -241,55 +289,34 @@ async function copy(text: string) {
     </t-dialog>
   </section>
 </template>
+
 <style scoped lang="less">
 .rum-apps {
   min-width: 0;
-}
-.rum-apps__header {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.rum-apps__header h1 {
-  margin: 0;
-  font-size: 22px;
-}
-.rum-apps__header p {
-  color: var(--td-text-color-secondary);
-}
-.rum-apps__list {
-  display: grid;
-  gap: 12px;
-}
-.rum-apps__item {
-  border: 1px solid var(--td-border-level-1-color);
-  background: var(--td-bg-color-container);
-  border-radius: 6px;
-  padding: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 24px;
-}
-.rum-apps__main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 180px;
-}
-.rum-apps__key {
-  color: var(--td-text-color-secondary);
-}
-.rum-apps__actions {
-  display: flex;
-}
-@media (max-width: 600px) {
-  .rum-apps__item {
-    align-items: flex-start;
-    flex-direction: column;
+
+  &__scope {
+    color: @beacon-text-secondary;
+  }
+
+  &__name {
+    color: @beacon-brand;
+  }
+
+  &__key {
+    display: inline-flex;
+    align-items: center;
+    gap: @beacon-gap;
+    color: @beacon-text-secondary;
+  }
+
+  &__toggle {
+    margin-left: @beacon-gap-l;
+  }
+
+  &__field {
+    display: block;
+    margin-bottom: 8px;
+    color: @beacon-text-secondary;
   }
 }
 </style>

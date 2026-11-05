@@ -33,6 +33,7 @@ export default {
     enableConfirm: 'Enable {name} and resume collection?',
     disableConfirm: 'Disable {name}? New telemetry will no longer be accepted.',
     publicKey: 'Public key',
+    platform: 'Platform',
     copy: 'Copy',
     copied: 'Copied',
     loadFailed: 'Failed to load applications',

@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import '@/assets/styles/rum-filters.css'
-import { onScopeDispose, reactive, ref, watch } from 'vue'
+import { computed, onScopeDispose, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { listRumErrors } from '@/api/modules/rum'
+import { listRumErrors, updateRumError } from '@/api/modules/rum'
+import type {
+  RumErrorGroup,
+  RumErrorStatus,
+  RumErrorStatusFilter,
+} from '@/api/types/rum'
+import { MessagePlugin } from 'tdesign-vue-next'
 import { useRumContext } from '@/composables/useRumContext'
 import { useRumResource } from '@/composables/useRumResource'
 import RumState from './RumState.vue'
@@ -29,6 +34,11 @@ const draft = reactive({
     ? queryString('errorSort')
     : 'lastSeenAt',
   sortOrder: queryString('errorOrder') === 'asc' ? 'asc' : 'desc',
+  status: (['ALL', 'UNRESOLVED', 'RESOLVED', 'IGNORED'].includes(
+    queryString('errorStatus'),
+  )
+    ? queryString('errorStatus')
+    : 'UNRESOLVED') as RumErrorStatusFilter,
 })
 const filters = ref({ ...draft })
 const resource = useRumResource(
@@ -51,6 +61,38 @@ const resource = useRumResource(
     ),
   [p, a, filters, page],
 )
+const columns = [
+  { colKey: 'message', title: t('rum.errorMessage'), ellipsis: true },
+  { colKey: 'status', title: t('rum.status'), width: 150 },
+  { colKey: 'type', title: t('rum.type'), width: 160 },
+  { colKey: 'release', title: t('rum.release'), width: 140 },
+  { colKey: 'count', title: t('rum.count'), width: 100 },
+  { colKey: 'lastSeenAt', title: t('rum.lastSeen'), width: 190 },
+]
+const statusOptions = computed(() => [
+  { value: 'UNRESOLVED', label: t('rum.statusUnresolved') },
+  { value: 'RESOLVED', label: t('rum.statusResolved') },
+  { value: 'IGNORED', label: t('rum.statusIgnored') },
+])
+const filterOptions = computed(() => [
+  { value: 'UNRESOLVED', label: t('rum.statusUnresolved') },
+  { value: 'RESOLVED', label: t('rum.statusResolved') },
+  { value: 'IGNORED', label: t('rum.statusIgnored') },
+  { value: 'ALL', label: t('rum.statusAll') },
+])
+const updating = ref<string | null>(null)
+async function changeStatus(row: RumErrorGroup, status: RumErrorStatus) {
+  if (updating.value) return
+  updating.value = row.id
+  try {
+    await updateRumError(p.value, a.value, row.id, { status })
+    await resource.reload()
+  } catch {
+    void MessagePlugin.error(t('rum.statusUpdateFailed'))
+  } finally {
+    updating.value = null
+  }
+}
 function persist() {
   void router.replace({
     query: {
@@ -63,6 +105,10 @@ function persist() {
       errorTo: filters.value.to || undefined,
       errorSort: filters.value.sortBy,
       errorOrder: filters.value.sortOrder,
+      errorStatus:
+        filters.value.status === 'UNRESOLVED'
+          ? undefined
+          : filters.value.status,
       errorPage: String(page.value),
     },
   })
@@ -71,6 +117,13 @@ function search() {
   page.value = 1
   filters.value = { ...draft }
   persist()
+}
+function errorTarget(id: string) {
+  return {
+    name: 'rum-error-detail',
+    params: { projectId: p.value, appId: a.value, errorId: id },
+    query: { ...route.query, tab: 'errors' },
+  }
 }
 watch(page, persist)
 let timer: ReturnType<typeof setTimeout> | undefined
@@ -86,104 +139,129 @@ onScopeDispose(() => {
 })
 </script>
 <template>
-  <form
-    class="filters rum-filter"
-    @submit.prevent="search"
-  >
-    <t-input
-      class="rum-filter__field"
-      v-model="draft.search"
-      :placeholder="t('rum.search')"
-    /><t-input
-      class="rum-filter__field"
-      v-model="draft.type"
-      :placeholder="t('rum.type')"
-    /><t-input
-      class="rum-filter__field"
-      v-model="draft.release"
-      :placeholder="t('rum.release')"
-    /><label class="rum-filter__field rum-filter__date"
-      >{{ t('rum.from') }}
-      <t-date-picker
-        v-model="draft.from"
-        enable-time-picker
-        format="YYYY-MM-DD HH:mm:ss"
-        clearable /></label
-    ><label class="rum-filter__field rum-filter__date"
-      >{{ t('rum.to') }}
-      <t-date-picker
-        v-model="draft.to"
-        enable-time-picker
-        format="YYYY-MM-DD HH:mm:ss"
-        clearable /></label
-    ><t-select
-      class="rum-filter__field"
-      v-model="draft.sortBy"
-      :options="[
-        { value: 'lastSeenAt', label: t('rum.lastSeen') },
-        { value: 'firstSeenAt', label: t('rum.firstSeen') },
-        { value: 'count', label: t('rum.count') },
-      ]"
-    /><t-select
-      class="rum-filter__field"
-      v-model="draft.sortOrder"
-      :options="[
-        { value: 'desc', label: t('rum.desc') },
-        { value: 'asc', label: t('rum.asc') },
-      ]"
-    /><t-button type="submit">{{ t('rum.search') }}</t-button>
-  </form>
-  <RumState
-    :loading="resource.loading.value"
-    :error="resource.error.value"
-    @retry="resource.reload"
-    ><t-empty
-      v-if="!resource.data.value?.items.length"
-      :description="t('rum.empty')" />
-    <div
-      v-else
-      class="list"
+  <t-card class="rum-errors">
+    <template #title>{{ t('rum.errors') }}</template>
+    <template #actions>
+      <span class="rum-errors__total">
+        {{ t('rum.total') }}: {{ resource.data.value?.total ?? '—' }}
+      </span>
+    </template>
+    <form
+      class="filters rum-filter"
+      @submit.prevent="search"
     >
-      <article
-        v-for="item in resource.data.value.items"
-        :key="item.id"
-      >
-        <t-button
-          variant="text"
-          @click="
-            router.push({
-              name: 'rum-error-detail',
-              params: { projectId: p, appId: a, errorId: item.id },
-              query: { ...route.query, tab: 'errors' },
-            })
-          "
-          >{{ item.message }}</t-button
+      <t-input
+        v-model="draft.search"
+        class="rum-filter__field"
+        :placeholder="t('rum.search')"
+      /><t-input
+        v-model="draft.type"
+        class="rum-filter__field"
+        :placeholder="t('rum.type')"
+      /><t-input
+        v-model="draft.release"
+        class="rum-filter__field"
+        :placeholder="t('rum.release')"
+      /><label class="rum-filter__field rum-filter__date"
+        >{{ t('rum.from') }}
+        <t-date-picker
+          v-model="draft.from"
+          enable-time-picker
+          format="YYYY-MM-DD HH:mm:ss"
+          clearable /></label
+      ><label class="rum-filter__field rum-filter__date"
+        >{{ t('rum.to') }}
+        <t-date-picker
+          v-model="draft.to"
+          enable-time-picker
+          format="YYYY-MM-DD HH:mm:ss"
+          clearable /></label
+      ><t-select
+        v-model="draft.status"
+        class="rum-filter__field"
+        :options="filterOptions"
+      /><t-select
+        v-model="draft.sortBy"
+        class="rum-filter__field"
+        :options="[
+          { value: 'lastSeenAt', label: t('rum.lastSeen') },
+          { value: 'firstSeenAt', label: t('rum.firstSeen') },
+          { value: 'count', label: t('rum.count') },
+        ]"
+      /><t-select
+        v-model="draft.sortOrder"
+        class="rum-filter__field"
+        :options="[
+          { value: 'desc', label: t('rum.desc') },
+          { value: 'asc', label: t('rum.asc') },
+        ]"
+      /><t-button type="submit">{{ t('rum.search') }}</t-button>
+    </form>
+    <RumState
+      :loading="resource.loading.value"
+      :error="resource.error.value"
+      @retry="resource.reload"
+    >
+      <template v-if="resource.data.value">
+        <t-table
+          row-key="id"
+          :data="resource.data.value.items"
+          :columns="columns"
+          :empty="t('rum.empty')"
+          hover
         >
-        <div>
-          {{ item.type }} · {{ item.release || '—' }} · {{ t('rum.count') }}:
-          {{ item.count }}
-        </div>
-        <small>{{ t('rum.lastSeen') }}: {{ item.lastSeenAt }}</small>
-      </article>
-    </div>
-    <RumPager
-      v-if="resource.data.value"
-      v-model="page"
-      :total="resource.data.value.total"
-      :limit="resource.data.value.limit"
-  /></RumState>
+          <template #message="{ row }"
+            ><router-link :to="errorTarget(row.id)">{{
+              row.message
+            }}</router-link></template
+          >
+          <template #status="{ row }">
+            <t-select
+              :value="row.status"
+              size="small"
+              :options="statusOptions"
+              :loading="updating === row.id"
+              @change="
+                (value: unknown) => changeStatus(row, value as RumErrorStatus)
+              "
+            />
+            <t-tag
+              v-if="row.reopenedAt"
+              class="rum-errors__reopened"
+              theme="warning"
+              variant="light"
+              size="small"
+              >{{ t('rum.reopened') }}</t-tag
+            >
+          </template>
+          <template #count="{ row }">
+            <span class="rum-errors__count">{{ row.count }}</span>
+          </template>
+          <template #lastSeenAt="{ row }">{{ row.lastSeenAt || '—' }}</template>
+        </t-table>
+        <RumPager
+          v-model="page"
+          :total="resource.data.value.total"
+          :limit="resource.data.value.limit"
+        />
+      </template>
+    </RumState>
+  </t-card>
 </template>
-<style scoped>
-.list {
-  display: grid;
-  gap: 8px;
-}
-.list article {
-  border-bottom: 1px solid var(--td-border-level-1-color);
-  padding: 12px;
-  overflow-wrap: anywhere;
-}
-.list small {
-  color: var(--td-text-color-secondary);
+<style scoped lang="less">
+.rum-errors {
+  min-width: 0;
+
+  &__total {
+    color: @beacon-text-secondary;
+  }
+
+  &__count {
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__reopened {
+    margin-left: 6px;
+  }
 }
 </style>

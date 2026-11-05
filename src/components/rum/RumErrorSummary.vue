@@ -11,159 +11,150 @@ const visibleStack = computed(() =>
     ? props.error.stack
     : props.error.resolvedStack || props.error.stack,
 )
+const facts = computed(() => [
+  { key: 'count', label: t('rum.count'), value: String(props.error.count) },
+  {
+    key: 'release',
+    label: t('rum.release'),
+    value: props.error.release || '—',
+  },
+  {
+    key: 'firstSeen',
+    label: t('rum.firstSeen'),
+    value: props.error.firstSeenAt,
+  },
+  { key: 'lastSeen', label: t('rum.lastSeen'), value: props.error.lastSeenAt },
+  { key: 'page', label: t('rum.page'), value: props.error.page || '—' },
+  {
+    key: 'session',
+    label: t('rum.sessionKey'),
+    value: props.error.replaySessionId || '—',
+  },
+])
 </script>
 
 <template>
-  <section class="summary-card">
-    <header class="summary-card__header">
-      <div>
-        <p class="summary-card__eyebrow">
-          {{ error.category || t('rum.unknownCategory') }}
-        </p>
-        <h2>{{ error.message }}</h2>
-      </div>
-      <div class="summary-card__tags">
-        <t-tag theme="danger">{{ error.level || 'ERROR' }}</t-tag>
+  <t-card class="rum-error-summary">
+    <template #title>{{ t('rum.errorMessage') }}</template>
+    <template #actions>
+      <div class="rum-error-summary__tags">
+        <t-tag
+          theme="danger"
+          variant="light"
+          >{{ error.level || 'ERROR' }}</t-tag
+        >
         <t-tag variant="outline">{{ error.type }}</t-tag>
       </div>
-    </header>
-
-    <dl class="summary-card__facts">
-      <div>
-        <dt>{{ t('rum.count') }}</dt>
-        <dd>{{ error.count }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.release') }}</dt>
-        <dd>{{ error.release || '—' }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.firstSeen') }}</dt>
-        <dd>{{ error.firstSeenAt }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.lastSeen') }}</dt>
-        <dd>{{ error.lastSeenAt }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.page') }}</dt>
-        <dd>{{ error.page || '—' }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.sessionKey') }}</dt>
-        <dd>{{ error.replaySessionId || '—' }}</dd>
+    </template>
+    <p class="rum-error-summary__message">{{ error.message }}</p>
+    <dl class="rum-error-summary__facts">
+      <div
+        v-for="fact in facts"
+        :key="fact.key"
+        class="rum-error-summary__fact"
+      >
+        <dt>{{ fact.label }}</dt>
+        <dd>{{ fact.value }}</dd>
       </div>
     </dl>
-
-    <div class="summary-card__stack-heading">
-      <div>
-        <h3>{{ t('rum.stack') }}</h3>
-        <span>{{
+    <div class="rum-error-summary__stack-head">
+      <h3 class="rum-error-summary__stack-title">
+        {{ t('rum.stack') }}
+        <span class="rum-error-summary__muted">{{
           t(error.sourceMapApplied ? 'rum.mapped' : 'rum.notMapped')
         }}</span>
-      </div>
+      </h3>
       <t-radio-group
         v-model="originalStack"
         variant="default-filled"
+        size="small"
       >
         <t-radio-button :value="false">{{ t('rum.resolved') }}</t-radio-button>
         <t-radio-button :value="true">{{ t('rum.original') }}</t-radio-button>
       </t-radio-group>
     </div>
-    <pre>{{ visibleStack || '—' }}</pre>
-  </section>
+    <pre class="rum-error-summary__code">{{ visibleStack || '—' }}</pre>
+  </t-card>
 </template>
 
-<style scoped>
-.summary-card {
-  padding: 22px;
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 10px;
-  background: var(--td-bg-color-container);
-}
-
-.summary-card__header,
-.summary-card__stack-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-}
-
-.summary-card__header h2,
-.summary-card__stack-heading h3 {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.summary-card__eyebrow {
-  margin: 0 0 6px;
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.summary-card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.summary-card__facts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin: 20px 0;
-}
-
-.summary-card__facts div {
+<style scoped lang="less">
+.rum-error-summary {
   min-width: 0;
-  padding: 12px;
-  border-radius: 8px;
-  background: var(--td-bg-color-secondarycontainer);
-}
 
-.summary-card__facts dt {
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-}
-
-.summary-card__facts dd {
-  margin: 6px 0 0;
-  overflow-wrap: anywhere;
-}
-
-.summary-card__stack-heading {
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.summary-card__stack-heading span {
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-}
-
-.summary-card pre {
-  max-height: 420px;
-  margin: 0;
-  padding: 16px;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  border-radius: 8px;
-  background: var(--td-bg-color-secondarycontainer);
-}
-
-@media (max-width: 820px) {
-  .summary-card__header,
-  .summary-card__stack-heading {
-    align-items: stretch;
-    flex-direction: column;
+  &__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
-  .summary-card__facts {
-    grid-template-columns: 1fr;
+  &__message {
+    margin: 0 0 @beacon-gap-l;
+    overflow-wrap: anywhere;
+  }
+
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: @beacon-gap-l;
+    margin: 0 0 @beacon-gap-l;
+  }
+
+  &__fact {
+    min-width: 0;
+    padding: @beacon-gap-l;
+    background-color: @beacon-bg-active;
+
+    dt {
+      font-size: @beacon-font-size-base;
+      color: @beacon-text-secondary;
+    }
+
+    dd {
+      margin: 6px 0 0;
+      overflow-wrap: anywhere;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__stack-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: @beacon-gap-l;
+    flex-wrap: wrap;
+    margin-bottom: @beacon-gap;
+  }
+
+  &__stack-title {
+    margin: 0;
+    font-size: @beacon-font-size-section;
+    font-weight: @beacon-font-weight-medium;
+    color: @beacon-text-primary;
+  }
+
+  &__muted {
+    margin-left: 8px;
+    font-size: @beacon-font-size-base;
+    font-weight: 400;
+    color: @beacon-text-tertiary;
+  }
+
+  &__code {
+    max-height: 420px;
+    margin: 0;
+    padding: @beacon-gap-l;
+    overflow: auto;
+    font-family: @beacon-font-family-code;
+    font-size: @beacon-font-size-base;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: @beacon-bg-active;
+  }
+
+  @media (max-width: 820px) {
+    &__facts {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 </style>

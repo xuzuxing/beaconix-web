@@ -15,6 +15,28 @@ const contextSections = computed(() =>
     Boolean(entry[1]),
   ),
 )
+const facts = computed(() => [
+  {
+    key: 'session',
+    label: t('rum.sessionId'),
+    value: props.occurrence.sessionId || '—',
+  },
+  {
+    key: 'actor',
+    label: t('rum.actor'),
+    value: props.occurrence.endUserId || props.occurrence.anonymousId || '—',
+  },
+  {
+    key: 'request',
+    label: t('rum.requestId'),
+    value: props.occurrence.requestId || '—',
+  },
+  {
+    key: 'client',
+    label: t('rum.clientEventId'),
+    value: props.occurrence.clientEventId || '—',
+  },
+])
 
 function formatData(data: Record<string, unknown>) {
   return JSON.stringify(data, null, 2)
@@ -22,141 +44,128 @@ function formatData(data: Record<string, unknown>) {
 </script>
 
 <template>
-  <section class="context">
-    <header>
-      <div>
-        <p>{{ occurrence.category }} · {{ occurrence.level }}</p>
-        <h2>{{ t('rum.occurrenceContext') }}</h2>
-      </div>
-      <span>{{ occurrence.occurredAt || occurrence.receivedAt }}</span>
-    </header>
-
-    <dl>
-      <div>
-        <dt>{{ t('rum.sessionId') }}</dt>
-        <dd>{{ occurrence.sessionId || '—' }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.actor') }}</dt>
-        <dd>{{ occurrence.endUserId || occurrence.anonymousId || '—' }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.requestId') }}</dt>
-        <dd>{{ occurrence.requestId || '—' }}</dd>
-      </div>
-      <div>
-        <dt>{{ t('rum.clientEventId') }}</dt>
-        <dd>{{ occurrence.clientEventId || '—' }}</dd>
+  <t-card class="rum-context">
+    <template #title>{{ t('rum.occurrenceContext') }}</template>
+    <template #actions>
+      <span class="rum-context__muted">
+        {{ occurrence.category }} · {{ occurrence.level }} ·
+        {{ occurrence.occurredAt || occurrence.receivedAt }}
+      </span>
+    </template>
+    <dl class="rum-context__facts">
+      <div
+        v-for="fact in facts"
+        :key="fact.key"
+        class="rum-context__fact"
+      >
+        <dt>{{ fact.label }}</dt>
+        <dd>{{ fact.value }}</dd>
       </div>
     </dl>
-
     <div
       v-if="contextSections.length"
-      class="context__sections"
+      class="rum-context__sections"
     >
-      <article
+      <section
         v-for="section in contextSections"
         :key="section[0]"
+        class="rum-context__section"
       >
-        <h3>{{ section[0] }}</h3>
-        <pre>{{ formatData(section[1]) }}</pre>
-      </article>
+        <h3 class="rum-context__title">{{ section[0] }}</h3>
+        <pre class="rum-context__code">{{ formatData(section[1]) }}</pre>
+      </section>
     </div>
-
-    <details v-if="occurrence.stack">
-      <summary>{{ t('rum.stack') }}</summary>
-      <pre>{{ occurrence.resolvedStack || occurrence.stack }}</pre>
-      <h3 v-if="occurrence.resolvedStack">{{ t('rum.original') }}</h3>
-      <pre v-if="occurrence.resolvedStack">{{ occurrence.stack }}</pre>
-    </details>
-  </section>
+    <section
+      v-if="occurrence.stack"
+      class="rum-context__stack"
+    >
+      <h3 class="rum-context__title">{{ t('rum.stack') }}</h3>
+      <pre class="rum-context__code">{{
+        occurrence.resolvedStack || occurrence.stack
+      }}</pre>
+      <template v-if="occurrence.resolvedStack">
+        <h3 class="rum-context__title">{{ t('rum.original') }}</h3>
+        <pre class="rum-context__code">{{ occurrence.stack }}</pre>
+      </template>
+    </section>
+  </t-card>
 </template>
 
-<style scoped>
-.context {
+<style scoped lang="less">
+.rum-context {
   min-width: 0;
-  padding: 18px;
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 10px;
-  background: var(--td-bg-color-container);
-}
 
-.context header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
+  &__muted {
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-secondary;
+  }
 
-.context header p,
-.context header h2 {
-  margin: 0;
-}
+  &__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: @beacon-gap;
+    margin: 0 0 @beacon-gap-l;
+  }
 
-.context header p,
-.context header > span,
-.context dt {
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-}
+  &__fact {
+    min-width: 0;
+    padding: @beacon-gap;
+    background-color: @beacon-bg-active;
 
-.context dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 18px 0;
-}
+    dt {
+      font-size: @beacon-font-size-base;
+      color: @beacon-text-secondary;
+    }
 
-.context dl div {
-  min-width: 0;
-  padding: 10px;
-  border-radius: 7px;
-  background: var(--td-bg-color-secondarycontainer);
-}
+    dd {
+      margin: 5px 0 0;
+      overflow-wrap: anywhere;
+    }
+  }
 
-.context dd {
-  margin: 5px 0 0;
-  overflow-wrap: anywhere;
-}
+  &__sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: @beacon-gap;
+  }
 
-.context__sections {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
+  &__section,
+  &__stack {
+    min-width: 0;
+  }
 
-.context__sections article {
-  min-width: 0;
-}
+  &__stack {
+    margin-top: @beacon-gap-l;
+  }
 
-.context h3 {
-  margin: 0 0 6px;
-  font-size: 14px;
-}
+  &__title {
+    margin: 0 0 6px;
+    font-size: @beacon-font-size-section;
+    font-weight: @beacon-font-weight-medium;
+    color: @beacon-text-primary;
+  }
 
-.context pre {
-  margin: 0;
-  padding: 12px;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  border-radius: 7px;
-  background: var(--td-bg-color-secondarycontainer);
-}
+  &__stack &__title:not(:first-child) {
+    margin-top: @beacon-gap-l;
+  }
 
-.context details {
-  margin-top: 16px;
-}
+  &__code {
+    max-height: 320px;
+    margin: 0;
+    padding: @beacon-gap;
+    overflow: auto;
+    font-family: @beacon-font-family-code;
+    font-size: @beacon-font-size-base;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: @beacon-bg-active;
+  }
 
-.context details pre,
-.context details h3 {
-  margin-top: 10px;
-}
-
-@media (max-width: 820px) {
-  .context dl,
-  .context__sections {
-    grid-template-columns: 1fr;
+  @media (max-width: 820px) {
+    &__facts,
+    &__sections {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 </style>

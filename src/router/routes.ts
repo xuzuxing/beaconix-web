@@ -62,8 +62,8 @@ export const layoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/rum/RumProjectView.vue'),
     props: { section },
     meta: {
+      // 标题由布局标题栏渲染（与云监控 / 探针一致），页面内不再自绘大标题
       titleKey: `rumProject.${section}`,
-      hideHeader: true,
       keepAlive: false,
     },
   })),
@@ -76,7 +76,6 @@ export const layoutChildren: RouteRecordRaw[] = [
       subTitleKey: 'rumProject.apps',
       icon: CodeIcon,
       group: 'main',
-      hideHeader: true,
       keepAlive: false,
     },
   },

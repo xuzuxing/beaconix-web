@@ -103,7 +103,7 @@ test('project menu and project-wide error/event queries use server pagination an
   await side.getByText('错误列表', { exact: true }).click()
   await expect(page.getByText('Cross app failure')).toBeVisible()
   const pageWidth = await page
-    .locator('.project-page')
+    .locator('.rum-project')
     .evaluate((el) => el.getBoundingClientRect().width)
   expect(pageWidth).toBeGreaterThan(1440)
   const desktopFields = await page.locator('.filters > .rum-filter__field').evaluateAll((fields) =>

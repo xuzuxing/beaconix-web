@@ -20,48 +20,88 @@ async function copy(value: string) {
 }
 </script>
 <template>
-  <section>
-    <h2>{{ app.name }}</h2>
-    <p>
-      {{ t('rum.publicKey') }}: <code>{{ app.publicKey }}</code>
+  <t-card class="rum-setup">
+    <template #title>{{ t('rum.setup') }}</template>
+    <div class="rum-setup__body">
+      <div class="rum-setup__row">
+        <span class="rum-setup__label">{{ t('rum.publicKey') }}</span>
+        <code class="rum-setup__key">{{ app.publicKey }}</code>
+        <t-button
+          variant="text"
+          @click="copy(app.publicKey)"
+          >{{ t('rum.copy') }}</t-button
+        >
+      </div>
+      <p class="rum-setup__hint">{{ t('rum.apiHint') }}</p>
+      <label class="rum-setup__field"
+        >{{ t('rum.apiOrigin') }}
+        <t-input
+          v-model="origin"
+          placeholder="https://api.example.com"
+      /></label>
+      <p class="rum-setup__hint">{{ t('rum.sdkGuide') }}</p>
+      <t-alert
+        theme="warning"
+        :message="t('rum.privacy')"
+      />
+      <pre class="rum-setup__code">{{ snippet }}</pre>
       <t-button
-        variant="text"
-        @click="copy(app.publicKey)"
+        variant="outline"
+        @click="copy(snippet)"
         >{{ t('rum.copy') }}</t-button
       >
-    </p>
-    <p>{{ t('rum.apiHint') }}</p>
-    <label
-      >{{ t('rum.apiOrigin') }}
-      <t-input
-        v-model="origin"
-        placeholder="https://api.example.com"
-    /></label>
-    <p>{{ t('rum.sdkGuide') }}</p>
-    <t-alert
-      theme="warning"
-      :message="t('rum.privacy')"
-    />
-    <pre>{{ snippet }}</pre>
-    <t-button
-      variant="outline"
-      @click="copy(snippet)"
-      >{{ t('rum.copy') }}</t-button
-    >
-  </section>
+    </div>
+  </t-card>
 </template>
-<style scoped>
-section {
-  max-width: 900px;
-}
-pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  background: var(--td-bg-color-secondarycontainer);
-  padding: 16px;
-  border-radius: 6px;
-}
-code {
-  overflow-wrap: anywhere;
+<style scoped lang="less">
+.rum-setup {
+  min-width: 0;
+
+  &__body {
+    display: grid;
+    gap: @beacon-gap-l;
+    justify-items: start;
+    max-width: 900px;
+  }
+
+  &__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: @beacon-gap;
+  }
+
+  &__label {
+    color: @beacon-text-secondary;
+  }
+
+  &__key {
+    font-family: @beacon-font-family-code;
+    overflow-wrap: anywhere;
+  }
+
+  &__hint {
+    margin: 0;
+    color: @beacon-text-secondary;
+  }
+
+  &__field {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    color: @beacon-text-secondary;
+  }
+
+  &__code {
+    width: 100%;
+    margin: 0;
+    padding: @beacon-gap-l;
+    overflow: auto;
+    font-family: @beacon-font-family-code;
+    font-size: @beacon-font-size-base;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: @beacon-bg-active;
+  }
 }
 </style>

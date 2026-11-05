@@ -185,7 +185,7 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
   ).toBeVisible()
   await page.getByRole('tab', { name: '错误' }).click()
   await expectFieldsOnSameRow(page, '.filters > .rum-filter__field')
-  await page.getByRole('button', { name: 'Example failure' }).click()
+  await page.getByRole('link', { name: 'Example failure' }).click()
   await expect(page.getByText('mapped stack')).toBeVisible()
   await expect(page.locator('#layout-header-title-addon .t-tag')).toHaveCount(0)
   await expect(page.locator('.layout__page-title')).toHaveText('Example failure')
@@ -196,7 +196,7 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
   await expectFieldsOnSameRow(page, '.filters form > .rum-filter__field')
   await page.getByRole('tab', { name: '会话回放' }).click()
   await expectFieldsOnSameRow(page, '.filters > .rum-filter__field')
-  await page.getByRole('button', { name: 'sessionkey1' }).click()
+  await page.getByRole('link', { name: 'sessionkey1' }).click()
   await expect(page.getByText('近似回放 / 事件时间轴')).toBeVisible()
   await expect(
     page.frameLocator('iframe[title="Replay snapshot"]').getByText('Safe Snapshot'),

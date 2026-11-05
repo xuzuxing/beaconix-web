@@ -1,7 +1,9 @@
 // 全局基础样式
 // - 令牌覆写集中在 theme.less
 // - 变量（@beacon-*）由 vite 注入，见 assets/styles/variables.less
+// - RUM 筛选工具条的类名落在 TDesign 组件根节点上，只能放在全局层，见 rum-filters.less
 @import './theme.less';
+@import './rum-filters.less';
 
 * {
   box-sizing: border-box;

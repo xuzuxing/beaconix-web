@@ -36,6 +36,13 @@ const timeline = useRumResource(
       : Promise.reject(new Error('RUM access denied')),
   [p, a, id, canReadRum],
 )
+/** 元信息与时间轴是同一屏的两块数据，合并成一次加载与重试 */
+const loading = computed(() => metadata.loading.value || timeline.loading.value)
+const failed = computed(() => metadata.error.value || timeline.error.value)
+function retry() {
+  metadata.reload()
+  timeline.reload()
+}
 watch(
   [p, a, id, canReadRum],
   () => {
@@ -95,34 +102,40 @@ onScopeDispose(() => {
 })
 </script>
 <template>
-  <section class="replay">
+  <section class="rum-replay">
     <t-alert
       theme="warning"
       :message="t('rum.replayNotice')"
-    /><t-alert
+    />
+    <t-alert
       v-if="!canReadRum"
       theme="warning"
       :message="t('rum.noPermission')"
-    /><template v-else
-      ><RumState
-        :loading="metadata.loading.value"
-        :error="metadata.error.value"
-        @retry="metadata.reload"
-        ><p v-if="metadata.data.value">
-          {{ metadata.data.value.sessionKey }} ·
-          {{ metadata.data.value.startedAt }} ·
-          {{ metadata.data.value.eventCount }} {{ t('rum.eventCount') }}
-        </p></RumState
-      ><RumState
-        :loading="timeline.loading.value"
-        :error="timeline.error.value"
-        @retry="timeline.reload"
-        ><template v-if="timeline.data.value?.length"
-          ><div class="controls">
+    />
+    <RumState
+      v-else
+      :loading="loading"
+      :error="failed"
+      @retry="retry"
+    >
+      <t-card class="rum-replay__card">
+        <template #title>{{ t('rum.replayTitle') }}</template>
+        <template #actions>
+          <span
+            v-if="metadata.data.value"
+            class="rum-replay__meta"
+          >
+            {{ metadata.data.value.sessionKey }} ·
+            {{ metadata.data.value.startedAt }} ·
+            {{ metadata.data.value.eventCount }} {{ t('rum.eventCount') }}
+          </span>
+        </template>
+        <template v-if="timeline.data.value?.length">
+          <div class="rum-replay__controls">
             <t-button @click="playing = !playing">{{
               t(playing ? 'rum.pause' : 'rum.play')
-            }}</t-button
-            ><label
+            }}</t-button>
+            <label class="rum-replay__speed"
               >{{ t('rum.speed') }}
               <t-select
                 v-model="speed"
@@ -131,26 +144,30 @@ onScopeDispose(() => {
                   { value: 1, label: '1×' },
                   { value: 2, label: '2×' },
                   { value: 4, label: '4×' },
-                ]" /></label
-            ><label class="controls__position"
+                ]"
+            /></label>
+            <label class="rum-replay__position"
               >{{ t('rum.position') }}
               <t-slider
                 v-model="index"
                 :min="0"
-                :max="timeline.data.value.length - 1" /></label
-            ><span>{{ index + 1 }} / {{ timeline.data.value.length }}</span>
+                :max="timeline.data.value.length - 1"
+            /></label>
+            <span class="rum-replay__meta"
+              >{{ index + 1 }} / {{ timeline.data.value.length }}</span
+            >
           </div>
           <t-alert
             v-if="timeline.data.value.some((e) => e.type === 'truncated')"
             theme="warning"
             :message="t('rum.truncated')"
           />
-          <div class="replay__grid">
-            <div>
-              <h3>{{ t('rum.snapshot') }}</h3>
+          <div class="rum-replay__grid">
+            <section class="rum-replay__pane">
+              <h3 class="rum-replay__title">{{ t('rum.snapshot') }}</h3>
               <div
                 v-if="snapshot"
-                class="replay__frame"
+                class="rum-replay__frame"
               >
                 <iframe
                   title="Replay snapshot"
@@ -159,96 +176,164 @@ onScopeDispose(() => {
                 />
                 <span
                   v-if="marker"
-                  class="replay__marker"
+                  class="rum-replay__marker"
                   :style="marker"
                   aria-hidden="true"
                 ></span>
               </div>
-              <p v-else>{{ t('rum.noSnapshot') }}</p>
-            </div>
-            <div>
-              <h3>{{ current?.type }} · {{ current?.at }}</h3>
-              <pre>{{ JSON.stringify(current?.data, null, 2) }}</pre>
-              <ol>
+              <p
+                v-else
+                class="rum-replay__meta"
+              >
+                {{ t('rum.noSnapshot') }}
+              </p>
+            </section>
+            <section class="rum-replay__pane">
+              <h3 class="rum-replay__title">
+                {{ current?.type }} · {{ current?.at }}
+              </h3>
+              <pre class="rum-replay__code">{{
+                JSON.stringify(current?.data, null, 2)
+              }}</pre>
+              <ol class="rum-replay__timeline">
                 <li
                   v-for="(event, i) in timeline.data.value"
                   :key="i"
                 >
-                  <t-button
-                    variant="text"
+                  <t-link
+                    theme="primary"
                     @click="index = i"
-                    >{{ event.at }} · {{ event.type }}</t-button
+                    >{{ event.at }} · {{ event.type }}</t-link
                   >
                 </li>
               </ol>
-            </div>
-          </div></template
-        ><t-empty
+            </section>
+          </div>
+        </template>
+        <t-empty
           v-else
-          :description="t('rum.empty')" /></RumState
-    ></template>
+          :description="t('rum.empty')"
+        />
+      </t-card>
+    </RumState>
   </section>
 </template>
-<style scoped>
-.replay {
+<style scoped lang="less">
+.rum-replay {
   min-width: 0;
-}
-.controls {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin: 16px 0;
-}
-.controls__position {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 220px;
-  flex: 1;
-}
-.controls__position :deep(.t-slider) {
-  flex: 1;
-}
-.replay__grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 16px;
-}
-.replay__frame {
-  position: relative;
-}
-.replay__marker {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  border: 2px solid white;
-  background: #d54941;
-  box-shadow: 0 0 0 3px #d5494180;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-iframe {
-  width: 100%;
-  height: 500px;
-  border: 1px solid var(--td-border-level-1-color);
-  background: white;
-}
-pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-ol {
-  max-height: 360px;
-  overflow: auto;
-}
-button {
-  cursor: pointer;
-}
-@media (max-width: 768px) {
-  .replay__grid {
-    grid-template-columns: 1fr;
+
+  &__card {
+    margin-top: @beacon-gap-l;
+  }
+
+  &__meta {
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-secondary;
+    overflow-wrap: anywhere;
+  }
+
+  &__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: @beacon-gap-l;
+    margin-bottom: @beacon-gap-l;
+  }
+
+  &__speed {
+    display: flex;
+    align-items: center;
+    gap: @beacon-gap;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-secondary;
+  }
+
+  &__position {
+    display: flex;
+    flex: 1 1 220px;
+    align-items: center;
+    gap: @beacon-gap;
+    min-width: 220px;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-secondary;
+
+    :deep(.t-slider) {
+      flex: 1;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: @beacon-gap-l;
+    margin-top: @beacon-gap-l;
+  }
+
+  &__pane {
+    min-width: 0;
+  }
+
+  &__title {
+    margin: 0 0 @beacon-gap;
+    font-size: @beacon-font-size-section;
+    font-weight: @beacon-font-weight-medium;
+    color: @beacon-text-primary;
+    overflow-wrap: anywhere;
+  }
+
+  &__frame {
+    position: relative;
+  }
+
+  &__frame iframe {
+    width: 100%;
+    height: 500px;
+    background-color: #fff;
+    border: 1px solid @beacon-border;
+  }
+
+  &__marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    background-color: @beacon-error;
+    border: 2px solid @beacon-bg-container;
+    border-radius: 50%;
+    // @beacon-* 是 CSS 变量，less 的 fade() 处理不了，用 color-mix 稀释
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--td-error-color) 50%, transparent);
+    transform: translate(-50%, -50%);
+  }
+
+  &__code {
+    max-height: 240px;
+    margin: 0;
+    padding: @beacon-gap;
+    overflow: auto;
+    font-family: @beacon-font-family-code;
+    font-size: @beacon-font-size-base;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: @beacon-bg-active;
+  }
+
+  &__timeline {
+    display: grid;
+    gap: 4px;
+    max-height: 240px;
+    margin-top: @beacon-gap;
+    overflow: auto;
+
+    :deep(.t-link) {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  @media (max-width: 768px) {
+    &__grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 </style>

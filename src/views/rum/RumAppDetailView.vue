@@ -13,6 +13,8 @@ import RumEvents from '@/components/rum/RumEvents.vue'
 import RumReplays from '@/components/rum/RumReplays.vue'
 import RumSourceMaps from '@/components/rum/RumSourceMaps.vue'
 import RumAlerts from '@/components/rum/RumAlerts.vue'
+import RumPerformance from '@/components/rum/RumPerformance.vue'
+import RumReleases from '@/components/rum/RumReleases.vue'
 import RumSetup from '@/components/rum/RumSetup.vue'
 import RumAppSettings from '@/components/rum/RumAppSettings.vue'
 const { t } = useI18n()
@@ -27,8 +29,10 @@ const tabs = [
   'errors',
   'events',
   'replays',
+  'performance',
   'source-maps',
   'alerts',
+  'releases',
   'setup',
   'settings',
 ] as const
@@ -46,6 +50,7 @@ function selectTab(value: string | number) {
       <t-tag
         v-if="app.data.value"
         :theme="app.data.value.enabled ? 'success' : 'default'"
+        variant="light"
       >
         {{ t(app.data.value.enabled ? 'rumApps.enabled' : 'rumApps.disabled') }}
       </t-tag>
@@ -56,10 +61,7 @@ function selectTab(value: string | number) {
       @retry="app.reload"
     >
       <template v-if="app.data.value">
-        <div
-          role="tablist"
-          :aria-label="t('rumApps.title')"
-        >
+        <div class="rum-detail__tabs">
           <t-tabs
             :value="tab"
             @change="selectTab"
@@ -69,20 +71,22 @@ function selectTab(value: string | number) {
               :key="key"
               :value="key"
             >
-              <template #label
-                ><span
+              <!-- TDesign 的 tab 项没有 role="tab"，这里补上可访问语义 -->
+              <template #label>
+                <span
                   role="tab"
                   tabindex="0"
                   :aria-selected="tab === key"
                   @keydown.enter.prevent="selectTab(key)"
                   @keydown.space.prevent="selectTab(key)"
-                  >{{
+                >
+                  {{
                     key === 'settings'
                       ? t('rumProject.settings')
                       : t('rum.' + (key === 'source-maps' ? 'maps' : key))
-                  }}</span
-                ></template
-              >
+                  }}
+                </span>
+              </template>
             </t-tab-panel>
           </t-tabs>
         </div>
@@ -94,29 +98,36 @@ function selectTab(value: string | number) {
             theme="warning"
             :message="t('rum.noPermission')"
           />
-          <template v-else
-            ><RumOverview v-if="tab === 'overview'" /><RumErrors
-              v-else-if="tab === 'errors'" /><RumEvents
-              v-else-if="tab === 'events'" /><RumReplays
-              v-else-if="tab === 'replays'" /><RumSourceMaps
-              v-else-if="tab === 'source-maps'" /><RumAlerts
-              v-else-if="tab === 'alerts'" /><RumSetup
+          <template v-else>
+            <RumOverview v-if="tab === 'overview'" />
+            <RumErrors v-else-if="tab === 'errors'" />
+            <RumEvents v-else-if="tab === 'events'" />
+            <RumReplays v-else-if="tab === 'replays'" />
+            <RumPerformance v-else-if="tab === 'performance'" />
+            <RumReleases v-else-if="tab === 'releases'" />
+            <RumSourceMaps v-else-if="tab === 'source-maps'" />
+            <RumAlerts v-else-if="tab === 'alerts'" />
+            <RumSetup
               v-else-if="tab === 'setup'"
-              :app="app.data.value" /><RumAppSettings
+              :app="app.data.value"
+            />
+            <RumAppSettings
               v-else
               :app="app.data.value"
               @updated="app.reload"
-          /></template>
+            />
+          </template>
         </div>
       </template>
     </RumState>
   </section>
 </template>
-<style scoped>
+<style scoped lang="less">
 .rum-detail {
   min-width: 0;
-}
-.rum-detail__body {
-  padding-top: 20px;
+
+  &__body {
+    padding-top: @beacon-gap-l;
+  }
 }
 </style>

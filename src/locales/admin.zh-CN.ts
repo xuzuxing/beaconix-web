@@ -242,6 +242,7 @@ export default {
   },
   refund: {
     title: '退款管理',
+    range: '时间范围',
     subtitle:
       '跨租户退款单。审批、重试与关闭都会驱动真实的支付渠道退款；「标记已退款」只在订单上记账。',
     search: '查询',

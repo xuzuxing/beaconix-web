@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getProjectRumOverview } from '@/api/modules/rum'
+import RumKpiGrid from '@/components/rum/RumKpiGrid.vue'
 import { useRumResource } from '@/composables/useRumResource'
 import { useOrganizationStore } from '@/stores'
 import { usePermissionsStore } from '@/stores/modules/permissions'
@@ -22,28 +23,33 @@ const resource = useRumResource(
       : Promise.resolve(null),
   [projectId, canRead],
 )
-const cards = computed(() => [
+const kpis = computed(() => [
   {
+    key: 'apps',
     label: t('rumProject.appCount'),
     value: resource.data.value?.appCount,
     hint: '',
   },
   {
+    key: 'errorGroups',
     label: t('rumProject.errorGroups'),
     value: resource.data.value?.errorGroups,
     hint: t('rumProject.retained'),
   },
   {
+    key: 'events7d',
     label: t('rumProject.events7d'),
     value: resource.data.value?.events7d,
     hint: t('rum.recent7'),
   },
   {
+    key: 'replays',
     label: t('rum.replays'),
     value: resource.data.value?.replays,
     hint: t('rumProject.retained'),
   },
   {
+    key: 'openAlerts',
     label: t('rum.openAlerts'),
     value: resource.data.value?.openAlerts,
     hint: t('rumProject.retained'),
@@ -59,11 +65,7 @@ const columns = computed(() => [
 </script>
 
 <template>
-  <section class="project-page">
-    <header>
-      <h1>{{ t('rumProject.overview') }}</h1>
-      <p>{{ t('rumProject.overviewDesc') }}</p>
-    </header>
+  <section class="rum-project-overview">
     <t-alert
       v-if="!projectId"
       theme="info"
@@ -81,22 +83,18 @@ const columns = computed(() => [
       @retry="resource.reload"
     >
       <template v-if="resource.data.value">
-        <div class="metrics">
-          <t-card
-            v-for="card in cards"
-            :key="card.label"
-            :bordered="false"
-            class="metric"
-          >
-            <div class="metric__label">{{ card.label }}</div>
-            <strong>{{ card.value ?? '—' }}</strong
-            ><small>{{ card.hint }}</small>
-          </t-card>
-        </div>
-        <t-card
-          :title="t('rumProject.appOverview')"
-          :bordered="false"
-        >
+        <RumKpiGrid
+          class="rum-project-overview__kpis"
+          :items="kpis"
+        />
+        <t-card class="rum-project-overview__card">
+          <template #title>{{ t('rumProject.appOverview') }}</template>
+          <template #actions>
+            <span class="rum-project-overview__scope">
+              {{ org.currentOrganization?.name ?? '-' }} /
+              {{ org.currentProject?.name ?? '-' }}
+            </span>
+          </template>
           <t-table
             row-key="id"
             :data="resource.data.value.apps"
@@ -132,35 +130,17 @@ const columns = computed(() => [
     </RumState>
   </section>
 </template>
-<style scoped>
-.project-page {
+
+<style scoped lang="less">
+.rum-project-overview {
   min-width: 0;
-}
-header {
-  margin-bottom: 24px;
-}
-h1 {
-  margin: 0 0 8px;
-  font-size: 24px;
-}
-header p,
-.metric__label,
-small {
-  color: var(--td-text-color-secondary);
-}
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-.metric strong {
-  display: block;
-  font-size: 30px;
-  line-height: 1.5;
-}
-small {
-  display: block;
-  min-height: 20px;
+
+  &__kpis {
+    margin-bottom: @beacon-gap-l;
+  }
+
+  &__scope {
+    color: @beacon-text-secondary;
+  }
 }
 </style>

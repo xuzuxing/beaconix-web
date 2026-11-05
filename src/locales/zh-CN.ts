@@ -33,6 +33,7 @@ export default {
     enableConfirm: '确认启用 {name} 并恢复采集吗？',
     disableConfirm: '停用 {name} 后将停止接收采集数据，确定继续吗？',
     publicKey: '公开 Key',
+    platform: '平台',
     copy: '复制',
     copied: '已复制',
     loadFailed: '加载应用失败',

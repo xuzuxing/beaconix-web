@@ -11,74 +11,82 @@ function formatData(data?: Record<string, unknown>) {
 </script>
 
 <template>
-  <section class="breadcrumbs">
-    <h2>{{ t('rum.breadcrumbs') }}</h2>
+  <t-card class="rum-breadcrumbs">
+    <template #title>{{ t('rum.breadcrumbs') }}</template>
+    <template #actions>
+      <span class="rum-breadcrumbs__total">{{ breadcrumbs.length }}</span>
+    </template>
     <t-empty
       v-if="!breadcrumbs.length"
       :description="t('rum.empty')"
     />
-    <ol v-else>
+    <ol
+      v-else
+      class="rum-breadcrumbs__list"
+    >
       <li
         v-for="(breadcrumb, index) in breadcrumbs"
         :key="`${breadcrumb.occurredAt}-${index}`"
+        class="rum-breadcrumbs__item"
       >
-        <div class="breadcrumbs__heading">
+        <div class="rum-breadcrumbs__heading">
           <strong>{{ breadcrumb.type }}</strong>
-          <span
+          <span class="rum-breadcrumbs__meta"
             >{{ breadcrumb.category || '—' }} ·
             {{ breadcrumb.occurredAt }}</span
           >
         </div>
-        <pre v-if="breadcrumb.data">{{ formatData(breadcrumb.data) }}</pre>
+        <pre
+          v-if="breadcrumb.data"
+          class="rum-breadcrumbs__code"
+          >{{ formatData(breadcrumb.data) }}</pre>
       </li>
     </ol>
-  </section>
+  </t-card>
 </template>
 
-<style scoped>
-.breadcrumbs {
+<style scoped lang="less">
+.rum-breadcrumbs {
   min-width: 0;
-  padding: 18px;
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 10px;
-  background: var(--td-bg-color-container);
-}
 
-.breadcrumbs h2 {
-  margin-top: 0;
-}
+  &__total {
+    color: @beacon-text-secondary;
+    font-variant-numeric: tabular-nums;
+  }
 
-.breadcrumbs ol {
-  display: grid;
-  gap: 14px;
-  margin: 0;
-  padding-left: 22px;
-}
+  &__list {
+    display: grid;
+    gap: @beacon-gap-l;
+  }
 
-.breadcrumbs li {
-  min-width: 0;
-  padding-left: 4px;
-}
+  &__item {
+    min-width: 0;
+    padding-left: @beacon-gap-l;
+    border-left: 2px solid @beacon-border;
+  }
 
-.breadcrumbs__heading {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-}
+  &__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: @beacon-gap;
+  }
 
-.breadcrumbs__heading span {
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-}
+  &__meta {
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-secondary;
+  }
 
-.breadcrumbs pre {
-  margin: 8px 0 0;
-  padding: 10px;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  border-radius: 6px;
-  background: var(--td-bg-color-secondarycontainer);
+  &__code {
+    margin: 8px 0 0;
+    padding: @beacon-gap;
+    overflow: auto;
+    font-family: @beacon-font-family-code;
+    font-size: @beacon-font-size-base;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background-color: @beacon-bg-active;
+  }
 }
 </style>

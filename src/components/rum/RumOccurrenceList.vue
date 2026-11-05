@@ -13,111 +13,113 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <section class="occurrences">
-    <header class="occurrences__header">
-      <div>
-        <h2>{{ t('rum.occurrences') }}</h2>
-        <p>{{ t('rum.occurrencesHint') }}</p>
-      </div>
-      <t-tag variant="outline">{{ data?.total ?? 0 }}</t-tag>
-    </header>
-
+  <t-card class="rum-occurrences">
+    <template #title>{{ t('rum.occurrences') }}</template>
+    <template #actions>
+      <span class="rum-occurrences__total">{{ data?.total ?? 0 }}</span>
+    </template>
+    <p class="rum-occurrences__hint">{{ t('rum.occurrencesHint') }}</p>
     <t-empty
       v-if="!data?.items.length"
       :description="t('rum.empty')"
     />
     <div
       v-else
-      class="occurrences__list"
+      class="rum-occurrences__list"
     >
       <button
         v-for="item in data.items"
         :key="item.id"
         type="button"
-        class="occurrences__item"
-        :class="{ 'occurrences__item--selected': item.id === selectedId }"
+        class="rum-occurrences__item"
+        :class="{ 'is-selected': item.id === selectedId }"
         @click="emit('select', item.id)"
       >
-        <span class="occurrences__item-topline">
-          <strong>{{ item.category }}</strong>
+        <span class="rum-occurrences__topline">
+          <strong class="rum-occurrences__category">{{ item.category }}</strong>
           <t-tag
             size="small"
+            variant="light"
             :theme="item.level === 'FATAL' ? 'danger' : 'warning'"
           >
             {{ item.level }}
           </t-tag>
         </span>
-        <span>{{ item.occurredAt || item.receivedAt }}</span>
-        <span>{{ item.page || '—' }}</span>
-        <span>{{ item.requestId || item.clientEventId || '—' }}</span>
+        <span class="rum-occurrences__meta">{{
+          item.occurredAt || item.receivedAt
+        }}</span>
+        <span class="rum-occurrences__meta">{{ item.page || '—' }}</span>
+        <span class="rum-occurrences__meta">{{
+          item.requestId || item.clientEventId || '—'
+        }}</span>
       </button>
     </div>
-
     <RumPager
       v-if="data"
       v-model="page"
       :total="data.total"
       :limit="data.limit"
     />
-  </section>
+  </t-card>
 </template>
 
-<style scoped>
-.occurrences {
+<style scoped lang="less">
+.rum-occurrences {
   min-width: 0;
-  padding: 18px;
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 10px;
-  background: var(--td-bg-color-container);
-}
 
-.occurrences__header,
-.occurrences__item-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
+  &__total {
+    color: @beacon-text-secondary;
+    font-variant-numeric: tabular-nums;
+  }
 
-.occurrences__header h2,
-.occurrences__header p {
-  margin: 0;
-}
+  &__hint {
+    margin: 0 0 @beacon-gap-l;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-tertiary;
+  }
 
-.occurrences__header p {
-  margin-top: 4px;
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-}
+  &__list {
+    display: grid;
+    gap: @beacon-gap;
+  }
 
-.occurrences__list {
-  display: grid;
-  gap: 8px;
-  margin-top: 16px;
-}
+  &__item {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    padding: @beacon-gap;
+    font-family: inherit;
+    font-size: @beacon-font-size-base;
+    color: @beacon-text-primary;
+    text-align: left;
+    cursor: pointer;
+    background-color: @beacon-bg-container;
+    border: 1px solid @beacon-border;
 
-.occurrences__item {
-  display: grid;
-  gap: 6px;
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 8px;
-  color: inherit;
-  text-align: left;
-  background: transparent;
-  cursor: pointer;
-}
+    &:hover {
+      background-color: @beacon-bg-hover;
+    }
 
-.occurrences__item:hover,
-.occurrences__item--selected {
-  border-color: var(--td-brand-color);
-  background: var(--td-brand-color-light);
-}
+    &.is-selected {
+      border-color: @beacon-brand;
+      background-color: @beacon-brand-light;
+    }
+  }
 
-.occurrences__item > span:not(.occurrences__item-topline) {
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-  overflow-wrap: anywhere;
+  &__topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: @beacon-gap;
+  }
+
+  &__category {
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    color: @beacon-text-secondary;
+    overflow-wrap: anywhere;
+  }
 }
 </style>
