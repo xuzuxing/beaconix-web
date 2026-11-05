@@ -68,7 +68,6 @@ function persist() {
   void router.replace({
     query: {
       ...route.query,
-      tab: 'errors',
       errorSearch: filters.value.search || undefined,
       errorType: filters.value.type || undefined,
       errorStatus: filters.value.status || undefined,
@@ -115,7 +114,7 @@ function openError(id: string) {
   void router.push({
     name: 'rum-error-detail',
     params: { projectId: p.value, appId: a.value, errorId: id },
-    query: { ...route.query, tab: 'errors' },
+    query: { ...route.query },
   })
 }
 

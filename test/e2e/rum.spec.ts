@@ -72,6 +72,22 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
   await page.route('**/api/organizations/o1/notification-channels', (route) =>
     route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: [] }) }),
   )
+  await page.route(/\/api\/projects\/[^/]+\/rum\/overview(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          appCount: 1,
+          errorGroups: 4,
+          events7d: 7,
+          replays: 1,
+          openAlerts: 0,
+          apps: [{ id: 'app1', name: 'Portal RUM', enabled: true, errorGroups: 4, events7d: 7 }],
+        },
+        meta: { timestamp: now },
+      }),
+    }),
+  )
   await page.route(/\/api\/projects\/[^/]+\/apps(?:\/.*)?(?:\?.*)?$/, async (route) => {
     const request = route.request()
     const url = new URL(request.url())
@@ -80,6 +96,47 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
     calls.push({ method, path, body: request.postData() })
     let data: unknown
     if (path.endsWith('/apps')) data = [app]
+    else if (path.endsWith('/apps/app1/overview'))
+      data = {
+        from: now,
+        to: now,
+        bucketMinutes: 60,
+        traffic: { pv: 120, uv: 48, clicks: 260 },
+        requests: {
+          total: 300,
+          success: 288,
+          failures: 12,
+          successRate: 96,
+          errorRate: 4,
+          p75: 320,
+          average: 210,
+        },
+        errors: { js: 6, custom: 2, total: 8, events: 9, jsRate: 5 },
+        series: [
+          {
+            bucketStart: now,
+            pv: 60,
+            uv: 25,
+            clicks: 130,
+            requests: 150,
+            failures: 6,
+            jsErrors: 3,
+            customErrors: 1,
+            events: 5,
+          },
+          {
+            bucketStart: now,
+            pv: 60,
+            uv: 23,
+            clicks: 130,
+            requests: 150,
+            failures: 6,
+            jsErrors: 3,
+            customErrors: 1,
+            events: 4,
+          },
+        ],
+      }
     else if (path.endsWith('/apps/app1')) data = app
     else if (path.endsWith('/errors/error1')) data = error
     else if (path.endsWith('/errors')) data = pg([error])
@@ -174,31 +231,53 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
   })
   await page.setViewportSize({ width: 1920, height: 1000 })
   await page.goto('/rum')
-  await expect(page.getByText('Portal RUM')).toBeVisible({ timeout: 25_000 })
+  await expect(page.locator('.app-card').first()).toBeVisible({ timeout: 25_000 })
+  await expect(page.locator('.app-card').getByText('错误分组')).toBeVisible()
+  const appNav = page.locator('.secondary-nav')
   await page.getByRole('link', { name: 'Portal RUM' }).click()
+  await expect(page).toHaveURL(/\/rum\/b\/app1\/errors$/)
   await expect(
     page.locator('.layout__page-title').getByText('Portal RUM', { exact: true }),
   ).toBeVisible()
   await expect(page.locator('.layout__content-header')).toContainText('启用')
-  await expect(page.locator('.secondary-nav__link--active')).toHaveText('应用列表')
+  await expect(appNav.locator('.secondary-nav__link--active')).toHaveText('错误')
   await page.locator('.layout__header-back').click()
   await expect(page).toHaveURL(/\/rum$/)
   await page.getByRole('link', { name: 'Portal RUM' }).click()
   await expect(
     page.locator('.layout__page-title').getByText('Portal RUM', { exact: true }),
   ).toBeVisible()
-  await page.getByRole('tab', { name: '错误' }).click()
   await expectFieldsOnSameRow(page, '.filters > .rum-filter__field')
-  await page.getByRole('button', { name: 'Example failure' }).click()
+  await page
+    .locator('.errors-panel')
+    .getByRole('button', { name: 'Example failure' })
+    .click()
   await expect(page.getByText('mapped stack')).toBeVisible()
   await expect(page.locator('#layout-header-title-addon .t-tag')).toHaveCount(0)
   await expect(page.locator('.layout__page-title')).toHaveText('Example failure')
   await page.locator('.layout__header-back').click()
-  await expect(page).toHaveURL(/tab=errors/)
-  await page.getByRole('tab', { name: '事件', exact: true }).click()
+  await expect(page).toHaveURL(/\/rum\/b\/app1\/errors$/)
+  // 概览页：访问 / 请求 / 错误与事件三组指标都有真实来源
+  await appNav.getByRole('link', { name: '概览', exact: true }).click()
+  await expect(page).toHaveURL(/\/rum\/b\/app1\/overview$/)
+  await expect(page.getByText('PV（页面浏览）')).toBeVisible()
+  await expect(page.getByText('UV（独立访客）')).toBeVisible()
+  await expect(page.getByText('点击量')).toBeVisible()
+  await expect(page.getByText('请求量')).toBeVisible()
+  await expect(page.getByText('成功率')).toBeVisible()
+  await expect(page.getByText('接口报错量')).toBeVisible()
+  await expect(page.getByText('接口耗时 p75')).toBeVisible()
+  await expect(page.getByText('JS 错误量')).toBeVisible()
+  await expect(page.getByText('JS 错误率')).toBeVisible()
+  await expect(page.getByText('自定义错误量')).toBeVisible()
+  await expect(page.getByText('事件量')).toBeVisible()
+  await expect(page.getByText('访问趋势')).toBeVisible()
+  await expect(page.getByText('请求趋势')).toBeVisible()
+  await expect(page.getByText('错误与事件趋势')).toBeVisible()
+  await appNav.getByRole('link', { name: '事件', exact: true }).click()
   await expect(page.getByText('checkout', { exact: true }).first()).toBeVisible()
   await expectFieldsOnSameRow(page, '.filters form > .rum-filter__field')
-  await page.getByRole('tab', { name: '会话回放' }).click()
+  await appNav.getByRole('link', { name: '会话回放' }).click()
   await expectFieldsOnSameRow(page, '.filters > .rum-filter__field')
   await page.getByRole('button', { name: 'sessionkey1' }).click()
   await expect(page.getByText('近似回放 / 事件时间轴')).toBeVisible()
@@ -208,8 +287,8 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
   expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss)).toBeUndefined()
   expect(calls.filter((c) => c.path.endsWith('/chunks'))).toHaveLength(2)
   await page.locator('.layout__header-back').click()
-  await expect(page).toHaveURL(/tab=replays/)
-  await page.getByRole('tab', { name: 'Source Map' }).click()
+  await expect(page).toHaveURL(/\/rum\/b\/app1\/replays$/)
+  await appNav.getByRole('link', { name: 'Source Map' }).click()
   await expect(page.getByText(/不超过 5 MiB/)).toBeVisible()
   await page.getByPlaceholder('版本').fill('v1')
   await page.getByPlaceholder('产物路径').fill('/assets/app.js')
@@ -224,7 +303,7 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
   expect(upload?.body).toContain('name="release"')
   expect(upload?.body).toContain('name="artifactPath"')
   expect(upload?.body).toContain('name="file"')
-  await page.getByRole('tab', { name: '告警', exact: true }).click()
+  await appNav.getByRole('link', { name: '告警', exact: true }).click()
   await expect(page.getByRole('button', { name: '新建规则' })).toBeVisible()
   await page.getByRole('button', { name: '新建规则' }).click()
   await page.getByRole('textbox', { name: '名称' }).fill('Checkout alert')
@@ -242,7 +321,7 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
     eventName: '*',
     channelIds: ['ch1'],
   })
-  await page.getByRole('tab', { name: '接入设置' }).click()
+  await appNav.getByRole('link', { name: '接入设置' }).click()
   await expect(page.getByText(/尚未发布 npm 包/)).toBeVisible()
   expect(state.pageErrors).toEqual([])
   expect(state.unexpected).toEqual([])
@@ -255,11 +334,13 @@ test('viewer can read but cannot mutate; unavailable project is rejected', async
   await page.route('**/api/settings/public', (route) =>
     route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: {} }) }),
   )
-  await page.route(/\/api\/projects\/[^/]+\/apps(?:\/.*)?(?:\?.*)?$/, async (route) => {
+  await page.route(/\/api\/projects\/[^/]+\/(?:apps|rum)(?:\/.*)?(?:\?.*)?$/, async (route) => {
     const url = new URL(route.request().url())
     paths.push(url.pathname)
     let data: unknown = []
-    if (url.pathname.endsWith('/apps')) data = [{ ...app, projectId: 'a' }]
+    if (url.pathname.endsWith('/rum/overview'))
+      data = { appCount: 0, errorGroups: 0, events7d: 0, replays: 0, openAlerts: 0, apps: [] }
+    else if (url.pathname.endsWith('/apps')) data = [{ ...app, projectId: 'a' }]
     else if (url.pathname.endsWith('/apps/app1')) data = { ...app, projectId: 'a' }
     else if (url.pathname.endsWith('/events/stats'))
       data = { days: 7, total: 0, uniqueActors: 0, uniqueSessions: 0, daily: [], topEvents: [] }
@@ -275,9 +356,10 @@ test('viewer can read but cannot mutate; unavailable project is rejected', async
   await expect(page.getByRole('link', { name: 'Portal RUM' })).toBeVisible({ timeout: 25_000 })
   await expect(page.getByRole('button', { name: '新建应用' })).toHaveCount(0)
   await page.getByRole('link', { name: 'Portal RUM' }).click()
-  await page.getByRole('tab', { name: 'Source Map' }).click()
+  const appNav = page.locator('.secondary-nav')
+  await appNav.getByRole('link', { name: 'Source Map' }).click()
   await expect(page.getByRole('button', { name: '上传' })).toHaveCount(0)
-  await page.getByRole('tab', { name: '告警', exact: true }).click()
+  await appNav.getByRole('link', { name: '告警', exact: true }).click()
   await expect(page.getByRole('button', { name: '新建规则' })).toHaveCount(0)
   await page.goto('/rum/c/app1')
   await expect(page).toHaveURL(/access-unavailable/)
@@ -293,13 +375,18 @@ test('RUM deep link adopts its authorized project and switching project returns 
   await page.route('**/api/settings/public', (route) =>
     route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data: {} }) }),
   )
-  await page.route(/\/api\/projects\/[^/]+\/apps(?:\/.*)?(?:\?.*)?$/, (route) => {
+  await page.route(/\/api\/projects\/[^/]+\/(?:apps|rum)(?:\/.*)?(?:\?.*)?$/, (route) => {
     const url = new URL(route.request().url())
     const projectId = url.pathname.split('/')[3]
-    const data = url.pathname.endsWith('/apps') ? [{ ...app, projectId }] : { ...app, projectId }
+    const data = url.pathname.endsWith('/rum/overview')
+      ? { appCount: 1, errorGroups: 0, events7d: 0, replays: 0, openAlerts: 0, apps: [] }
+      : url.pathname.endsWith('/apps')
+        ? [{ ...app, projectId }]
+        : { ...app, projectId }
     return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ data }) })
   })
   await page.goto('/rum/b/app1?tab=setup')
+  await expect(page).toHaveURL(/\/rum\/b\/app1\/setup$/)
   await expect(
     page.locator('.layout__page-title').getByText('Portal RUM', { exact: true }),
   ).toBeVisible({
@@ -316,8 +403,12 @@ test('RUM deep link adopts its authorized project and switching project returns 
 test('application header keeps a return path when app loading fails', async ({ page }) => {
   const state = await mockWorkspace(page, { owner: true, projectId: 'b' })
   await page.route('**/api/settings/public', (route) => route.fulfill({ json: { data: {} } }))
-  await page.route(/\/api\/projects\/[^/]+\/apps(?:\/.*)?(?:\?.*)?$/, (route) => {
+  await page.route(/\/api\/projects\/[^/]+\/(?:apps|rum)(?:\/.*)?(?:\?.*)?$/, (route) => {
     const url = new URL(route.request().url())
+    if (url.pathname.endsWith('/rum/overview'))
+      return route.fulfill({
+        json: { data: { appCount: 1, errorGroups: 0, events7d: 0, replays: 0, openAlerts: 0, apps: [] } },
+      })
     return url.pathname.endsWith('/apps/app1')
       ? route.fulfill({ status: 500, json: { message: 'Unavailable' } })
       : route.fulfill({ json: { data: [app] } })

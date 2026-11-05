@@ -146,13 +146,13 @@ describe('authorized workspace and shared navigation', () => {
     expect(search.map((item) => item.path)).toEqual(['/monitor'])
   })
   it.each([
-    { app: true, rum: true, expected: ['/rum/overview', '/rum/errors', '/rum/events', '/rum'] },
-    { app: true, rum: false, expected: ['/rum'] },
-    { app: false, rum: true, expected: ['/rum/overview', '/rum/errors', '/rum/events'] },
-    { app: false, rum: false, expected: [] },
+    { app: true, rum: true, visible: true },
+    { app: true, rum: false, visible: true },
+    { app: false, rum: true, visible: true },
+    { app: false, rum: false, visible: false },
   ])(
-    'filters RUM child navigation for independent capabilities: $app / $rum',
-    async ({ app, rum, expected }) => {
+    'keeps RUM a single entry whose project-level pages are not menu items: $app / $rum',
+    async ({ app, rum, visible }) => {
       vi.mocked(getProjectPermissions).mockImplementation(async (id) => {
         const permission = projectPermission(id, 'VIEWER')
         permission.capabilities['app.read'] = app
@@ -162,14 +162,12 @@ describe('authorized workspace and shared navigation', () => {
       const org = useOrganizationStore()
       await org.loadWorkspace()
       const parent = buildMenu(layoutChildren).find((item) => item.path === '/rum')
-      if (!expected.length) {
+      if (!visible) {
         expect(parent).toBeUndefined()
       } else {
+        // 一级入口直接落地应用卡片列表，项目级跨应用页面收在列表页顶部
         expect(parent).toBeDefined()
-        const targets = parent?.submenu
-          ?.filter((item) => item.type !== 'group')
-          .map((item) => item.path) ?? [parent?.path]
-        expect(targets).toEqual(expected)
+        expect(parent?.submenu).toBeUndefined()
       }
       expect(canVisitNavigation('/rum')).toBe(app)
       expect(canVisitNavigation('/rum/overview')).toBe(rum)

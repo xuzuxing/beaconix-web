@@ -1,132 +1,430 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import dayjs from 'dayjs'
+import { getRumAppOverview } from '@/api/modules/rum'
+import type { RumAppOverview } from '@/api/types/rum'
+import ChartCard from '@/components/charts/ChartCard.vue'
+import EChart from '@/components/charts/EChart.vue'
+import { useChartTheme } from '@/components/charts/chartTheme'
 import {
-  getRumEventStats,
-  listRumAlertIncidents,
-  listRumErrors,
-  listRumReplays,
-} from '@/api/modules/rum'
+  areaStyle,
+  chartBase,
+  chartGrid,
+  chartLegend,
+  chartTooltip,
+  categoryAxis,
+  valueAxis,
+} from '@/components/charts/chartPresets'
+import type { ChartOption } from '@/components/charts/echarts'
 import { useRumContext } from '@/composables/useRumContext'
 import { useRumResource } from '@/composables/useRumResource'
 import RumState from './RumState.vue'
 
+/**
+ * 应用概览：一屏回答「有多少人来、接口是否健康、错误量级如何」。
+ * 数据来自 getRumAppOverview 的单次聚合：PV/UV/点击来自 SDK 自动上报的
+ * `$pageview` / `$click`，请求指标来自 HTTP 性能样本；比率没有数据时为 null，不编造数值。
+ */
+type Range = '1h' | '24h' | '7d' | '30d'
+
+const ranges: Range[] = ['1h', '24h', '7d', '30d']
+const rangeConfig: Record<Range, { hours: number; bucketMinutes: number }> = {
+  '1h': { hours: 1, bucketMinutes: 5 },
+  '24h': { hours: 24, bucketMinutes: 60 },
+  '7d': { hours: 168, bucketMinutes: 360 },
+  '30d': { hours: 720, bucketMinutes: 1440 },
+}
+
 const { t } = useI18n()
 const { projectId: p, appId: a } = useRumContext()
-const sources = [p, a]
-const errors = useRumResource(
-  (signal) =>
-    listRumErrors(
+const theme = useChartTheme()
+const range = ref<Range>('24h')
+
+const resource = useRumResource(
+  (signal) => {
+    const config = rangeConfig[range.value]
+    const to = new Date()
+    const from = new Date(to.getTime() - config.hours * 3_600_000)
+    return getRumAppOverview(
       p.value,
       a.value,
-      { page: 1, limit: 5, sortBy: 'lastSeenAt', sortOrder: 'desc' },
+      {
+        from: from.toISOString(),
+        to: to.toISOString(),
+        bucketMinutes: config.bucketMinutes,
+      },
       { signal },
-    ),
-  sources,
+    )
+  },
+  [p, a, range],
 )
-const events = useRumResource(
-  (signal) => getRumEventStats(p.value, a.value, { days: 7 }, { signal }),
-  sources,
-)
-const replays = useRumResource(
-  (signal) =>
-    listRumReplays(p.value, a.value, { page: 1, limit: 5 }, { signal }),
-  sources,
-)
-const alerts = useRumResource(
-  (signal) =>
-    listRumAlertIncidents(
-      p.value,
-      a.value,
-      { status: 'OPEN', page: 1, limit: 5 },
-      { signal },
-    ),
-  sources,
-)
-const metrics = [
-  { key: 'errors', sub: 'retained', resource: errors },
-  { key: 'events', sub: 'recent7', resource: events },
-  { key: 'replays', sub: 'retained', resource: replays },
-  { key: 'openAlerts', sub: 'retained', resource: alerts },
-] as const
+
+const data = computed<RumAppOverview | null>(() => resource.data.value)
+const series = computed(() => data.value?.series ?? [])
+const labels = computed(() => {
+  const format = range.value === '7d' || range.value === '30d' ? 'MM-DD' : 'HH:mm'
+  return series.value.map((point) => dayjs(point.bucketStart).format(format))
+})
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('en-US').format(value)
+}
+function formatRate(value: number | null) {
+  return value === null ? '—' : `${value}%`
+}
+function formatMs(value: number | null) {
+  return value === null ? '—' : `${formatNumber(value)} ms`
+}
+
+/** 三组指标，顺序与排查路径一致：多少人 → 接口健不健康 → 错在哪 */
+const groups = computed(() => {
+  const overview = data.value
+  if (!overview) return []
+  return [
+    {
+      key: 'traffic',
+      title: t('rum.trafficGroup'),
+      items: [
+        { key: 'pv', label: t('rum.pv'), value: formatNumber(overview.traffic.pv) },
+        { key: 'uv', label: t('rum.uv'), value: formatNumber(overview.traffic.uv) },
+        { key: 'clicks', label: t('rum.clicks'), value: formatNumber(overview.traffic.clicks) },
+      ],
+    },
+    {
+      key: 'requests',
+      title: t('rum.requestGroup'),
+      items: [
+        {
+          key: 'total',
+          label: t('rum.requestVolume'),
+          value: formatNumber(overview.requests.total),
+        },
+        {
+          key: 'successRate',
+          label: t('rum.requestSuccessRate'),
+          value: formatRate(overview.requests.successRate),
+        },
+        {
+          key: 'errorRate',
+          label: t('rum.requestErrorRate'),
+          value: formatRate(overview.requests.errorRate),
+        },
+        {
+          key: 'failures',
+          label: t('rum.requestFailures'),
+          value: formatNumber(overview.requests.failures),
+        },
+        {
+          key: 'p75',
+          label: t('rum.requestLatency'),
+          value: formatMs(overview.requests.p75),
+        },
+      ],
+    },
+    {
+      key: 'errors',
+      title: t('rum.errorEventGroup'),
+      items: [
+        { key: 'js', label: t('rum.jsErrorVolume'), value: formatNumber(overview.errors.js) },
+        {
+          key: 'jsRate',
+          label: t('rum.jsErrorRate'),
+          value: formatRate(overview.errors.jsRate),
+        },
+        {
+          key: 'custom',
+          label: t('rum.customErrorVolume'),
+          value: formatNumber(overview.errors.custom),
+        },
+        {
+          key: 'events',
+          label: t('rum.eventVolume'),
+          value: formatNumber(overview.errors.events),
+        },
+      ],
+    },
+  ]
+})
+
+const trafficOption = computed<ChartOption>(() => {
+  const palette = theme.value
+  return chartBase(palette, {
+    grid: { ...chartGrid, top: 40 },
+    tooltip: chartTooltip(palette),
+    legend: chartLegend(palette),
+    xAxis: categoryAxis(palette, labels.value, true),
+    yAxis: valueAxis(palette),
+    series: [
+      {
+        name: t('rum.pv'),
+        type: 'line',
+        smooth: true,
+        showSymbol: false,
+        data: series.value.map((point) => point.pv),
+        lineStyle: { width: 1.8, color: palette.brand },
+        itemStyle: { color: palette.brand },
+        areaStyle: areaStyle(palette.brand),
+      },
+      {
+        name: t('rum.uv'),
+        type: 'line',
+        smooth: true,
+        showSymbol: false,
+        data: series.value.map((point) => point.uv),
+        lineStyle: { width: 1.8, color: palette.success },
+        itemStyle: { color: palette.success },
+      },
+      {
+        name: t('rum.clicks'),
+        type: 'line',
+        smooth: true,
+        showSymbol: false,
+        data: series.value.map((point) => point.clicks),
+        lineStyle: { width: 1.8, color: palette.warning },
+        itemStyle: { color: palette.warning },
+      },
+    ],
+  })
+})
+
+const requestOption = computed<ChartOption>(() => {
+  const palette = theme.value
+  return chartBase(palette, {
+    grid: { ...chartGrid, top: 40 },
+    tooltip: chartTooltip(palette),
+    legend: chartLegend(palette),
+    xAxis: categoryAxis(palette, labels.value, true),
+    yAxis: [valueAxis(palette), valueAxis(palette, { formatter: '{value}%', max: 100 })],
+    series: [
+      {
+        name: t('rum.requestVolume'),
+        type: 'bar',
+        stack: 'requests',
+        barMaxWidth: 18,
+        data: series.value.map((point) => point.requests),
+        itemStyle: { color: palette.brand },
+      },
+      {
+        name: t('rum.requestFailures'),
+        type: 'bar',
+        stack: 'requests',
+        barMaxWidth: 18,
+        data: series.value.map((point) => point.failures),
+        itemStyle: { color: palette.error },
+      },
+      {
+        name: t('rum.requestSuccessRate'),
+        type: 'line',
+        yAxisIndex: 1,
+        smooth: true,
+        showSymbol: false,
+        // 没有请求的桶留空，避免把「无数据」画成 0%
+        data: series.value.map((point) =>
+          point.requests
+            ? Math.round(((point.requests - point.failures) / point.requests) * 10_000) / 100
+            : null,
+        ),
+        lineStyle: { width: 1.8, color: palette.success },
+        itemStyle: { color: palette.success },
+      },
+    ],
+  })
+})
+
+const errorOption = computed<ChartOption>(() => {
+  const palette = theme.value
+  return chartBase(palette, {
+    grid: { ...chartGrid, top: 40 },
+    tooltip: chartTooltip(palette),
+    legend: chartLegend(palette),
+    xAxis: categoryAxis(palette, labels.value, true),
+    yAxis: [valueAxis(palette), valueAxis(palette)],
+    series: [
+      {
+        name: t('rum.jsErrorVolume'),
+        type: 'bar',
+        stack: 'errors',
+        barMaxWidth: 18,
+        data: series.value.map((point) => point.jsErrors),
+        itemStyle: { color: palette.error },
+      },
+      {
+        name: t('rum.customErrorVolume'),
+        type: 'bar',
+        stack: 'errors',
+        barMaxWidth: 18,
+        data: series.value.map((point) => point.customErrors),
+        itemStyle: { color: palette.warning },
+      },
+      {
+        name: t('rum.eventVolume'),
+        type: 'bar',
+        yAxisIndex: 1,
+        barMaxWidth: 18,
+        data: series.value.map((point) => point.events),
+        itemStyle: { color: palette.brand },
+      },
+    ],
+  })
+})
+
+const rangeLabel = computed(() => t(`rum.range${range.value}`))
 </script>
 
 <template>
-  <t-card class="rum-overview">
-    <template #title>{{ t('rum.overview') }}</template>
-    <template #actions>
-      <span class="rum-overview__hint">{{ t('rum.recent7') }}</span>
-    </template>
-    <div class="rum-overview__grid">
-      <div
-        v-for="item in metrics"
-        :key="item.key"
-        class="rum-overview__metric"
+  <div class="rum-overview">
+    <header class="rum-overview__toolbar">
+      <span class="rum-overview__scope">{{ t('rum.overviewScope') }}</span>
+      <t-radio-group
+        v-model="range"
+        variant="default-filled"
+        size="small"
       >
-        <span class="rum-overview__label">{{ t('rum.' + item.key) }}</span>
-        <RumState
-          :loading="item.resource.loading.value"
-          :error="item.resource.error.value"
-          @retry="item.resource.reload"
+        <t-radio-button
+          v-for="value in ranges"
+          :key="value"
+          :value="value"
         >
-          <strong>{{ item.resource.data.value?.total ?? '—' }}</strong>
-        </RumState>
-        <small>{{ t('rum.' + item.sub) }}</small>
+          {{ t(`rum.range${value}`) }}
+        </t-radio-button>
+      </t-radio-group>
+    </header>
+
+    <RumState
+      :loading="resource.loading.value"
+      :error="resource.error.value"
+      @retry="resource.reload"
+    >
+      <div
+        v-if="data"
+        class="rum-overview__body"
+      >
+        <section
+          v-for="group in groups"
+          :key="group.key"
+          class="rum-overview__group"
+        >
+          <h3 class="rum-overview__group-title">{{ group.title }}</h3>
+          <dl class="rum-overview__kpis">
+            <div
+              v-for="item in group.items"
+              :key="item.key"
+              class="rum-overview__kpi"
+            >
+              <dt>{{ item.label }}</dt>
+              <dd>{{ item.value }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <div class="rum-overview__charts">
+          <ChartCard
+            :title="t('rum.trafficTrend')"
+            :extra="rangeLabel"
+            height="260px"
+          >
+            <EChart :option="trafficOption" />
+          </ChartCard>
+          <ChartCard
+            :title="t('rum.requestTrend')"
+            :extra="formatRate(data.requests.successRate)"
+            height="260px"
+          >
+            <EChart :option="requestOption" />
+          </ChartCard>
+          <ChartCard
+            :title="t('rum.errorEventTrend')"
+            :extra="formatNumber(data.errors.total)"
+            height="260px"
+          >
+            <EChart :option="errorOption" />
+          </ChartCard>
+        </div>
       </div>
-    </div>
-  </t-card>
+    </RumState>
+  </div>
 </template>
 
 <style scoped lang="less">
 .rum-overview {
+  display: grid;
+  gap: 16px;
   min-width: 0;
 
-  &__hint {
-    color: @beacon-text-secondary;
+  &__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  &__scope {
+    color: @beacon-text-tertiary;
     font-size: 12px;
   }
 
-  &__grid {
+  &__body {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
+    min-width: 0;
   }
 
-  &__metric {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
-    padding: 4px 0;
+  &__group {
+    padding: 16px;
+    background: @beacon-bg-container;
+    border: 1px solid @beacon-border;
+  }
 
-    strong {
+  &__group-title {
+    margin: 0 0 12px;
+    color: @beacon-text-secondary;
+    font-size: 12px;
+    font-weight: @beacon-font-weight-medium;
+  }
+
+  &__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+    margin: 0;
+
+    div {
+      min-width: 0;
+    }
+
+    dt {
+      color: @beacon-text-secondary;
+      font-size: 12px;
+    }
+
+    dd {
+      margin: 6px 0 0;
+      overflow-wrap: anywhere;
       font-size: 24px;
       font-weight: 600;
       line-height: 32px;
-      overflow-wrap: anywhere;
       font-variant-numeric: tabular-nums;
     }
-
-    small {
-      color: @beacon-text-tertiary;
-      font-size: 12px;
-    }
   }
 
-  &__label {
-    color: @beacon-text-secondary;
-    font-size: 12px;
+  &__charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+    min-width: 0;
   }
 }
 
-@media (max-width: 1100px) {
-  .rum-overview__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 600px) {
-  .rum-overview__grid {
+@media (max-width: 700px) {
+  .rum-overview__charts {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rum-overview__kpis dd {
+    font-size: 20px;
+    line-height: 28px;
   }
 }
 </style>

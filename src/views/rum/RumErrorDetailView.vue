@@ -36,9 +36,9 @@ usePageHeader({
     route.query.returnTo === 'project-errors'
       ? { path: '/rum/errors', query: { ...route.query, returnTo: undefined } }
       : {
-          name: 'rum-app-detail',
-          params: { projectId: projectId.value, appId: appId.value },
-          query: { ...route.query, tab: 'errors' },
+          name: 'rum-app-section',
+          params: { projectId: projectId.value, appId: appId.value, section: 'errors' },
+          query: { ...route.query },
         },
 })
 
@@ -73,7 +73,7 @@ function openTrace() {
   void router.push({
     name: 'rum-replay-detail',
     params: { projectId: projectId.value, appId: appId.value, replayId },
-    query: { ...route.query, tab: 'replays' },
+    query: { ...route.query },
   })
 }
 

@@ -11,9 +11,9 @@ const { t } = useI18n()
 const { route, projectId: p, appId: a, canReadRum } = useRumContext()
 usePageHeader({
   back: () => ({
-    name: 'rum-app-detail',
-    params: { projectId: p.value, appId: a.value },
-    query: { tab: 'replays' },
+    name: 'rum-app-section',
+    params: { projectId: p.value, appId: a.value, section: 'replays' },
+    query: { ...route.query },
   }),
 })
 const id = computed(() => String(route.params.replayId ?? ''))

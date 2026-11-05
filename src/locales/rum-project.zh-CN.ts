@@ -1,8 +1,8 @@
 ﻿export default {
   overview: '概览',
-  errors: '错误列表',
-  events: '事件统计',
-  apps: '应用列表',
+  errors: '错误',
+  events: '事件',
+  apps: '应用',
   appDetail: '应用详情',
   overviewDesc: '当前项目所有应用的监控概况',
   errorsDesc: '查询当前项目所有应用的聚合错误',

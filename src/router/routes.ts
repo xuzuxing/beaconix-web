@@ -2,6 +2,7 @@ import type { RouteRecordRaw } from 'vue-router'
 
 import type { GlobalRole } from '@/api/types'
 import { HOME_PATH } from '@/config'
+import { normalizeRumAppSection } from '@/config/rum-app-nav'
 import {
   Analytics01Icon,
   CodeIcon,
@@ -55,17 +56,20 @@ export const layoutChildren: RouteRecordRaw[] = [
   },
 
   // ---------- RUM ----------
-  // Declare overview first so the primary item opens the first accessible page.
-  ...(['overview', 'errors', 'events'] as const).map((section) => ({
-    path: `rum/${section}`,
-    name: `rum-project-${section}`,
+  // 一级入口「前端监控」直接落地应用卡片列表（/rum）。
+  // 概览/错误/事件是项目级（跨应用）查询，入口收在卡片列表页顶部，不占左侧二级菜单；
+  // 应用级页面（/rum/:projectId/:appId/*）进入后由 SecondaryNav 渲染应用内导航。
+  {
+    path: 'rum/overview',
+    name: 'rum-project-overview',
     component: () => import('@/views/rum/RumProjectView.vue'),
-    props: { section },
+    props: { section: 'overview' },
     meta: {
-      titleKey: `rumProject.${section}`,
+      titleKey: 'rumProject.overview',
+      menuExcluded: true,
       keepAlive: false,
     },
-  })),
+  },
   {
     path: 'rum',
     name: 'rum-apps',
@@ -78,10 +82,31 @@ export const layoutChildren: RouteRecordRaw[] = [
       keepAlive: false,
     },
   },
+  ...(['errors', 'events'] as const).map((section) => ({
+    path: `rum/${section}`,
+    name: `rum-project-${section}`,
+    component: () => import('@/views/rum/RumProjectView.vue'),
+    props: { section },
+    meta: {
+      titleKey: `rumProject.${section}`,
+      menuExcluded: true,
+      keepAlive: false,
+    },
+  })),
   {
+    // 旧链接兼容：/rum/p/a 与 /rum/p/a?tab=errors 统一重定向到真实子路径
     path: 'rum/:projectId/:appId',
     name: 'rum-app-detail',
-    component: () => import('@/views/rum/RumAppDetailView.vue'),
+    redirect: (to) => {
+      const tab = Array.isArray(to.query.tab) ? to.query.tab[0] : to.query.tab
+      const query = { ...to.query }
+      delete query.tab
+      return {
+        name: 'rum-app-section',
+        params: { ...to.params, section: normalizeRumAppSection(tab) },
+        query,
+      }
+    },
     meta: {
       titleKey: 'rumProject.appDetail',
       hidden: true,
@@ -111,6 +136,22 @@ export const layoutChildren: RouteRecordRaw[] = [
       hidden: true,
       menuExcluded: true,
       activeMenu: '/rum',
+      keepAlive: false,
+    },
+  },
+  {
+    // 应用工作台：概览/错误/性能/回放/版本/事件/告警/Source Map/接入/设置
+    // 都是真实子路径，可深链、可书签；左侧导航由 SecondaryNav 按 rumAppScoped 渲染
+    path: 'rum/:projectId/:appId/:section',
+    name: 'rum-app-section',
+    component: () => import('@/views/rum/RumAppDetailView.vue'),
+    props: (route) => ({ section: normalizeRumAppSection(route.params.section) }),
+    meta: {
+      titleKey: 'rumProject.appDetail',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/rum',
+      rumAppScoped: true,
       keepAlive: false,
     },
   },

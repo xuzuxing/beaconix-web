@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
 import { MessagePlugin } from 'tdesign-vue-next'
 import {
   createRumApp,
+  getProjectRumOverview,
   listRumApps,
   setRumAppEnabled,
   updateRumApp,
 } from '@/api/modules/rum'
-import type { RumApp } from '@/api/types/rum'
+import type { RumApp, RumProjectOverview } from '@/api/types/rum'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import { PlusSignIcon, RefreshIcon, Search01Icon } from '@/icons'
@@ -21,10 +24,17 @@ import {
   workspaceEpoch,
 } from '@/utils/access-context'
 
+/**
+ * 前端监控入口：项目内的应用卡片列表。
+ * 点卡片进入应用工作台（/rum/:projectId/:appId/*），左侧切换成应用内导航；
+ * 项目级（跨应用）查询的入口收在本页顶部，不再占用左侧二级菜单。
+ */
 const { t } = useI18n()
+const router = useRouter()
 const org = useOrganizationStore()
 const permissions = usePermissionsStore()
 const apps = ref<RumApp[]>([])
+const overview = ref<RumProjectOverview | null>(null)
 const loading = ref(false)
 const error = ref(false)
 const submitting = ref(false)
@@ -34,13 +44,27 @@ const name = ref('')
 const search = ref('')
 const status = ref<'all' | 'enabled' | 'disabled'>('all')
 const page = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(12)
 const projectId = computed(() => org.currentProjectId)
 const canManage = computed(
   () =>
     org.currentProject?.status === 'ACTIVE' &&
     permissions.canProject(projectId.value, 'app.manage'),
 )
+const canReadApps = computed(() => permissions.canProject(projectId.value, 'app.read'))
+const canReadRum = computed(() => permissions.canProject(projectId.value, 'rum.read'))
+const projectShortcuts = computed(() => [
+  { path: '/rum/overview', label: t('rumProject.overview') },
+  { path: '/rum/errors', label: t('rumProject.errors') },
+  { path: '/rum/events', label: t('rumProject.events') },
+])
+const stats = computed(() => {
+  const map = new Map<string, { errorGroups: number; events7d: number }>()
+  for (const item of overview.value?.apps ?? []) {
+    map.set(item.id, { errorGroups: item.errorGroups, events7d: item.events7d })
+  }
+  return map
+})
 const filtered = computed(() => {
   const keyword = search.value.trim().toLowerCase()
   return apps.value.filter((app) => {
@@ -51,12 +75,9 @@ const filtered = computed(() => {
   })
 })
 const currentPage = computed(() =>
-  Math.min(
-    page.value,
-    Math.max(1, Math.ceil(filtered.value.length / pageSize.value)),
-  ),
+  Math.min(page.value, Math.max(1, Math.ceil(filtered.value.length / pageSize.value))),
 )
-const rows = computed(() => {
+const visibleApps = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   return filtered.value.slice(start, start + pageSize.value)
 })
@@ -69,6 +90,7 @@ async function reload() {
   controller?.abort()
   controller = new AbortController()
   apps.value = []
+  overview.value = null
   error.value = false
   if (!projectId.value) {
     loading.value = false
@@ -76,11 +98,14 @@ async function reload() {
   }
   loading.value = true
   try {
-    const result = await listRumApps(projectId.value, {
-      signal: controller.signal,
-    })
+    const [list, summary] = await Promise.all([
+      listRumApps(projectId.value, { signal: controller.signal }),
+      // 卡片上的错误组/事件数来自概览聚合；聚合失败不影响列表本身
+      getProjectRumOverview(projectId.value, { signal: controller.signal }).catch(() => null),
+    ])
     if (token === generation) {
-      apps.value = result
+      apps.value = list
+      overview.value = summary
       page.value = 1
     }
   } catch {
@@ -110,10 +135,25 @@ onScopeDispose(() => {
   generation++
   controller?.abort()
 })
+function formatTime(value?: string | null) {
+  return value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '—'
+}
+function appTarget(app: RumApp) {
+  return {
+    name: 'rum-app-section',
+    params: { projectId: projectId.value, appId: app.id, section: 'errors' },
+  }
+}
+function openApp(app: RumApp) {
+  void router.push(appTarget(app))
+}
 function edit(app?: RumApp) {
   edited.value = app ?? null
   name.value = app?.name ?? ''
   editorOpen.value = true
+}
+function openSettings(app: RumApp) {
+  edit(app)
 }
 async function allowed(id: string) {
   const authority = await permissions.ensureProject(id, true)
@@ -138,8 +178,7 @@ async function save() {
     editorOpen.value = false
     await reload()
   } catch {
-    if (isCurrentContext(context))
-      void MessagePlugin.error(t('rumApps.operationFailed'))
+    if (isCurrentContext(context)) void MessagePlugin.error(t('rumApps.operationFailed'))
   } finally {
     submitting.value = false
   }
@@ -162,8 +201,7 @@ async function toggle(app: RumApp) {
     await setRumAppEnabled(id, app.id, !app.enabled)
     if (isCurrentContext(context) && id === projectId.value) await reload()
   } catch {
-    if (isCurrentContext(context))
-      void MessagePlugin.error(t('rumApps.operationFailed'))
+    if (isCurrentContext(context)) void MessagePlugin.error(t('rumApps.operationFailed'))
   } finally {
     submitting.value = false
   }
@@ -176,13 +214,7 @@ async function copy(text: string) {
     void MessagePlugin.error(t('rumApps.operationFailed'))
   }
 }
-function paginate({
-  current,
-  pageSize: size,
-}: {
-  current: number
-  pageSize: number
-}) {
+function paginate({ current, pageSize: size }: { current: number; pageSize: number }) {
   page.value = current
   pageSize.value = size
 }
@@ -227,6 +259,21 @@ function resetFilters() {
         </span>
       </template>
 
+      <nav
+        v-if="canReadRum"
+        class="rum-apps__shortcuts"
+        :aria-label="t('rumApps.crossApp')"
+      >
+        <span>{{ t('rumApps.crossApp') }}</span>
+        <RouterLink
+          v-for="item in projectShortcuts"
+          :key="item.path"
+          :to="item.path"
+        >
+          {{ item.label }}
+        </RouterLink>
+      </nav>
+
       <div class="rum-apps__filters">
         <t-input
           v-model="search"
@@ -245,6 +292,7 @@ function resetFilters() {
             { label: t('rumApps.disabled'), value: 'disabled' },
           ]"
         />
+        <span class="rum-apps__count">{{ t('rumApps.total', { count: filtered.length }) }}</span>
       </div>
 
       <div
@@ -269,84 +317,86 @@ function resetFilters() {
       >
         {{ t('rumProject.noProject') }}
       </div>
-      <template v-else-if="rows.length">
-        <div class="rum-apps__table">
-          <div class="rum-apps__table-head">
-            <span>{{ t('rumApps.name') }}</span>
-            <span>{{ t('rumApps.publicKey') }}</span>
-            <span>{{ t('rum.updated') }}</span>
-            <span>{{ t('rumApps.actions') }}</span>
-          </div>
+      <div
+        v-else-if="!canReadApps"
+        class="rum-apps__empty"
+      >
+        <t-alert
+          theme="warning"
+          :message="t('rumApps.noAppPermission')"
+        />
+      </div>
+      <template v-else-if="visibleApps.length">
+        <div class="rum-apps__grid">
           <article
-            v-for="app in rows"
+            v-for="app in visibleApps"
             :key="app.id"
-            class="rum-apps__item"
+            class="app-card"
+            @click="openApp(app)"
           >
-            <div class="rum-apps__identity">
-              <div class="rum-apps__name">
-                <RouterLink
-                  :to="{
-                    name: 'rum-app-detail',
-                    params: { projectId, appId: app.id },
-                  }"
-                >
-                  {{ app.name }}
-                </RouterLink>
-                <t-tag
-                  :theme="app.enabled ? 'success' : 'default'"
-                  variant="light"
-                >
-                  {{ t(app.enabled ? 'rumApps.enabled' : 'rumApps.disabled') }}
-                </t-tag>
-                <span class="rum-apps__platform">{{ app.platform }}</span>
+            <header class="app-card__head">
+              <RouterLink
+                class="app-card__name"
+                :to="appTarget(app)"
+                @click.stop
+              >
+                {{ app.name }}
+              </RouterLink>
+              <t-tag
+                size="small"
+                variant="light"
+                :theme="app.enabled ? 'success' : 'default'"
+              >
+                {{ t(app.enabled ? 'rumApps.enabled' : 'rumApps.disabled') }}
+              </t-tag>
+            </header>
+            <p class="app-card__meta">
+              <span class="app-card__platform">{{ app.platform }}</span>
+              <span>{{ t('rumApps.createdAt') }}: {{ formatTime(app.createdAt) }}</span>
+            </p>
+
+            <dl class="app-card__stats">
+              <div>
+                <dt>{{ t('rumProject.errorGroups') }}</dt>
+                <dd>{{ stats.get(app.id)?.errorGroups ?? '—' }}</dd>
               </div>
-              <p class="rum-apps__created">
-                {{ t('rumApps.createdAt') }}: {{ app.createdAt }}
-              </p>
-            </div>
-            <div class="rum-apps__key">
+              <div>
+                <dt>{{ t('rumProject.events7d') }}</dt>
+                <dd>{{ stats.get(app.id)?.events7d ?? '—' }}</dd>
+              </div>
+            </dl>
+
+            <p class="app-card__key">
+              <span>{{ t('rumApps.publicKey') }}</span>
               <code>{{ app.publicKey.slice(0, 12) }}…</code>
               <t-button
                 size="small"
                 variant="text"
-                @click="copy(app.publicKey)"
+                @click.stop="copy(app.publicKey)"
               >
                 {{ t('rumApps.copy') }}
               </t-button>
-            </div>
-            <time class="rum-apps__time">{{ app.updatedAt }}</time>
-            <div
-              v-if="canManage"
-              class="rum-apps__actions"
-            >
+            </p>
+
+            <footer class="app-card__foot">
+              <span class="app-card__open">{{ t('rumApps.enter') }} →</span>
               <t-button
+                v-if="canManage"
                 size="small"
-                variant="text"
+                variant="outline"
                 :disabled="submitting"
-                @click="edit(app)"
+                @click.stop="openSettings(app)"
               >
-                {{ t('rumApps.edit') }}
+                {{ t('rumApps.settings') }}
               </t-button>
-              <t-button
-                size="small"
-                variant="text"
-                :disabled="submitting"
-                @click="toggle(app)"
-              >
-                {{ t(app.enabled ? 'rumApps.disable' : 'rumApps.enable') }}
-              </t-button>
-            </div>
-            <span
-              v-else
-              class="rum-apps__actions"
-            >-</span>
+            </footer>
           </article>
         </div>
         <t-pagination
           :total="filtered.length"
           :current="currentPage"
           :page-size="pageSize"
-          :page-size-options="[10, 20, 50]"
+          :page-size-options="[12, 24, 48]"
           :show-jumper="false"
           @change="paginate"
         />
@@ -355,32 +405,74 @@ function resetFilters() {
         v-else
         class="rum-apps__empty"
       >
-        <p>{{ t(apps.length ? 'rumApps.noMatches' : 'rumApps.empty') }}</p>
-        <t-button
-          v-if="apps.length"
-          variant="outline"
-          @click="resetFilters"
-        >
-          {{ t('rumApps.reset') }}
-        </t-button>
+        <template v-if="apps.length">
+          <p>{{ t('rumApps.noMatches') }}</p>
+          <t-button
+            variant="outline"
+            @click="resetFilters"
+          >
+            {{ t('rumApps.reset') }}
+          </t-button>
+        </template>
+        <template v-else>
+          <h3 class="rum-apps__empty-title">{{ t('rumApps.empty') }}</h3>
+          <p class="rum-apps__empty-hint">{{ t('rumApps.emptyHint') }}</p>
+          <t-button
+            v-if="canManage"
+            theme="primary"
+            @click="edit()"
+          >
+            <template #icon><AppIcon :icon="PlusSignIcon" /></template>
+            {{ t('rumApps.createFirst') }}
+          </t-button>
+        </template>
       </div>
     </t-card>
 
     <t-dialog
       v-model:visible="editorOpen"
-      :header="t(edited ? 'rumApps.edit' : 'rumApps.create')"
+      :header="t(edited ? 'rumApps.settings' : 'rumApps.create')"
       :confirm-btn="t('rumApps.save')"
       :cancel-btn="t('rumApps.cancel')"
       :confirm-loading="submitting"
+      :confirm-disabled="!name.trim()"
+      width="520px"
       @confirm="save"
     >
-      <label for="rum-name">{{ t('rumApps.name') }}</label>
-      <t-input
-        id="rum-name"
-        v-model="name"
-        maxlength="100"
-        :placeholder="t('rumApps.namePlaceholder')"
-      />
+      <div class="app-editor">
+        <label
+          for="rum-name"
+          class="app-editor__label"
+          >{{ t('rumApps.name') }}</label
+        >
+        <t-input
+          id="rum-name"
+          v-model="name"
+          maxlength="100"
+          :placeholder="t('rumApps.namePlaceholder')"
+        />
+        <template v-if="edited">
+          <div class="app-editor__status">
+            <span>{{ t('rumProject.status') }}</span>
+            <t-tag
+              size="small"
+              variant="light"
+              :theme="edited.enabled ? 'success' : 'default'"
+            >
+              {{ t(edited.enabled ? 'rumApps.enabled' : 'rumApps.disabled') }}
+            </t-tag>
+            <t-button
+              size="small"
+              variant="outline"
+              :loading="submitting"
+              @click="toggle(edited)"
+            >
+              {{ t(edited.enabled ? 'rumApps.disable' : 'rumApps.enable') }}
+            </t-button>
+          </div>
+          <p class="app-editor__hint">{{ t('rumApps.settingsHint') }}</p>
+        </template>
+      </div>
     </t-dialog>
   </section>
 </template>
@@ -397,52 +489,22 @@ function resetFilters() {
     min-width: 0;
   }
 
-  &__filters {
-    display: grid;
-    grid-template-columns: minmax(180px, 1fr) 150px;
-    gap: 8px;
-    margin-bottom: 16px;
-  }
-
-  // 表头与行之间用 1px 分割线；白底与边框由卡片（.t-card）提供
-  &__table {
-    border-top: 1px solid @beacon-border;
-  }
-
-  &__table-head,
-  .rum-apps__item {
-    display: grid;
-    grid-template-columns: minmax(200px, 1fr) 190px 168px 128px;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 16px;
-    border-bottom: 1px solid @beacon-border;
-  }
-
-  &__table-head {
-    color: @beacon-text-secondary;
-    font-size: 12px;
-    background: @beacon-bg-page;
-  }
-
-  &__item:hover {
-    background: @beacon-bg-page;
-  }
-
-  &__identity {
-    min-width: 0;
-  }
-
-  &__name {
+  &__shortcuts {
     display: flex;
-    gap: 8px;
-    align-items: center;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid @beacon-border;
+    font-size: 12px;
+
+    > span {
+      color: @beacon-text-tertiary;
+    }
 
     a {
       color: @beacon-text-primary;
-      font-weight: 600;
-      overflow-wrap: anywhere;
 
       &:hover {
         color: @beacon-brand;
@@ -450,45 +512,25 @@ function resetFilters() {
     }
   }
 
-  &__platform {
+  &__filters {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) 150px auto;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  &__count {
     color: @beacon-text-tertiary;
-    font-size: 11px;
-  }
-
-  &__created {
-    margin: 6px 0 0;
-    overflow: hidden;
-    color: @beacon-text-secondary;
     font-size: 12px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
   }
 
-  &__key {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    min-width: 0;
-
-    code {
-      overflow: hidden;
-      color: @beacon-text-secondary;
-      font-size: 12px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  &__time {
-    color: @beacon-text-secondary;
-    font-size: 12px;
-  }
-
-  &__actions {
-    display: flex;
-    gap: 4px;
-    align-items: center;
-    min-height: 24px;
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
   }
 
   &__empty {
@@ -496,8 +538,24 @@ function resetFilters() {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 12px;
+    padding: 32px 16px;
     min-height: 240px;
+    text-align: center;
+  }
+
+  &__empty-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: @beacon-font-weight-medium;
+  }
+
+  &__empty-hint {
+    max-width: 420px;
+    margin: 0;
+    color: @beacon-text-secondary;
+    font-size: 12px;
+    line-height: 20px;
   }
 
   :deep(.t-pagination) {
@@ -507,15 +565,138 @@ function resetFilters() {
   }
 }
 
-@media (max-width: 1200px) {
-  .rum-apps__table-head,
-  .rum-apps .rum-apps__item {
-    grid-template-columns: minmax(180px, 1fr) 160px 128px;
+.app-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid @beacon-border;
+  border-radius: @beacon-radius-m;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: @beacon-brand;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 6%);
   }
 
-  .rum-apps__table-head > :nth-child(3),
-  .rum-apps__time {
-    display: none;
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: @beacon-text-primary;
+    font-size: 15px;
+    font-weight: 600;
+
+    &:hover {
+      color: @beacon-brand;
+    }
+  }
+
+  &__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin: 0;
+    color: @beacon-text-tertiary;
+    font-size: 12px;
+  }
+
+  &__platform {
+    padding: 0 6px;
+    color: @beacon-text-secondary;
+    border: 1px solid @beacon-border;
+    border-radius: @beacon-radius;
+  }
+
+  &__stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 12px 0;
+    border-top: 1px solid @beacon-border;
+    border-bottom: 1px solid @beacon-border;
+
+    dt {
+      color: @beacon-text-secondary;
+      font-size: 12px;
+    }
+
+    dd {
+      margin: 4px 0 0;
+      font-size: 18px;
+      line-height: 24px;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  &__key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: @beacon-text-secondary;
+    font-size: 12px;
+
+    code {
+      overflow: hidden;
+      font-family: @beacon-font-family-code;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__open {
+    color: @beacon-brand;
+    font-size: 12px;
+  }
+}
+
+.app-editor {
+  display: grid;
+  gap: 8px;
+
+  &__label {
+    color: @beacon-text-secondary;
+    font-size: 12px;
+  }
+
+  &__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid @beacon-border;
+    font-size: 12px;
+
+    > span:first-child {
+      color: @beacon-text-secondary;
+    }
+  }
+
+  &__hint {
+    margin: 0;
+    color: @beacon-text-tertiary;
+    font-size: 12px;
   }
 }
 
@@ -524,22 +705,12 @@ function resetFilters() {
     grid-template-columns: minmax(0, 1fr) 130px;
   }
 
-  .rum-apps__table-head {
+  .rum-apps__count {
     display: none;
   }
 
-  .rum-apps .rum-apps__item {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 12px;
-    padding: 16px 8px;
-  }
-
-  .rum-apps__identity {
-    grid-column: 1 / -1;
-  }
-
-  .rum-apps__key {
-    grid-column: 1 / -1;
+  .rum-apps__grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

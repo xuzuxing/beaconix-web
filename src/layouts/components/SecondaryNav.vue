@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
+import { RUM_APP_NAV, normalizeRumAppSection, type RumAppSection } from '@/config/rum-app-nav'
 import { buildMenu } from '@/router/menu'
 import { layoutChildren } from '@/router/routes'
 import { useUserStore } from '@/stores'
@@ -11,6 +12,7 @@ import type { MenuItem } from '@/types'
 /**
  * 二级菜单：展示当前一级模块的子页面。
  * 只有带子路由的模块才会渲染，宽度与样式对齐参考实现的 180px 侧栏。
+ * 进入 RUM 应用工作台（/rum/:projectId/:appId/*）后，切换成该应用的页内导航。
  */
 defineOptions({ name: 'SecondaryNav' })
 
@@ -50,6 +52,36 @@ const activePath = computed(() =>
     : (route.meta.activeMenu ?? route.path),
 )
 
+/**
+ * RUM 应用工作台的应用内导航：路由 meta 标记 rumAppScoped 时渲染，
+ * 页面地址带 projectId/appId，无法由路由表静态生成，因此在这里按当前参数拼装。
+ */
+const appNav = computed(() => {
+  const scoped =
+    route.meta.rumAppScoped ||
+    route.name === 'rum-error-detail' ||
+    route.name === 'rum-replay-detail'
+  const projectId = typeof route.params.projectId === 'string' ? route.params.projectId : ''
+  const appId = typeof route.params.appId === 'string' ? route.params.appId : ''
+  if (!scoped || !projectId || !appId) return null
+  const base = `/rum/${encodeURIComponent(projectId)}/${encodeURIComponent(appId)}`
+  return {
+    items: RUM_APP_NAV.map((item) => ({
+      ...item,
+      path: `${base}/${item.section}`,
+    })),
+    appsPath: '/rum',
+  }
+})
+
+/** 当前高亮的应用内页面：详情页（错误/回放）归属到它所属的列表页 */
+const activeSection = computed<RumAppSection | ''>(() => {
+  if (!appNav.value) return ''
+  if (route.name === 'rum-error-detail') return 'errors'
+  if (route.name === 'rum-replay-detail') return 'replays'
+  return normalizeRumAppSection(route.params.section)
+})
+
 function renderTitle(item: MenuItem) {
   return item.titleKey ? t(item.titleKey) : item.path
 }
@@ -57,39 +89,75 @@ function renderTitle(item: MenuItem) {
 
 <template>
   <aside
-    v-if="current?.submenu"
+    v-if="appNav || current?.submenu"
     class="secondary-nav"
   >
     <div class="secondary-nav__header">
-      <h2 class="secondary-nav__title">{{ renderTitle(current) }}</h2>
+      <h2 class="secondary-nav__title">
+        {{ appNav ? t('rumProject.appDetail') : current ? renderTitle(current) : '' }}
+      </h2>
     </div>
 
     <nav class="secondary-nav__body">
       <ul class="secondary-nav__list">
-        <template
-          v-for="item in current.submenu"
-          :key="item.path"
-        >
-          <li
-            v-if="item.type === 'group'"
-            class="secondary-nav__group"
-          >
-            {{ renderTitle(item) }}
-          </li>
-          <li
-            v-else
-            class="secondary-nav__cell"
-          >
+        <template v-if="appNav">
+          <li class="secondary-nav__cell">
             <router-link
               class="secondary-nav__link"
-              :class="{
-                'secondary-nav__link--active': activePath === item.path,
-              }"
-              :to="item.path"
+              :to="appNav.appsPath"
             >
-              {{ renderTitle(item) }}
+              {{ t('rum.backToApps') }}
             </router-link>
           </li>
+          <template
+            v-for="item in appNav.items"
+            :key="item.section"
+          >
+            <li
+              v-if="item.groupKey"
+              class="secondary-nav__group"
+            >
+              {{ t(item.groupKey) }}
+            </li>
+            <li class="secondary-nav__cell">
+              <router-link
+                class="secondary-nav__link"
+                :class="{
+                  'secondary-nav__link--active': activeSection === item.section,
+                }"
+                :to="item.path"
+              >
+                {{ t(item.titleKey) }}
+              </router-link>
+            </li>
+          </template>
+        </template>
+        <template v-else>
+          <template
+            v-for="item in current?.submenu"
+            :key="item.path"
+          >
+            <li
+              v-if="item.type === 'group'"
+              class="secondary-nav__group"
+            >
+              {{ renderTitle(item) }}
+            </li>
+            <li
+              v-else
+              class="secondary-nav__cell"
+            >
+              <router-link
+                class="secondary-nav__link"
+                :class="{
+                  'secondary-nav__link--active': activePath === item.path,
+                }"
+                :to="item.path"
+              >
+                {{ renderTitle(item) }}
+              </router-link>
+            </li>
+          </template>
         </template>
       </ul>
     </nav>

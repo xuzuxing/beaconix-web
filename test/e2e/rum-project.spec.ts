@@ -87,10 +87,19 @@ test('project menu and project-wide error/event queries use server pagination an
   })
   await page.setViewportSize({ width: 1920, height: 1000 })
   await page.goto('/rum')
-  await expect(page.locator('.side-nav').getByText('前端监控', { exact: true })).toBeVisible({
-    timeout: 25_000,
-  })
-  await page.locator('.side-nav').getByText('前端监控', { exact: true }).click()
+  // 一级入口直接落地应用卡片列表
+  await expect(page.locator('.app-card').first()).toBeVisible({ timeout: 25_000 })
+  const primary = page.locator('.side-nav')
+  await expect(primary.getByText('云监控', { exact: true })).toBeVisible()
+  await expect(primary.getByText('前端监控', { exact: true })).toBeVisible()
+  await primary.getByText('前端监控', { exact: true }).click()
+  await expect(page).toHaveURL(/\/rum$/)
+
+  // 项目级跨应用查询的入口收在卡片列表页顶部
+  const shortcuts = page.locator('.rum-apps__shortcuts')
+  for (const name of ['概览', '错误', '事件'])
+    await expect(shortcuts.getByRole('link', { name, exact: true })).toBeVisible()
+  await shortcuts.getByRole('link', { name: '概览', exact: true }).click()
   await expect(page).toHaveURL(/\/rum\/overview/)
 
   await expect(page.getByRole('heading', { name: '概览', exact: true })).toBeVisible({
@@ -98,13 +107,13 @@ test('project menu and project-wide error/event queries use server pagination an
   })
   await expect(page.getByText('Alpha', { exact: true })).toBeVisible()
   await expect(page.getByText('Beta', { exact: true })).toBeVisible()
-  const primary = page.locator('.side-nav')
-  await expect(primary.getByText('云监控', { exact: true })).toBeVisible()
-  await expect(primary.getByText('前端监控', { exact: true })).toBeVisible()
-  const side = page.locator('.secondary-nav')
-  for (const name of ['概览', '错误列表', '事件统计', '应用列表'])
-    await expect(side.getByText(name, { exact: true })).toBeVisible()
-  await side.getByText('错误列表', { exact: true }).click()
+  // 项目级页面之间用页内导航切换，不再占用左侧二级菜单
+  const projectNav = page.locator('.rum-project-nav')
+  await expect(projectNav.getByRole('link', { name: '概览', exact: true })).toHaveClass(
+    /rum-project-nav__link--active/,
+  )
+  await projectNav.getByRole('link', { name: '错误', exact: true }).click()
+  await expect(page).toHaveURL(/\/rum\/errors/)
   await expect(page.getByText('Cross app failure')).toBeVisible()
   const pageWidth = await page
     .locator('.project-page')
@@ -153,9 +162,9 @@ test('project menu and project-wide error/event queries use server pagination an
     .toBe(true)
   await page.getByText('Cross app failure').click()
   await expect(page.locator('.layout__page-title')).toHaveText('Cross app failure')
-  await expect(side.getByText('错误列表', { exact: true })).toHaveClass(
-    /secondary-nav__link--active/,
-  )
+  // 错误详情属于应用工作台，左侧切换成该应用的应用内导航
+  const appNav = page.locator('.secondary-nav')
+  await expect(appNav.locator('.secondary-nav__link--active')).toHaveText('错误')
   await page.locator('.layout__header-back').click()
   await expect(page).toHaveURL(/\/rum\/errors/)
   await expect(page.getByPlaceholder('错误类型（精确匹配）')).toHaveValue('TypeError')
@@ -163,7 +172,7 @@ test('project menu and project-wide error/event queries use server pagination an
   await expect(page.locator('.filters .t-date-range-picker input').nth(0)).toHaveValue(
     '2026-11-01 00:00:00',
   )
-  await side.getByText('事件统计', { exact: true }).click()
+  await projectNav.getByRole('link', { name: '事件', exact: true }).click()
   await expect(page.getByText('checkout', { exact: true })).toBeVisible()
   await page.getByPlaceholder('事件名称（精确匹配）').fill('checkout')
   await page.getByRole('button', { name: '查询', exact: true }).click()
@@ -175,14 +184,16 @@ test('project menu and project-wide error/event queries use server pagination an
       ),
     )
     .toBe(true)
-  await side.getByText('应用列表', { exact: true }).click()
+  // 回到应用卡片列表，点卡片进入应用工作台
+  await projectNav.getByRole('link', { name: '返回应用列表' }).click()
+  await expect(page).toHaveURL(/\/rum$/)
   await expect(page.getByRole('link', { name: 'Alpha' })).toBeVisible()
   await page.getByRole('link', { name: 'Beta' }).click()
-  await expect(side.getByText('应用列表', { exact: true })).toHaveClass(
-    /secondary-nav__link--active/,
-  )
-  await side.getByText('应用列表', { exact: true }).click()
-  await side.getByText('概览', { exact: true }).click()
+  await expect(page).toHaveURL(/\/rum\/b\/app2\/errors$/)
+  await expect(appNav.locator('.secondary-nav__link--active')).toHaveText('错误')
+  await appNav.getByRole('link', { name: '返回应用列表' }).click()
+  await expect(page).toHaveURL(/\/rum$/)
+  await page.locator('.rum-apps__shortcuts').getByRole('link', { name: '概览', exact: true }).click()
   await page.locator('.app-header__project').click()
   await page.locator('.project-list__item').filter({ hasText: 'Project A' }).click()
   await expect
@@ -191,8 +202,8 @@ test('project menu and project-wide error/event queries use server pagination an
   await page.goto('/rum/errors')
   await expect(page.locator('.filters')).toBeVisible()
   await page.setViewportSize({ width: 390, height: 844 })
-  await expect(page.locator('.secondary-nav')).toBeVisible()
-  await page.locator('.secondary-nav').getByText('事件统计', { exact: true }).click()
+  await expect(page.locator('.rum-project-nav')).toBeVisible()
+  await page.locator('.rum-project-nav').getByRole('link', { name: '事件', exact: true }).click()
   await expect(page).toHaveURL(/\/rum\/events/)
   await expect
     .poll(() => page.locator('.filters').evaluate((el) => el.scrollWidth <= el.clientWidth + 1))

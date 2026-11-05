@@ -238,7 +238,7 @@ function openError(id: string) {
   void router.push({
     name: 'rum-error-detail',
     params: { projectId: p.value, appId: a.value, errorId: id },
-    query: { ...route.query, tab: 'errors' },
+    query: { ...route.query },
   })
 }
 </script>

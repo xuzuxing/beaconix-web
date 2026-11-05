@@ -161,6 +161,49 @@ export interface RumSourceMap {
 export type RumPerformanceMetric =
   'LCP' | 'CLS' | 'INP' | 'FCP' | 'TTFB' | 'PAGE_LOAD' | 'RESOURCE' | 'HTTP'
 export type RumPerformanceRating = 'GOOD' | 'NEEDS_IMPROVEMENT' | 'POOR'
+
+/** 应用概览：PV/UV/点击、请求健康度、错误与事件，以及对应的时间序列。 */
+export interface RumAppOverviewTraffic {
+  pv: number
+  uv: number
+  clicks: number
+}
+export interface RumAppOverviewRequests {
+  total: number
+  success: number
+  failures: number
+  successRate: number | null
+  errorRate: number | null
+  p75: number | null
+  average: number | null
+}
+export interface RumAppOverviewErrors {
+  js: number
+  custom: number
+  total: number
+  events: number
+  jsRate: number | null
+}
+export interface RumAppOverviewPoint {
+  bucketStart: string
+  pv: number
+  uv: number
+  clicks: number
+  requests: number
+  failures: number
+  jsErrors: number
+  customErrors: number
+  events: number
+}
+export interface RumAppOverview {
+  from: string
+  to: string
+  bucketMinutes: number
+  traffic: RumAppOverviewTraffic
+  requests: RumAppOverviewRequests
+  errors: RumAppOverviewErrors
+  series: RumAppOverviewPoint[]
+}
 export interface RumPerformanceStats {
   metric: RumPerformanceMetric
   count: number

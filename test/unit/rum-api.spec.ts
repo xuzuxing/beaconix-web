@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   createRumApp,
   getRumApp,
+  getRumAppOverview,
   getProjectRumOverview,
   listProjectRumErrors,
   listProjectRumEvents,
@@ -73,6 +74,28 @@ describe('RUM app management API', () => {
     expect(patch).toHaveBeenCalledWith('/projects/p%2Fa/apps/a%2Fb', { name: 'New' })
     setRumAppEnabled('p/a', 'a/b', false)
     expect(post).toHaveBeenCalledWith('/projects/p%2Fa/apps/a%2Fb/disable')
+  })
+  it('reads the app overview with its window and bucket', () => {
+    const signal = new AbortController().signal
+    getRumAppOverview(
+      'p/a',
+      'a/b',
+      {
+        from: '2026-11-04T00:00:00.000Z',
+        to: '2026-11-05T00:00:00.000Z',
+        bucketMinutes: 60,
+      },
+      { signal },
+    )
+    expect(get).toHaveBeenCalledWith(
+      '/projects/p%2Fa/apps/a%2Fb/overview',
+      {
+        from: '2026-11-04T00:00:00.000Z',
+        to: '2026-11-05T00:00:00.000Z',
+        bucketMinutes: 60,
+      },
+      { signal },
+    )
   })
   it('exposes performance and release query endpoints', () => {
     const signal = new AbortController().signal

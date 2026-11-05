@@ -42,6 +42,16 @@ export default {
     noMatches: 'No matching applications',
     reset: 'Reset filters',
     refresh: 'Refresh',
+    total: 'Applications: {count}',
+    crossApp: 'Cross-app queries',
+    enter: 'Open application',
+    settings: 'Settings',
+    settingsHint:
+      'Renaming takes effect immediately. Disabling stops collection for this application; existing data is kept.',
+    createFirst: 'Create the first application',
+    emptyHint:
+      'Each application has one public key. Create one, then use the snippet on the integration page to wire up the SDK and start seeing errors, performance and replays here.',
+    noAppPermission: 'You do not have permission to view applications in this project.',
   },
   productNav: { label: 'Switch monitoring product', cloud: 'Cloud', rum: 'Frontend Monitoring' },
   access,

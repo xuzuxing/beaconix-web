@@ -25,6 +25,7 @@ import type {
   RumReleaseList,
   RumReleaseCompare,
   RumErrorStatus,
+  RumAppOverview,
 } from '@/api/types/rum'
 import { del, get, patch, post, upload } from '@/utils/request'
 
@@ -146,6 +147,12 @@ export const getRumPerformanceSummary = (
   params: Query = {},
   config?: AxiosRequestConfig,
 ) => get<RumPerformanceSummary>(nested(p, a, 'performance/summary'), params, config)
+export const getRumAppOverview = (
+  p: string,
+  a: string,
+  params: Query = {},
+  config?: AxiosRequestConfig,
+) => get<RumAppOverview>(nested(p, a, 'overview'), params, config)
 export const listRumPerformancePages = (
   p: string,
   a: string,

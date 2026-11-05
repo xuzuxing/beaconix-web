@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getRumApp } from '@/api/modules/rum'
+import { RUM_APP_MANAGE_ONLY_SECTIONS, type RumAppSection } from '@/config/rum-app-nav'
 import { useRumContext } from '@/composables/useRumContext'
 import { useRumResource } from '@/composables/useRumResource'
 import { usePageHeader } from '@/composables/usePageHeader'
@@ -18,39 +19,27 @@ import RumSourceMaps from '@/components/rum/RumSourceMaps.vue'
 import RumAlerts from '@/components/rum/RumAlerts.vue'
 import RumSetup from '@/components/rum/RumSetup.vue'
 import RumAppSettings from '@/components/rum/RumAppSettings.vue'
+
+/**
+ * 应用工作台：一个应用的全部页面都在这里，具体展示哪一屏由路由参数 `section` 决定。
+ * 左侧导航由 SecondaryNav 依据 `meta.rumAppScoped` 渲染，本页不再自带页签，
+ * 因此每个页面都有独立地址、可深链、可书签。
+ */
+const props = defineProps<{ section: RumAppSection }>()
+
 const { t } = useI18n()
-const { route, router, projectId, appId, canReadRum } = useRumContext()
+const { projectId, appId, canReadRum } = useRumContext()
 const app = useRumResource(
   (signal) => getRumApp(projectId.value, appId.value, { signal }),
   [projectId, appId],
 )
 usePageHeader({ title: () => app.data.value?.name, back: '/rum' })
-const tabs = [
-  'overview',
-  'performance',
-  'error-overview',
-  'errors',
-  'releases',
-  'events',
-  'replays',
-  'source-maps',
-  'alerts',
-  'setup',
-  'settings',
-] as const
-type Tab = (typeof tabs)[number]
-const tab = computed<Tab>(() =>
-  tabs.includes(route.query.tab as Tab) ? (route.query.tab as Tab) : 'overview',
+
+/** 接入与配置类页面不依赖观测数据，没有 rum.read 也能进来 */
+const needsRumRead = computed(
+  () => !RUM_APP_MANAGE_ONLY_SECTIONS.includes(props.section),
 )
-function selectTab(value: string | number) {
-  void router.replace({ query: { ...route.query, tab: String(value) } })
-}
-function tabLabel(key: Tab) {
-  if (key === 'settings') return t('rumProject.settings')
-  if (key === 'source-maps') return t('rum.maps')
-  if (key === 'error-overview') return t('rum.errorOverview')
-  return t(`rum.${key}`)
-}
+const denied = computed(() => needsRumRead.value && !canReadRum.value)
 </script>
 <template>
   <section class="rum-detail">
@@ -68,56 +57,35 @@ function tabLabel(key: Tab) {
       @retry="app.reload"
     >
       <template v-if="app.data.value">
+        <t-alert
+          v-if="denied"
+          theme="warning"
+          :message="t('rum.noPermission')"
+        />
         <div
-          role="tablist"
-          :aria-label="t('rumApps.title')"
+          v-else
+          class="rum-detail__body"
         >
-          <t-tabs
-            :value="tab"
-            @change="selectTab"
-          >
-            <t-tab-panel
-              v-for="key in tabs"
-              :key="key"
-              :value="key"
-            >
-              <template #label
-                ><span
-                  role="tab"
-                  tabindex="0"
-                  :aria-selected="tab === key"
-                  @keydown.enter.prevent="selectTab(key)"
-                  @keydown.space.prevent="selectTab(key)"
-                  >{{ tabLabel(key) }}</span
-                ></template
-              >
-            </t-tab-panel>
-          </t-tabs>
-        </div>
-        <div class="rum-detail__body">
-          <t-alert
-            v-if="
-              !canReadRum && !['source-maps', 'setup', 'settings'].includes(tab)
-            "
-            theme="warning"
-            :message="t('rum.noPermission')"
+          <RumOverview v-if="section === 'overview'" />
+          <template v-else-if="section === 'errors'">
+            <RumErrorOverview />
+            <RumErrors />
+          </template>
+          <RumPerformance v-else-if="section === 'performance'" />
+          <RumReleases v-else-if="section === 'releases'" />
+          <RumEvents v-else-if="section === 'events'" />
+          <RumReplays v-else-if="section === 'replays'" />
+          <RumSourceMaps v-else-if="section === 'source-maps'" />
+          <RumAlerts v-else-if="section === 'alerts'" />
+          <RumSetup
+            v-else-if="section === 'setup'"
+            :app="app.data.value"
           />
-          <template v-else
-            ><RumOverview v-if="tab === 'overview'" /><RumPerformance
-              v-else-if="tab === 'performance'" /><RumErrorOverview
-              v-else-if="tab === 'error-overview'" /><RumErrors
-              v-else-if="tab === 'errors'" /><RumReleases
-              v-else-if="tab === 'releases'" /><RumEvents
-              v-else-if="tab === 'events'" /><RumReplays
-              v-else-if="tab === 'replays'" /><RumSourceMaps
-              v-else-if="tab === 'source-maps'" /><RumAlerts
-              v-else-if="tab === 'alerts'" /><RumSetup
-              v-else-if="tab === 'setup'"
-              :app="app.data.value" /><RumAppSettings
-              v-else
-              :app="app.data.value"
-              @updated="app.reload"
-          /></template>
+          <RumAppSettings
+            v-else
+            :app="app.data.value"
+            @updated="app.reload"
+          />
         </div>
       </template>
     </RumState>
@@ -128,6 +96,8 @@ function tabLabel(key: Tab) {
   min-width: 0;
 }
 .rum-detail__body {
-  padding-top: 20px;
+  display: grid;
+  gap: 16px;
+  min-width: 0;
 }
 </style>

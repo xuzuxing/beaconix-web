@@ -19,6 +19,8 @@ import type { MenuBadge } from './index'
  * - public: 为 true 时无需登录即可访问（如公开状态页 /status/:slug），路由守卫会放行
  * - searchExcluded: 为 true 时不作为顶栏功能搜索的结果（如「关于」这类非功能页）
  * - keepAlive: 为 false 时该页面不参与 keep-alive 缓存（默认缓存）
+ * - rumAppScoped: 为 true 时表示该路由属于 RUM 应用工作台（/rum/:projectId/:appId/*），
+ *   左侧二级导航会从「RUM 项目级菜单」切换成「应用内导航」
  */
 declare module 'vue-router' {
   interface RouteMeta {
@@ -36,5 +38,6 @@ declare module 'vue-router' {
     searchExcluded?: boolean
     activeMenu?: string
     keepAlive?: boolean
+    rumAppScoped?: boolean
   }
 }

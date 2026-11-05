@@ -62,8 +62,9 @@ export function buildMenu(
   routes.forEach((route) => {
     const path = resolvePath(basePath, route.path)
     const canVisit = canVisitNavigation(path)
-    // The navigation container is visible when either RUM capability is granted.
-    const isRumContainer = path === '/rum' && canVisitNavigation('/rum/overview')
+    // RUM 入口同时承载应用列表（app.read）与项目级查询（rum.read）：
+    // 两个能力任一可用就展示入口，进入后的内容由页面按能力自行降级。
+    const isRumContainer = path === '/rum' && (canVisit || canVisitNavigation('/rum/overview'))
     if (
       route.meta?.menuExcluded ||
       (!includeHidden && route.meta?.hidden) ||
