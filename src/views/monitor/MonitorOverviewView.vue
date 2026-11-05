@@ -6,6 +6,7 @@ import type { MonitorRange } from '@/api/types/monitoring'
 import MetricChartCard from '@/components/overview/MetricChartCard.vue'
 import MonitorKpiGrid from '@/components/monitor/MonitorKpiGrid.vue'
 import { useMonitorList } from '@/composables/useMonitorList'
+import { useMonitorRuntime } from '@/composables/useMonitorRuntime'
 import { useMonitoringDashboard } from '@/composables/useMonitoringDashboard'
 import { useOrganizationStore } from '@/stores'
 import { adaptKpis, adaptTimeline } from '@/utils/monitoring-adapter'
@@ -20,6 +21,7 @@ defineOptions({ name: 'MonitorOverviewView' })
 
 const { t } = useI18n()
 const org = useOrganizationStore()
+const { now } = useMonitorRuntime()
 const projectId = computed(() => org.currentProjectId)
 const {
   monitors,
@@ -98,7 +100,9 @@ const statuses: MonitorStatus[] = [
   'PAUSED',
   'UNKNOWN',
 ]
-const summary = computed(() => summarizeMonitors(monitors.value))
+const summary = computed(() =>
+  summarizeMonitors(monitors.value, now.value.getTime()),
+)
 const items = computed(() => [
   {
     key: 'all',

@@ -11,6 +11,7 @@ import {
 import type { Monitor } from '@/api/types'
 import { usePermissionsStore } from '@/stores/modules/permissions'
 import { accessContext, isCurrentContext } from '@/utils/access-context'
+import { monitorCapacityRestricted } from '@/utils/monitor-presenter'
 
 export type MonitorAction = 'check' | 'toggle' | 'delete' | 'test-alert'
 export function useMonitorActions(
@@ -36,6 +37,10 @@ export function useMonitorActions(
   })
   async function act(projectId: string, monitor: Monitor, action: MonitorAction) {
     if (pending.value[monitor.id]) return
+    if (action === 'check' && monitorCapacityRestricted(monitor)) {
+      actionError.value = t('monitorCapacity.blocked')
+      return
+    }
     const token = generation
     const context = accessContext()
     pending.value[monitor.id] = true

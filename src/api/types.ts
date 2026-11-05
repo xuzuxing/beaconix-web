@@ -479,6 +479,8 @@ export interface Monitor {
   hasCredentials?: boolean
   executionEligible?: boolean
   executionBlockedReason?: string | null
+  /** 数量降级宽限截止；独立于用户的 enabled 设置。 */
+  quotaGraceEndsAt?: string | null
 }
 
 export interface CreateMonitorParams {
