@@ -63,7 +63,6 @@ export const layoutChildren: RouteRecordRaw[] = [
     props: { section },
     meta: {
       titleKey: `rumProject.${section}`,
-      hideHeader: true,
       keepAlive: false,
     },
   })),
@@ -76,7 +75,6 @@ export const layoutChildren: RouteRecordRaw[] = [
       subTitleKey: 'rumProject.apps',
       icon: CodeIcon,
       group: 'main',
-      hideHeader: true,
       keepAlive: false,
     },
   },

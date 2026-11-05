@@ -9,6 +9,7 @@ import type {
   RumPage,
   RumErrorGroup,
   RumErrorOccurrence,
+  RumErrorNote,
   RumEvent,
   RumEventStats,
   RumReplaySession,
@@ -17,6 +18,13 @@ import type {
   RumAlertRule,
   RumAlertInput,
   RumAlertIncident,
+  RumPerformanceSeries,
+  RumPerformanceSummary,
+  RumPerformancePages,
+  RumPerformanceResources,
+  RumReleaseList,
+  RumReleaseCompare,
+  RumErrorStatus,
 } from '@/api/types/rum'
 import { del, get, patch, post, upload } from '@/utils/request'
 
@@ -60,6 +68,12 @@ export const listRumErrors = (
 ) => get<RumPage<RumErrorGroup>>(nested(p, a, 'errors'), params, config)
 export const getRumError = (p: string, a: string, id: string, config?: AxiosRequestConfig) =>
   get<RumErrorGroup>(nested(p, a, `errors/${enc(id)}`), undefined, config)
+export const updateRumError = (
+  p: string,
+  a: string,
+  id: string,
+  data: { status?: RumErrorStatus; ignoredUntil?: string | null; assigneeId?: string | null },
+) => patch<RumErrorGroup>(nested(p, a, `errors/${enc(id)}`), data)
 export const listRumErrorOccurrences = (
   p: string,
   a: string,
@@ -67,6 +81,17 @@ export const listRumErrorOccurrences = (
   params: Query = {},
   config?: AxiosRequestConfig,
 ) => get<RumPage<RumErrorOccurrence>>(nested(p, a, `errors/${enc(id)}/occurrences`), params, config)
+export const listRumErrorNotes = (
+  p: string,
+  a: string,
+  id: string,
+  params: Query = {},
+  config?: AxiosRequestConfig,
+) => get<RumPage<RumErrorNote>>(nested(p, a, `errors/${enc(id)}/notes`), params, config)
+export const createRumErrorNote = (p: string, a: string, id: string, body: string) =>
+  post<RumErrorNote>(nested(p, a, `errors/${enc(id)}/notes`), { body })
+export const deleteRumErrorNote = (p: string, a: string, id: string, noteId: string) =>
+  del<void>(nested(p, a, `errors/${enc(id)}/notes/${enc(noteId)}`))
 export const listRumEvents = (
   p: string,
   a: string,
@@ -109,6 +134,39 @@ export const uploadRumSourceMap = (
 ) => upload<RumSourceMap & { reprocessed: number }>(nested(p, a, 'source-maps'), data, config)
 export const deleteRumSourceMap = (p: string, a: string, id: string) =>
   del<void>(nested(p, a, `source-maps/${enc(id)}`))
+export const getRumPerformanceSeries = (
+  p: string,
+  a: string,
+  params: Query = {},
+  config?: AxiosRequestConfig,
+) => get<RumPerformanceSeries>(nested(p, a, 'performance'), params, config)
+export const getRumPerformanceSummary = (
+  p: string,
+  a: string,
+  params: Query = {},
+  config?: AxiosRequestConfig,
+) => get<RumPerformanceSummary>(nested(p, a, 'performance/summary'), params, config)
+export const listRumPerformancePages = (
+  p: string,
+  a: string,
+  params: Query = {},
+  config?: AxiosRequestConfig,
+) => get<RumPerformancePages>(nested(p, a, 'performance/pages'), params, config)
+export const listRumPerformanceResources = (
+  p: string,
+  a: string,
+  params: Query = {},
+  config?: AxiosRequestConfig,
+) => get<RumPerformanceResources>(nested(p, a, 'performance/resources'), params, config)
+export const listRumReleases = (p: string, a: string, config?: AxiosRequestConfig) =>
+  get<RumReleaseList>(nested(p, a, 'releases'), undefined, config)
+export const compareRumReleases = (
+  p: string,
+  a: string,
+  base: string,
+  target: string,
+  config?: AxiosRequestConfig,
+) => get<RumReleaseCompare>(nested(p, a, 'releases/compare'), { base, target }, config)
 export const listRumAlertChannels = (p: string, a: string, config?: AxiosRequestConfig) =>
   get<RumAlertChannel[]>(nested(p, a, 'alerts/channels'), undefined, config)
 export const listRumAlertRules = (p: string, a: string, config?: AxiosRequestConfig) =>

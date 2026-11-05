@@ -26,4 +26,7 @@
   rangeInvalid: '开始时间不能晚于结束时间',
   retained: '当前保留数据',
   appLink: '查看应用',
+  records: '查询结果',
+  keyMetrics: '核心指标',
+  refresh: '刷新',
 }

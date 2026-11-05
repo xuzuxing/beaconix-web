@@ -19,6 +19,10 @@ const error = {
   appId: 'app2',
   app: { id: 'app2', name: 'Beta' },
   type: 'TypeError',
+  category: 'JAVASCRIPT',
+  level: 'ERROR',
+  status: 'UNRESOLVED',
+  ignoredUntil: null,
   message: 'Cross app failure',
   count: 3,
   lastSeenAt: now,
@@ -148,7 +152,7 @@ test('project menu and project-wide error/event queries use server pagination an
     )
     .toBe(true)
   await page.getByText('Cross app failure').click()
-  await expect(page.getByRole('heading', { name: 'Cross app failure' })).toBeVisible()
+  await expect(page.locator('.layout__page-title')).toHaveText('Cross app failure')
   await expect(side.getByText('错误列表', { exact: true })).toHaveClass(
     /secondary-nav__link--active/,
   )

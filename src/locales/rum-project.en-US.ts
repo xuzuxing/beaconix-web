@@ -26,4 +26,7 @@
   rangeInvalid: 'Start time must be before end time',
   retained: 'Currently retained data',
   appLink: 'View application',
+  records: 'Results',
+  keyMetrics: 'Key metrics',
+  refresh: 'Refresh',
 }

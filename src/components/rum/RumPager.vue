@@ -4,6 +4,7 @@ defineProps<{ total: number; limit: number }>()
 </script>
 <template>
   <t-pagination
+    class="rum-pager"
     v-model:current="page"
     :total="total"
     :page-size="limit"
@@ -12,10 +13,9 @@ defineProps<{ total: number; limit: number }>()
   />
 </template>
 <style scoped>
-.pager {
+.rum-pager {
   display: flex;
   align-items: center;
-  gap: 12px;
   margin-top: 16px;
 }
 </style>

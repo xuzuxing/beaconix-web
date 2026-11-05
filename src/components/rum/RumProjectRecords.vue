@@ -11,6 +11,9 @@ import {
   getProjectRumOverview,
 } from '@/api/modules/rum'
 import type { RumProjectError, RumProjectEvent } from '@/api/types/rum'
+import AppIcon from '@/components/AppIcon.vue'
+import HeaderActions from '@/components/HeaderActions.vue'
+import { RefreshIcon } from '@/icons'
 import { useRumResource } from '@/composables/useRumResource'
 import { useOrganizationStore } from '@/stores'
 import { usePermissionsStore } from '@/stores/modules/permissions'
@@ -137,23 +140,6 @@ function reset() {
   draft.range = []
   apply()
 }
-const columns = computed(() =>
-  props.kind === 'errors'
-    ? [
-        { colKey: 'message', title: t('rum.errorMessage'), ellipsis: true },
-        { colKey: 'type', title: t('rum.type'), width: 160 },
-        { colKey: 'app', title: t('rumProject.appName'), width: 170 },
-        { colKey: 'count', title: t('rum.count'), width: 100 },
-        { colKey: 'lastSeenAt', title: t('rum.lastSeen'), width: 190 },
-      ]
-    : [
-        { colKey: 'eventName', title: t('rumProject.eventType') },
-        { colKey: 'app', title: t('rumProject.appName'), width: 170 },
-        { colKey: 'sessionId', title: t('rum.sessionId'), ellipsis: true },
-        { colKey: 'receivedAt', title: t('rumProject.occurred'), width: 190 },
-        { colKey: 'action', title: '', width: 110 },
-      ],
-)
 function viewError(row: RumProjectError) {
   void router.push({
     name: 'rum-error-detail',
@@ -181,18 +167,21 @@ function paginate(info: { current: number; pageSize: number }) {
 
 <template>
   <section class="project-page">
-    <header>
-      <h1>{{ t(`rumProject.${kind}`) }}</h1>
-      <p>
-        {{
-          t(
-            kind === 'errors'
-              ? 'rumProject.errorsDesc'
-              : 'rumProject.eventsDesc',
-          )
-        }}
-      </p>
-    </header>
+    <HeaderActions>
+      <t-tooltip :content="t('rumProject.refresh')">
+        <t-button
+          variant="outline"
+          shape="square"
+          :loading="resource.loading.value"
+          :disabled="!projectId"
+          :aria-label="t('rumProject.refresh')"
+          @click="resource.reload"
+        >
+          <template #icon><AppIcon :icon="RefreshIcon" /></template>
+        </t-button>
+      </t-tooltip>
+    </HeaderActions>
+
     <t-alert
       v-if="!projectId"
       theme="info"
@@ -204,21 +193,25 @@ function paginate(info: { current: number; pageSize: number }) {
       :message="t('rum.noPermission')"
     />
     <template v-else>
-      <t-card
-        :bordered="false"
-        class="content"
-      >
+      <t-card class="project-page__card">
+        <template #title>{{ t('rumProject.records') }}</template>
+        <template #actions>
+          <span class="project-page__hint">
+            {{ t('rum.total') }}: {{ resource.data.value?.total ?? 0 }}
+          </span>
+        </template>
+
         <div class="filters rum-filter">
           <t-select
-            class="rum-filter__field"
             v-model="draft.appId"
+            class="rum-filter__field"
             :options="options"
             :aria-label="t('rumProject.appName')"
             :loading="apps.loading.value"
           />
           <t-input
-            class="rum-filter__field"
             v-model="draft.type"
+            class="rum-filter__field"
             :placeholder="
               t(
                 kind === 'errors'
@@ -230,8 +223,8 @@ function paginate(info: { current: number; pageSize: number }) {
             @enter="apply"
           />
           <t-date-range-picker
-            class="rum-filter__field rum-filter__range"
             v-model="draft.range"
+            class="rum-filter__field rum-filter__range"
             allow-input
             enable-time-picker
             format="YYYY-MM-DD HH:mm:ss"
@@ -241,14 +234,17 @@ function paginate(info: { current: number; pageSize: number }) {
           <t-button
             theme="primary"
             @click="apply"
-            >{{ t('rumProject.apply') }}</t-button
           >
+            {{ t('rumProject.apply') }}
+          </t-button>
           <t-button
             variant="outline"
             @click="reset"
-            >{{ t('rumProject.reset') }}</t-button
           >
+            {{ t('rumProject.reset') }}
+          </t-button>
         </div>
+
         <t-alert
           v-if="apps.error.value"
           theme="warning"
@@ -260,35 +256,85 @@ function paginate(info: { current: number; pageSize: number }) {
           @retry="resource.reload"
         >
           <template v-if="resource.data.value">
-            <t-table
-              row-key="id"
-              :data="resource.data.value.items"
-              :columns="columns"
-              :empty="t('rum.empty')"
-              hover
+            <div
+              v-if="resource.data.value.items.length"
+              class="project-page__table"
+              :class="`project-page__table--${kind}`"
             >
-              <template #message="{ row }"
-                ><t-link
-                  theme="primary"
-                  @click="viewError(row)"
-                  >{{ row.message }}</t-link
-                ></template
+              <div class="project-page__table-head">
+                <template v-if="kind === 'errors'">
+                  <span>{{ t('rum.errorMessage') }}</span>
+                  <span>{{ t('rum.type') }}</span>
+                  <span>{{ t('rumProject.appName') }}</span>
+                  <span>{{ t('rum.count') }}</span>
+                  <span>{{ t('rum.lastSeen') }}</span>
+                </template>
+                <template v-else>
+                  <span>{{ t('rumProject.eventType') }}</span>
+                  <span>{{ t('rumProject.appName') }}</span>
+                  <span>{{ t('rum.sessionId') }}</span>
+                  <span>{{ t('rumProject.occurred') }}</span>
+                  <span>{{ t('rumApps.actions') }}</span>
+                </template>
+              </div>
+              <article
+                v-for="row in resource.data.value.items"
+                :key="row.id"
+                class="project-page__row"
               >
-              <template #app="{ row }">{{ row.app.name }}</template>
-              <template #lastSeenAt="{ row }">{{
-                formatTime(row.lastSeenAt)
-              }}</template>
-              <template #receivedAt="{ row }">{{
-                formatTime(row.receivedAt)
-              }}</template>
-              <template #action="{ row }"
-                ><t-link
-                  theme="primary"
-                  @click="selectedEvent = row"
-                  >{{ t('rum.properties') }}</t-link
-                ></template
-              >
-            </t-table>
+                <template v-if="kind === 'errors'">
+                  <div class="project-page__message">
+                    <t-button
+                      variant="text"
+                      @click="viewError(row as RumProjectError)"
+                    >
+                      {{ (row as RumProjectError).message }}
+                    </t-button>
+                  </div>
+                  <div class="project-page__muted">
+                    {{ (row as RumProjectError).type }}
+                  </div>
+                  <div class="project-page__muted">
+                    {{ (row as RumProjectError).app.name }}
+                  </div>
+                  <div class="project-page__num">
+                    {{ (row as RumProjectError).count }}
+                  </div>
+                  <time class="project-page__muted">
+                    {{ formatTime((row as RumProjectError).lastSeenAt) }}
+                  </time>
+                </template>
+                <template v-else>
+                  <div class="project-page__primary">
+                    {{ (row as RumProjectEvent).eventName }}
+                  </div>
+                  <div class="project-page__muted">
+                    {{ (row as RumProjectEvent).app.name }}
+                  </div>
+                  <div class="project-page__muted">
+                    {{ (row as RumProjectEvent).sessionId || '—' }}
+                  </div>
+                  <time class="project-page__muted">
+                    {{ formatTime((row as RumProjectEvent).receivedAt) }}
+                  </time>
+                  <div>
+                    <t-button
+                      size="small"
+                      variant="text"
+                      @click="selectedEvent = row as RumProjectEvent"
+                    >
+                      {{ t('rum.properties') }}
+                    </t-button>
+                  </div>
+                </template>
+              </article>
+            </div>
+            <div
+              v-else
+              class="project-page__empty"
+            >
+              {{ t('rum.empty') }}
+            </div>
             <t-pagination
               :current="page"
               :page-size="size"
@@ -310,27 +356,166 @@ function paginate(info: { current: number; pageSize: number }) {
     </template>
   </section>
 </template>
-<style scoped>
+
+<style scoped lang="less">
 .project-page {
   min-width: 0;
+
+  &__card {
+    min-width: 0;
+  }
+
+  &__hint {
+    color: @beacon-text-secondary;
+    font-size: 12px;
+  }
+
+  &__table {
+    border-top: 1px solid @beacon-border;
+
+    &--errors {
+      .project-page__table-head,
+      .project-page__row {
+        grid-template-columns: minmax(240px, 1fr) 150px 160px 90px 180px;
+      }
+    }
+
+    &--events {
+      .project-page__table-head,
+      .project-page__row {
+        grid-template-columns: minmax(180px, 1fr) 150px 200px 180px 110px;
+      }
+    }
+  }
+
+  &__table-head,
+  .project-page__row {
+    display: grid;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    border-bottom: 1px solid @beacon-border;
+  }
+
+  &__table-head {
+    color: @beacon-text-secondary;
+    font-size: 12px;
+    background: @beacon-bg-page;
+  }
+
+  &__row {
+    min-width: 0;
+  }
+
+  &__row:hover {
+    background: @beacon-bg-page;
+  }
+
+  &__message {
+    min-width: 0;
+
+    :deep(.t-button) {
+      max-width: 100%;
+      justify-content: flex-start;
+      padding: 0;
+      overflow: hidden;
+      font-weight: 600;
+      text-align: left;
+
+      .t-button__text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  &__primary {
+    min-width: 0;
+    overflow: hidden;
+    color: @beacon-text-primary;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__muted {
+    min-width: 0;
+    overflow: hidden;
+    color: @beacon-text-secondary;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: @beacon-text-tertiary;
+  }
+
+  :deep(.t-pagination) {
+    padding-top: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
 }
-header {
-  margin-bottom: 24px;
-}
-h1 {
-  margin: 0 0 8px;
-  font-size: 24px;
-}
-header p {
-  color: var(--td-text-color-secondary);
-}
-:deep(.t-pagination) {
-  margin-top: 20px;
-}
+
 pre {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
   max-height: 55vh;
   overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1200px) {
+  .project-page__table--errors {
+    .project-page__table-head,
+    .project-page__row {
+      grid-template-columns: minmax(200px, 1fr) 140px 120px 170px;
+    }
+
+    .project-page__table-head > :nth-child(3),
+    .project-page__row > :nth-child(3) {
+      display: none;
+    }
+  }
+
+  .project-page__table--events {
+    .project-page__table-head,
+    .project-page__row {
+      grid-template-columns: minmax(160px, 1fr) 140px 170px 100px;
+    }
+
+    .project-page__table-head > :nth-child(3),
+    .project-page__row > :nth-child(3) {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  .project-page__table-head {
+    display: none;
+  }
+
+  .project-page__table--errors,
+  .project-page__table--events {
+    .project-page__row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px 16px;
+      padding: 16px 8px;
+    }
+
+    .project-page__row > :first-child {
+      grid-column: 1 / -1;
+    }
+  }
 }
 </style>

@@ -119,78 +119,80 @@ async function remove(id: string) {
 }
 </script>
 <template>
-  <p>{{ t('rum.mapHint') }}</p>
-  <form
-    v-if="canManage"
-    class="upload rum-filter"
-    @submit.prevent="uploadMap"
-  >
-    <t-input
-      class="rum-filter__field"
-      v-model="release"
-      maxlength="100"
-      :placeholder="t('rum.release')"
-    /><t-input
-      class="rum-filter__field"
-      v-model="artifactPath"
-      maxlength="2048"
-      :placeholder="t('rum.artifactPath')"
-    /><input
-      class="rum-filter__field"
-      type="file"
-      accept=".map,.json,application/json"
-      @change="choose"
-    /><t-button
-      type="submit"
-      :loading="submitting"
-      >{{ t('rum.upload') }}</t-button
+  <t-card>
+    <p>{{ t('rum.mapHint') }}</p>
+    <form
+      v-if="canManage"
+      class="upload rum-filter"
+      @submit.prevent="uploadMap"
     >
-  </form>
-  <RumState
-    :loading="resource.loading.value"
-    :error="resource.error.value"
-    @retry="resource.reload"
-    ><t-empty
-      v-if="!resource.data.value?.length"
-      :description="t('rum.empty')"
-    />
-    <article
-      v-for="item in resource.data.value"
-      :key="item.id"
-    >
-      <strong>{{ item.release }}</strong
-      ><code>{{ item.artifactPath }}</code
-      ><span
-        >{{ t('rum.checksum') }}: {{ item.checksum.slice(0, 12) }} ·
-        {{ item.sizeBytes }} B</span
-      ><span
-        >{{ t('rum.uploadedBy') }}: {{ item.uploadedById || '—' }} ·
-        {{ t('rum.created') }}: {{ item.createdAt }} ? {{ t('rum.updated') }}:
-        {{ item.updatedAt }}</span
-      ><t-button
-        v-if="canManage"
-        variant="text"
-        :disabled="submitting"
-        @click="remove(item.id)"
-        >{{ t('rum.remove') }}</t-button
+      <t-input
+        class="rum-filter__field"
+        v-model="release"
+        maxlength="100"
+        :placeholder="t('rum.release')"
+      /><t-input
+        class="rum-filter__field"
+        v-model="artifactPath"
+        maxlength="2048"
+        :placeholder="t('rum.artifactPath')"
+      /><input
+        class="rum-filter__field"
+        type="file"
+        accept=".map,.json,application/json"
+        @change="choose"
+      /><t-button
+        type="submit"
+        :loading="submitting"
+        >{{ t('rum.upload') }}</t-button
       >
-    </article></RumState
-  >
+    </form>
+    <RumState
+      :loading="resource.loading.value"
+      :error="resource.error.value"
+      @retry="resource.reload"
+      ><t-empty
+        v-if="!resource.data.value?.length"
+        :description="t('rum.empty')"
+      />
+      <article
+        v-for="item in resource.data.value"
+        :key="item.id"
+        class="source-map-item"
+      >
+        <strong>{{ item.release }}</strong
+        ><code>{{ item.artifactPath }}</code
+        ><span
+          >{{ t('rum.checksum') }}: {{ item.checksum.slice(0, 12) }} ·
+          {{ item.sizeBytes }} B</span
+        ><span
+          >{{ t('rum.uploadedBy') }}: {{ item.uploadedById || '—' }} ·
+          {{ t('rum.created') }}: {{ item.createdAt }} ? {{ t('rum.updated') }}:
+          {{ item.updatedAt }}</span
+        ><t-button
+          v-if="canManage"
+          variant="text"
+          :disabled="submitting"
+          @click="remove(item.id)"
+          >{{ t('rum.remove') }}</t-button
+        >
+      </article></RumState
+    >
+  </t-card>
 </template>
 <style scoped>
-article {
+.source-map-item {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
-  padding: 14px;
+  padding: 14px 0;
   border-bottom: 1px solid var(--td-border-level-1-color);
+}
+.source-map-item code {
   overflow-wrap: anywhere;
 }
-code {
-  overflow-wrap: anywhere;
-}
-span {
+.source-map-item span {
   color: var(--td-text-color-secondary);
 }
 </style>

@@ -8,7 +8,7 @@ const { t } = useI18n()
 const origin = ref('')
 const snippet = computed(
   () =>
-    `import { initRum } from './lib/beaconix-rum'\n\nconst rum = initRum({\n  endpoint: ${JSON.stringify((origin.value.trim().replace(/\/$/, '') || 'https://your-api.example.com') + '/api/rum')},\n  publicKey: ${JSON.stringify(props.app.publicKey)},\n  release: 'web-release-1',\n  sessionReplay: { enabled: false, maskText: true },\n})\n\nvoid rum.captureEvent('checkout_completed', { plan: 'pro' })`,
+    `import { initRum } from './lib/beaconix-rum'\n\nconst rum = initRum({\n  endpoint: ${JSON.stringify((origin.value.trim().replace(/\/$/, '') || 'https://your-api.example.com') + '/api/rum')},\n  publicKey: ${JSON.stringify(props.app.publicKey)},\n  release: 'web-release-1',\n  performance: { enabled: true, sampleRate: 0.25, reportResources: false },\n  sessionReplay: { enabled: false, maskText: true },\n})\n\nvoid rum.captureEvent('checkout_completed', { plan: 'pro' })`,
 )
 async function copy(value: string) {
   try {
@@ -20,7 +20,7 @@ async function copy(value: string) {
 }
 </script>
 <template>
-  <section>
+  <t-card class="setup-card">
     <h2>{{ app.name }}</h2>
     <p>
       {{ t('rum.publicKey') }}: <code>{{ app.publicKey }}</code>
@@ -48,18 +48,18 @@ async function copy(value: string) {
       @click="copy(snippet)"
       >{{ t('rum.copy') }}</t-button
     >
-  </section>
+  </t-card>
 </template>
 <style scoped>
-section {
+.setup-card {
   max-width: 900px;
 }
 pre {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  background: var(--td-bg-color-secondarycontainer);
   padding: 16px;
-  border-radius: 6px;
+  border: 1px solid var(--td-border-level-1-color);
+  background: var(--td-bg-color-page);
 }
 code {
   overflow-wrap: anywhere;

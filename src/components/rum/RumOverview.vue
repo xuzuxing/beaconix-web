@@ -9,6 +9,7 @@ import {
 import { useRumContext } from '@/composables/useRumContext'
 import { useRumResource } from '@/composables/useRumResource'
 import RumState from './RumState.vue'
+
 const { t } = useI18n()
 const { projectId: p, appId: a } = useRumContext()
 const sources = [p, a]
@@ -41,50 +42,91 @@ const alerts = useRumResource(
     ),
   sources,
 )
+const metrics = [
+  { key: 'errors', sub: 'retained', resource: errors },
+  { key: 'events', sub: 'recent7', resource: events },
+  { key: 'replays', sub: 'retained', resource: replays },
+  { key: 'openAlerts', sub: 'retained', resource: alerts },
+] as const
 </script>
+
 <template>
-  <div class="metrics">
-    <article
-      v-for="item in [
-        { key: 'errors', sub: 'retained', resource: errors },
-        { key: 'events', sub: 'recent7', resource: events },
-        { key: 'replays', sub: 'retained', resource: replays },
-        { key: 'openAlerts', sub: 'retained', resource: alerts },
-      ]"
-      :key="item.key"
-    >
-      <h3>{{ t('rum.' + item.key) }}</h3>
-      <RumState
-        :loading="item.resource.loading.value"
-        :error="item.resource.error.value"
-        @retry="item.resource.reload"
-        ><strong>{{ item.resource.data.value?.total ?? '—' }}</strong></RumState
-      ><small>{{ t('rum.' + item.sub) }}</small>
-    </article>
-  </div>
+  <t-card class="rum-overview">
+    <template #title>{{ t('rum.overview') }}</template>
+    <template #actions>
+      <span class="rum-overview__hint">{{ t('rum.recent7') }}</span>
+    </template>
+    <div class="rum-overview__grid">
+      <div
+        v-for="item in metrics"
+        :key="item.key"
+        class="rum-overview__metric"
+      >
+        <span class="rum-overview__label">{{ t('rum.' + item.key) }}</span>
+        <RumState
+          :loading="item.resource.loading.value"
+          :error="item.resource.error.value"
+          @retry="item.resource.reload"
+        >
+          <strong>{{ item.resource.data.value?.total ?? '—' }}</strong>
+        </RumState>
+        <small>{{ t('rum.' + item.sub) }}</small>
+      </div>
+    </div>
+  </t-card>
 </template>
-<style scoped>
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
+
+<style scoped lang="less">
+.rum-overview {
+  min-width: 0;
+
+  &__hint {
+    color: @beacon-text-secondary;
+    font-size: 12px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  &__metric {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px 0;
+
+    strong {
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 32px;
+      overflow-wrap: anywhere;
+      font-variant-numeric: tabular-nums;
+    }
+
+    small {
+      color: @beacon-text-tertiary;
+      font-size: 12px;
+    }
+  }
+
+  &__label {
+    color: @beacon-text-secondary;
+    font-size: 12px;
+  }
 }
-.metrics article {
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 6px;
-  padding: 18px;
-  background: var(--td-bg-color-container);
+
+@media (max-width: 1100px) {
+  .rum-overview__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
-h3 {
-  margin: 0 0 14px;
-  font-size: 14px;
-}
-strong {
-  font-size: 28px;
-}
-small {
-  display: block;
-  color: var(--td-text-color-secondary);
-  margin-top: 8px;
+
+@media (max-width: 600px) {
+  .rum-overview__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>

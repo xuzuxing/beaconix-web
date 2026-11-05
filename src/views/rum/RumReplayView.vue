@@ -118,7 +118,7 @@ onScopeDispose(() => {
         :error="timeline.error.value"
         @retry="timeline.reload"
         ><template v-if="timeline.data.value?.length"
-          ><div class="controls">
+          ><t-card class="controls">
             <t-button @click="playing = !playing">{{
               t(playing ? 'rum.pause' : 'rum.play')
             }}</t-button
@@ -139,14 +139,14 @@ onScopeDispose(() => {
                 :min="0"
                 :max="timeline.data.value.length - 1" /></label
             ><span>{{ index + 1 }} / {{ timeline.data.value.length }}</span>
-          </div>
+          </t-card>
           <t-alert
             v-if="timeline.data.value.some((e) => e.type === 'truncated')"
             theme="warning"
             :message="t('rum.truncated')"
           />
           <div class="replay__grid">
-            <div>
+            <t-card>
               <h3>{{ t('rum.snapshot') }}</h3>
               <div
                 v-if="snapshot"
@@ -165,8 +165,8 @@ onScopeDispose(() => {
                 ></span>
               </div>
               <p v-else>{{ t('rum.noSnapshot') }}</p>
-            </div>
-            <div>
+            </t-card>
+            <t-card>
               <h3>{{ current?.type }} · {{ current?.at }}</h3>
               <pre>{{ JSON.stringify(current?.data, null, 2) }}</pre>
               <ol>
@@ -181,7 +181,7 @@ onScopeDispose(() => {
                   >
                 </li>
               </ol>
-            </div>
+            </t-card>
           </div></template
         ><t-empty
           v-else
@@ -217,6 +217,7 @@ onScopeDispose(() => {
 }
 .replay__frame {
   position: relative;
+  overflow: hidden;
 }
 .replay__marker {
   position: absolute;

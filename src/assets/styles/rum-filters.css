@@ -46,3 +46,74 @@
     flex-basis: 100%;
   }
 }
+
+/* RUM 列表：与云监控列表一致的表头 + 行分隔线。
+   各页面只需在 scoped 样式里覆盖 grid-template-columns。 */
+.rum-table {
+  border-top: 1px solid var(--td-border-level-1-color);
+}
+
+.rum-table__head,
+.rum-table__row {
+  display: grid;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--td-border-level-1-color);
+}
+
+.rum-table__head {
+  color: var(--td-text-color-secondary);
+  font-size: 12px;
+  background: var(--td-bg-color-page);
+}
+
+.rum-table__row {
+  min-width: 0;
+}
+
+.rum-table__row:hover {
+  background: var(--td-bg-color-page);
+}
+
+.rum-table__row a {
+  color: var(--td-text-color-primary);
+  font-weight: 600;
+}
+
+.rum-table__row a:hover {
+  color: var(--td-brand-color);
+}
+
+.rum-table__primary {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--td-text-color-primary);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rum-table__muted {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--td-text-color-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rum-table__num {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .rum-table__head {
+    display: none;
+  }
+
+  .rum-table__row {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 10px 16px;
+  }
+}

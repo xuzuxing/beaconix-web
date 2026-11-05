@@ -8,7 +8,10 @@ import { usePageHeader } from '@/composables/usePageHeader'
 import HeaderActions from '@/components/HeaderActions.vue'
 import RumState from '@/components/rum/RumState.vue'
 import RumOverview from '@/components/rum/RumOverview.vue'
+import RumPerformance from '@/components/rum/RumPerformance.vue'
+import RumErrorOverview from '@/components/rum/RumErrorOverview.vue'
 import RumErrors from '@/components/rum/RumErrors.vue'
+import RumReleases from '@/components/rum/RumReleases.vue'
 import RumEvents from '@/components/rum/RumEvents.vue'
 import RumReplays from '@/components/rum/RumReplays.vue'
 import RumSourceMaps from '@/components/rum/RumSourceMaps.vue'
@@ -24,7 +27,10 @@ const app = useRumResource(
 usePageHeader({ title: () => app.data.value?.name, back: '/rum' })
 const tabs = [
   'overview',
+  'performance',
+  'error-overview',
   'errors',
+  'releases',
   'events',
   'replays',
   'source-maps',
@@ -38,6 +44,12 @@ const tab = computed<Tab>(() =>
 )
 function selectTab(value: string | number) {
   void router.replace({ query: { ...route.query, tab: String(value) } })
+}
+function tabLabel(key: Tab) {
+  if (key === 'settings') return t('rumProject.settings')
+  if (key === 'source-maps') return t('rum.maps')
+  if (key === 'error-overview') return t('rum.errorOverview')
+  return t(`rum.${key}`)
 }
 </script>
 <template>
@@ -76,11 +88,7 @@ function selectTab(value: string | number) {
                   :aria-selected="tab === key"
                   @keydown.enter.prevent="selectTab(key)"
                   @keydown.space.prevent="selectTab(key)"
-                  >{{
-                    key === 'settings'
-                      ? t('rumProject.settings')
-                      : t('rum.' + (key === 'source-maps' ? 'maps' : key))
-                  }}</span
+                  >{{ tabLabel(key) }}</span
                 ></template
               >
             </t-tab-panel>
@@ -95,8 +103,11 @@ function selectTab(value: string | number) {
             :message="t('rum.noPermission')"
           />
           <template v-else
-            ><RumOverview v-if="tab === 'overview'" /><RumErrors
-              v-else-if="tab === 'errors'" /><RumEvents
+            ><RumOverview v-if="tab === 'overview'" /><RumPerformance
+              v-else-if="tab === 'performance'" /><RumErrorOverview
+              v-else-if="tab === 'error-overview'" /><RumErrors
+              v-else-if="tab === 'errors'" /><RumReleases
+              v-else-if="tab === 'releases'" /><RumEvents
               v-else-if="tab === 'events'" /><RumReplays
               v-else-if="tab === 'replays'" /><RumSourceMaps
               v-else-if="tab === 'source-maps'" /><RumAlerts

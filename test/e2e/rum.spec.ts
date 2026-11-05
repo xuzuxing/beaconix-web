@@ -30,6 +30,10 @@ const app = {
 const error = {
   id: 'error1',
   type: 'error',
+  category: 'JAVASCRIPT',
+  level: 'ERROR',
+  status: 'UNRESOLVED',
+  ignoredUntil: null,
   message: 'Example failure',
   stack: 'raw stack',
   resolvedStack: 'mapped stack',
@@ -224,7 +228,7 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
   await expect(page.getByRole('button', { name: '新建规则' })).toBeVisible()
   await page.getByRole('button', { name: '新建规则' }).click()
   await page.getByRole('textbox', { name: '名称' }).fill('Checkout alert')
-  await page.locator('.form label').filter({ hasText: '指标' }).locator('.t-select').click()
+  await page.locator('.alert-form label').filter({ hasText: '指标' }).locator('.t-select').click()
   await page.getByText('事件次数', { exact: true }).click()
   await page.getByText('指定渠道').click()
   await page.locator('fieldset .t-select').click()

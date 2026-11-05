@@ -13,14 +13,16 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <section class="occurrences">
-    <header class="occurrences__header">
-      <div>
-        <h2>{{ t('rum.occurrences') }}</h2>
-        <p>{{ t('rum.occurrencesHint') }}</p>
-      </div>
-      <t-tag variant="outline">{{ data?.total ?? 0 }}</t-tag>
-    </header>
+  <t-card class="occurrences">
+    <template #title>{{ t('rum.occurrences') }}</template>
+    <template #actions>
+      <span class="occurrences__hint">{{ t('rum.occurrencesHint') }}</span>
+      <t-tag
+        variant="outline"
+        size="small"
+        >{{ data?.total ?? 0 }}</t-tag
+      >
+    </template>
 
     <t-empty
       v-if="!data?.items.length"
@@ -59,65 +61,58 @@ const { t } = useI18n()
       :total="data.total"
       :limit="data.limit"
     />
-  </section>
+  </t-card>
 </template>
 
-<style scoped>
+<style scoped lang="less">
 .occurrences {
   min-width: 0;
-  padding: 18px;
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 10px;
-  background: var(--td-bg-color-container);
-}
 
-.occurrences__header,
-.occurrences__item-topline {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
+  &__hint {
+    margin-right: 8px;
+    color: @beacon-text-tertiary;
+    font-size: 12px;
+  }
 
-.occurrences__header h2,
-.occurrences__header p {
-  margin: 0;
-}
+  &__list {
+    margin-top: 4px;
+    border-top: 1px solid @beacon-border;
+  }
 
-.occurrences__header p {
-  margin-top: 4px;
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-}
+  &__item {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+    padding: 12px 10px;
+    border: 0;
+    border-bottom: 1px solid @beacon-border;
+    border-left: 2px solid transparent;
+    color: inherit;
+    text-align: left;
+    background: transparent;
+    cursor: pointer;
 
-.occurrences__list {
-  display: grid;
-  gap: 8px;
-  margin-top: 16px;
-}
+    &:hover {
+      background: @beacon-bg-page;
+    }
 
-.occurrences__item {
-  display: grid;
-  gap: 6px;
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--td-border-level-1-color);
-  border-radius: 8px;
-  color: inherit;
-  text-align: left;
-  background: transparent;
-  cursor: pointer;
-}
+    &--selected {
+      border-left-color: @beacon-brand;
+      background: @beacon-brand-light;
+    }
+  }
 
-.occurrences__item:hover,
-.occurrences__item--selected {
-  border-color: var(--td-brand-color);
-  background: var(--td-brand-color-light);
-}
+  &__item-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
 
-.occurrences__item > span:not(.occurrences__item-topline) {
-  color: var(--td-text-color-secondary);
-  font-size: 12px;
-  overflow-wrap: anywhere;
+  &__item > span:not(.occurrences__item-topline) {
+    overflow-wrap: anywhere;
+    color: @beacon-text-secondary;
+    font-size: 12px;
+  }
 }
 </style>
