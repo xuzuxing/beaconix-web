@@ -204,6 +204,33 @@ export interface RumAppOverview {
   errors: RumAppOverviewErrors
   series: RumAppOverviewPoint[]
 }
+
+/** 错误列表页顶部概览：错误发生次数、错误率与按桶的分布。 */
+export interface RumErrorOverviewTotals {
+  errors: number
+  js: number
+  custom: number
+  pv: number
+  errorRate: number | null
+  affectedUsers: number
+  affectedPages: number
+  openGroups: number
+}
+export interface RumErrorOverviewPoint {
+  bucketStart: string
+  errors: number
+  js: number
+  custom: number
+  pv: number
+  errorRate: number | null
+}
+export interface RumErrorOverview {
+  from: string
+  to: string
+  bucketMinutes: number
+  totals: RumErrorOverviewTotals
+  series: RumErrorOverviewPoint[]
+}
 export interface RumPerformanceStats {
   metric: RumPerformanceMetric
   count: number

@@ -139,6 +139,40 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
       }
     else if (path.endsWith('/apps/app1')) data = app
     else if (path.endsWith('/errors/error1')) data = error
+    else if (path.endsWith('/errors/overview'))
+      data = {
+        from: now,
+        to: now,
+        bucketMinutes: 60,
+        totals: {
+          errors: 40,
+          js: 30,
+          custom: 10,
+          pv: 800,
+          errorRate: 5,
+          affectedUsers: 12,
+          affectedPages: 5,
+          openGroups: 3,
+        },
+        series: [
+          {
+            bucketStart: now,
+            errors: 30,
+            js: 22,
+            custom: 8,
+            pv: 600,
+            errorRate: 5,
+          },
+          {
+            bucketStart: now,
+            errors: 10,
+            js: 8,
+            custom: 2,
+            pv: 200,
+            errorRate: 5,
+          },
+        ],
+      }
     else if (path.endsWith('/errors')) data = pg([error])
     else if (path.endsWith('/events/stats'))
       data = {
@@ -248,6 +282,12 @@ test('RUM app tabs, error details, events, safe replay, source maps and alerts',
     page.locator('.layout__page-title').getByText('Portal RUM', { exact: true }),
   ).toBeVisible()
   await expectFieldsOnSameRow(page, '.filters > .rum-filter__field')
+  // 错误列表页顶部的异常概览同样走聚合接口
+  const errorOverview = page.locator('.error-overview')
+  await expect(errorOverview.getByText('未解决错误组')).toBeVisible()
+  await expect(errorOverview.getByText('影响页面')).toBeVisible()
+  await expect(errorOverview.getByText('错误趋势')).toBeVisible()
+  await expect(errorOverview.getByText('所选范围内最近出现').first()).toBeVisible()
   await page
     .locator('.errors-panel')
     .getByRole('button', { name: 'Example failure' })

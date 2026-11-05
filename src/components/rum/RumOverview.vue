@@ -17,6 +17,7 @@ import {
   valueAxis,
 } from '@/components/charts/chartPresets'
 import type { ChartOption } from '@/components/charts/echarts'
+import { RUM_RANGES, rumRangeWindow, type RumRange } from '@/config/rum-ranges'
 import { useRumContext } from '@/composables/useRumContext'
 import { useRumResource } from '@/composables/useRumResource'
 import RumState from './RumState.vue'
@@ -26,37 +27,16 @@ import RumState from './RumState.vue'
  * 数据来自 getRumAppOverview 的单次聚合：PV/UV/点击来自 SDK 自动上报的
  * `$pageview` / `$click`，请求指标来自 HTTP 性能样本；比率没有数据时为 null，不编造数值。
  */
-type Range = '1h' | '24h' | '7d' | '30d'
-
-const ranges: Range[] = ['1h', '24h', '7d', '30d']
-const rangeConfig: Record<Range, { hours: number; bucketMinutes: number }> = {
-  '1h': { hours: 1, bucketMinutes: 5 },
-  '24h': { hours: 24, bucketMinutes: 60 },
-  '7d': { hours: 168, bucketMinutes: 360 },
-  '30d': { hours: 720, bucketMinutes: 1440 },
-}
+const ranges = RUM_RANGES
 
 const { t } = useI18n()
 const { projectId: p, appId: a } = useRumContext()
 const theme = useChartTheme()
-const range = ref<Range>('24h')
+const range = ref<RumRange>('24h')
 
 const resource = useRumResource(
-  (signal) => {
-    const config = rangeConfig[range.value]
-    const to = new Date()
-    const from = new Date(to.getTime() - config.hours * 3_600_000)
-    return getRumAppOverview(
-      p.value,
-      a.value,
-      {
-        from: from.toISOString(),
-        to: to.toISOString(),
-        bucketMinutes: config.bucketMinutes,
-      },
-      { signal },
-    )
-  },
+  (signal) =>
+    getRumAppOverview(p.value, a.value, rumRangeWindow(range.value), { signal }),
   [p, a, range],
 )
 

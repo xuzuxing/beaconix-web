@@ -3,8 +3,8 @@ import '@/assets/styles/rum-filters.css'
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import dayjs from 'dayjs'
-import { listRumErrors } from '@/api/modules/rum'
-import type { RumErrorGroup } from '@/api/types/rum'
+import { getRumErrorOverview, listRumErrors } from '@/api/modules/rum'
+import type { RumErrorGroup, RumErrorOverview } from '@/api/types/rum'
 import ChartCard from '@/components/charts/ChartCard.vue'
 import EChart from '@/components/charts/EChart.vue'
 import { useChartTheme } from '@/components/charts/chartTheme'
@@ -17,40 +17,40 @@ import {
   valueAxis,
 } from '@/components/charts/chartPresets'
 import type { ChartOption } from '@/components/charts/echarts'
+import { RUM_RANGES, rumRangeWindow, type RumRange } from '@/config/rum-ranges'
 import { useRumContext } from '@/composables/useRumContext'
 import { useRumResource } from '@/composables/useRumResource'
 import RumState from './RumState.vue'
 
-type Range = '1h' | '24h' | '7d' | '30d'
-
-const ranges: Range[] = ['1h', '24h', '7d', '30d']
-const rangeHours: Record<Range, number> = {
-  '1h': 1,
-  '24h': 24,
-  '7d': 168,
-  '30d': 720,
-}
-const bucketCount: Record<Range, number> = {
-  '1h': 12,
-  '24h': 24,
-  '7d': 7,
-  '30d': 30,
-}
+/**
+ * 错误列表页顶部的异常概览。
+ * 指标来自 getRumErrorOverview 的聚合（错误发生次数 / PV / 影响面），
+ * 「最新错误」列表来自 listRumErrors 的真实查询；比率没有数据时为 null。
+ */
+const ranges = RUM_RANGES
 
 const { t } = useI18n()
 const { projectId: p, appId: a, router, route } = useRumContext()
 const theme = useChartTheme()
-const range = ref<Range>('24h')
+const range = ref<RumRange>('24h')
 
 const resource = useRumResource(
+  (signal) =>
+    getRumErrorOverview(p.value, a.value, rumRangeWindow(range.value), {
+      signal,
+    }),
+  [p, a, range],
+)
+
+const latest = useRumResource(
   (signal) => {
-    const hours = rangeHours[range.value]
+    const window = rumRangeWindow(range.value)
     return listRumErrors(
       p.value,
       a.value,
       {
-        from: new Date(Date.now() - hours * 3_600_000).toISOString(),
-        to: new Date().toISOString(),
+        from: window.from,
+        to: window.to,
         page: 1,
         limit: 50,
         sortBy: 'lastSeenAt',
@@ -62,106 +62,52 @@ const resource = useRumResource(
   [p, a, range],
 )
 
-const items = computed(() => resource.data.value?.items ?? [])
-const customItems = computed(() =>
-  items.value.filter((item) => item.category === 'MANUAL'),
-)
-const jsItems = computed(() =>
-  items.value.filter((item) => item.category !== 'MANUAL'),
-)
-const sum = (list: RumErrorGroup[]) =>
-  list.reduce((total, item) => total + item.count, 0)
-const totalCount = computed(() => sum(items.value))
-const jsCount = computed(() => sum(jsItems.value))
-const customCount = computed(() => sum(customItems.value))
-const pageCount = computed(
-  () => new Set(items.value.map((item) => item.page || '—')).size,
-)
-
-const rangeLabel = computed(() => t(`rum.range${range.value}`))
-
-/** 确定性伪随机，保证同一批数据刷新时图表形态稳定。 */
-function hash(input: string) {
-  let value = 2_166_136_261
-  for (let index = 0; index < input.length; index++) {
-    value ^= input.charCodeAt(index)
-    value = Math.imul(value, 16_777_619)
-  }
-  return value >>> 0
-}
-function seeded(seed: number) {
-  let state = seed || 1
-  return () => {
-    state = (Math.imul(state, 1_664_525) + 1_013_904_223) >>> 0
-    return state / 4_294_967_296
-  }
-}
-
-const identity = computed(
-  () => items.value.map((item) => item.id).join('|') || 'empty',
-)
-
-const affectedUsers = computed(() => {
-  if (!items.value.length) return 0
-  const rng = seeded(hash(`users:${identity.value}`))
-  return Math.max(
-    1,
-    Math.round(
-      items.value.length * (1 + rng() * 1.8) + totalCount.value * 0.04,
-    ),
-  )
-})
-
-const errorRate = computed(() => {
-  const pageViews = Math.max(160, Math.round(totalCount.value * 26.5))
-  return ((totalCount.value / pageViews) * 100).toFixed(2)
-})
-
+const data = computed<RumErrorOverview | null>(() => resource.data.value)
+const series = computed(() => data.value?.series ?? [])
 const labels = computed(() => {
-  const count = bucketCount[range.value]
-  const now = dayjs()
-  return Array.from({ length: count }, (_, index) => {
-    const offset = count - 1 - index
-    if (range.value === '1h')
-      return now.subtract(offset * 5, 'minute').format('HH:mm')
-    if (range.value === '24h')
-      return now.subtract(offset, 'hour').format('HH:mm')
-    return now.subtract(offset, 'day').format('MM-DD')
-  })
+  const format = range.value === '7d' || range.value === '30d' ? 'MM-DD' : 'HH:mm'
+  return series.value.map((point) => dayjs(point.bucketStart).format(format))
 })
 
-function buildTrend(total: number, seedKey: string) {
-  const count = bucketCount[range.value]
-  const rng = seeded(hash(`${seedKey}:${range.value}`))
-  const base = Math.max(total, 14) / count
-  const values = Array.from({ length: count }, (_, index) => {
-    const wave =
-      0.55 + Math.sin((index / Math.max(1, count - 1)) * Math.PI) * 0.45
-    return Math.max(0, Math.round(base * wave * (0.55 + rng() * 0.9)))
-  })
-  const peak = Math.max(1, ...values)
-  const rate = values.map((value) =>
-    Number(((value / (peak * 28 + 160)) * 100).toFixed(2)),
-  )
-  return { values, rate }
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('en-US').format(value)
+}
+function formatRate(value: number | null) {
+  return value === null ? '—' : `${value}%`
+}
+function formatTime(value?: string | null) {
+  return value ? dayjs(value).format('MM-DD HH:mm:ss') : '—'
 }
 
-const totalTrend = computed(() => buildTrend(totalCount.value, 'total'))
-const jsTrend = computed(() =>
-  buildTrend(jsCount.value, `js:${identity.value}`),
-)
-const customTrend = computed(() =>
-  buildTrend(customCount.value, `custom:${identity.value}`),
-)
-
-const kpis = computed(() => [
-  { key: 'totalErrors', value: String(totalCount.value) },
-  { key: 'jsErrors', value: String(jsCount.value) },
-  { key: 'customExceptions', value: String(customCount.value) },
-  { key: 'errorRate', value: `${errorRate.value}%` },
-  { key: 'affectedUsers', value: String(affectedUsers.value) },
-  { key: 'errorPages', value: String(pageCount.value) },
-])
+const kpis = computed(() => {
+  const totals = data.value?.totals
+  if (!totals) return []
+  return [
+    { key: 'errors', label: t('rum.totalErrors'), value: formatNumber(totals.errors) },
+    { key: 'js', label: t('rum.jsErrors'), value: formatNumber(totals.js) },
+    {
+      key: 'custom',
+      label: t('rum.customExceptions'),
+      value: formatNumber(totals.custom),
+    },
+    { key: 'rate', label: t('rum.errorRate'), value: formatRate(totals.errorRate) },
+    {
+      key: 'users',
+      label: t('rum.affectedUsers'),
+      value: formatNumber(totals.affectedUsers),
+    },
+    {
+      key: 'pages',
+      label: t('rum.affectedPages'),
+      value: formatNumber(totals.affectedPages),
+    },
+    {
+      key: 'open',
+      label: t('rum.openGroups'),
+      value: formatNumber(totals.openGroups),
+    },
+  ]
+})
 
 const trendOption = computed<ChartOption>(() => {
   const palette = theme.value
@@ -177,7 +123,7 @@ const trendOption = computed<ChartOption>(() => {
         type: 'bar',
         stack: 'errors',
         barMaxWidth: 20,
-        data: jsTrend.value.values,
+        data: series.value.map((point) => point.js),
         itemStyle: { color: palette.error },
       },
       {
@@ -185,7 +131,7 @@ const trendOption = computed<ChartOption>(() => {
         type: 'bar',
         stack: 'errors',
         barMaxWidth: 20,
-        data: customTrend.value.values,
+        data: series.value.map((point) => point.custom),
         itemStyle: { color: palette.warning },
       },
       {
@@ -194,7 +140,8 @@ const trendOption = computed<ChartOption>(() => {
         yAxisIndex: 1,
         smooth: true,
         showSymbol: false,
-        data: totalTrend.value.rate,
+        // 没有 PV 的桶留空，避免把「无流量」画成 0%
+        data: series.value.map((point) => point.errorRate),
         lineStyle: { width: 1.8, color: palette.brand },
         itemStyle: { color: palette.brand },
       },
@@ -221,18 +168,25 @@ function barOption(values: number[], color: string): ChartOption {
 }
 
 const jsOption = computed(() =>
-  barOption(jsTrend.value.values, theme.value.error),
+  barOption(series.value.map((point) => point.js), theme.value.error),
 )
 const customOption = computed(() =>
-  barOption(customTrend.value.values, theme.value.warning),
+  barOption(series.value.map((point) => point.custom), theme.value.warning),
 )
 
-const latestJs = computed(() => jsItems.value.slice(0, 5))
-const latestCustom = computed(() => customItems.value.slice(0, 5))
-
-function formatTime(value?: string | null) {
-  return value ? dayjs(value).format('MM-DD HH:mm:ss') : '—'
-}
+const latestRows = computed(() => latest.data.value?.items ?? [])
+const latestJs = computed(() =>
+  latestRows.value.filter((item) => item.category !== 'MANUAL').slice(0, 5),
+)
+const latestCustom = computed(() =>
+  latestRows.value.filter((item) => item.category === 'MANUAL').slice(0, 5),
+)
+const latestPanels = computed<{ key: string; title: string; rows: RumErrorGroup[] }[]>(
+  () => [
+    { key: 'js', title: t('rum.jsErrors'), rows: latestJs.value },
+    { key: 'custom', title: t('rum.customExceptions'), rows: latestCustom.value },
+  ],
+)
 
 function openError(id: string) {
   void router.push({
@@ -241,30 +195,27 @@ function openError(id: string) {
     query: { ...route.query },
   })
 }
+
+const rangeLabel = computed(() => t(`rum.range${range.value}`))
 </script>
 
 <template>
   <t-card class="error-overview">
     <template #title>{{ t('rum.errorOverview') }}</template>
     <template #actions>
-      <div class="error-overview__toolbar">
-        <t-tag
-          variant="outline"
-          size="small"
-          >{{ t('rum.sampleData') }}</t-tag
+      <t-radio-group
+        v-model="range"
+        variant="default-filled"
+        size="small"
+      >
+        <t-radio-button
+          v-for="value in ranges"
+          :key="value"
+          :value="value"
         >
-        <t-radio-group
-          v-model="range"
-          variant="default-filled"
-        >
-          <t-radio-button
-            v-for="value in ranges"
-            :key="value"
-            :value="value"
-            >{{ t(`rum.range${value}`) }}</t-radio-button
-          >
-        </t-radio-group>
-      </div>
+          {{ t(`rum.range${value}`) }}
+        </t-radio-button>
+      </t-radio-group>
     </template>
 
     <RumState
@@ -272,134 +223,92 @@ function openError(id: string) {
       :error="resource.error.value"
       @retry="resource.reload"
     >
-      <div class="error-overview__kpis">
-        <div
-          v-for="item in kpis"
-          :key="item.key"
-          class="error-overview__kpi"
+      <div
+        v-if="data && data.totals"
+        class="error-overview__body"
+      >
+        <dl class="error-overview__kpis">
+          <div
+            v-for="item in kpis"
+            :key="item.key"
+            class="error-overview__kpi"
+          >
+            <dt>{{ item.label }}</dt>
+            <dd>{{ item.value }}</dd>
+          </div>
+        </dl>
+
+        <ChartCard
+          :title="t('rum.errorTrend')"
+          :extra="rangeLabel"
+          height="260px"
         >
-          <span>{{ t(`rum.${item.key}`) }}</span>
-          <strong>{{ item.value }}</strong>
-          <small>{{ rangeLabel }}</small>
+          <EChart :option="trendOption" />
+        </ChartCard>
+
+        <div class="error-overview__split">
+          <ChartCard
+            :title="t('rum.jsErrors')"
+            :extra="formatNumber(data.totals.js)"
+            height="220px"
+          >
+            <EChart :option="jsOption" />
+          </ChartCard>
+          <ChartCard
+            :title="t('rum.customExceptions')"
+            :extra="formatNumber(data.totals.custom)"
+            height="220px"
+          >
+            <EChart :option="customOption" />
+          </ChartCard>
         </div>
-      </div>
 
-      <section class="error-overview__section">
-        <header class="error-overview__section-head">
-          <h3>{{ t('rum.errorTrend') }}</h3>
-          <span>{{ rangeLabel }}</span>
-        </header>
-        <EChart
-          :option="trendOption"
-          height="280px"
-        />
-      </section>
-
-      <div class="error-overview__hourly">
-        <ChartCard
-          :title="t('rum.hourlyJsErrors')"
-          :extra="`${jsCount}`"
-          height="220px"
-        >
-          <EChart :option="jsOption" />
-        </ChartCard>
-        <ChartCard
-          :title="t('rum.hourlyCustomErrors')"
-          :extra="`${customCount}`"
-          height="220px"
-        >
-          <EChart :option="customOption" />
-        </ChartCard>
-      </div>
-
-      <div class="error-overview__latest">
-        <section class="error-overview__panel">
-          <header class="error-overview__section-head">
-            <h3>{{ t('rum.jsErrors') }} · {{ t('rum.latestErrors') }}</h3>
-            <span>{{ t('rum.last5Minutes') }}</span>
-          </header>
-          <div
-            v-if="latestJs.length"
-            class="rum-table"
+        <div class="error-overview__latest">
+          <section
+            v-for="group in latestPanels"
+            :key="group.key"
+            class="error-overview__panel"
           >
-            <div class="rum-table__head error-overview__row">
-              <span>{{ t('rum.errorMessage') }}</span>
-              <span>{{ t('rum.page') }}</span>
-              <span>{{ t('rum.count') }}</span>
-              <span>{{ t('rum.lastSeen') }}</span>
-            </div>
-            <article
-              v-for="item in latestJs"
-              :key="item.id"
-              class="rum-table__row error-overview__row error-overview__row--clickable"
-              @click="openError(item.id)"
+            <header class="error-overview__section-head">
+              <h3>{{ group.title }} · {{ t('rum.latestErrors') }}</h3>
+              <span>{{ t('rum.latestInWindow') }}</span>
+            </header>
+            <div
+              v-if="group.rows.length"
+              class="rum-table"
             >
-              <div class="rum-table__primary">
-                <t-button
-                  variant="text"
-                  @click.stop="openError(item.id)"
-                  >{{ item.message }}</t-button
-                >
+              <div class="rum-table__head error-overview__row">
+                <span>{{ t('rum.errorMessage') }}</span>
+                <span>{{ t('rum.page') }}</span>
+                <span>{{ t('rum.count') }}</span>
+                <span>{{ t('rum.lastSeen') }}</span>
               </div>
-              <span class="rum-table__muted">{{ item.page || '—' }}</span>
-              <span class="rum-table__num">{{ item.count }}</span>
-              <time class="rum-table__muted">{{
-                formatTime(item.lastSeenAt)
-              }}</time>
-            </article>
-          </div>
-          <div
-            v-else
-            class="error-overview__empty"
-          >
-            {{ t('rum.empty') }}
-          </div>
-        </section>
-
-        <section class="error-overview__panel">
-          <header class="error-overview__section-head">
-            <h3>
-              {{ t('rum.customExceptions') }} · {{ t('rum.latestErrors') }}
-            </h3>
-            <span>{{ t('rum.last5Minutes') }}</span>
-          </header>
-          <div
-            v-if="latestCustom.length"
-            class="rum-table"
-          >
-            <div class="rum-table__head error-overview__row">
-              <span>{{ t('rum.errorMessage') }}</span>
-              <span>{{ t('rum.page') }}</span>
-              <span>{{ t('rum.count') }}</span>
-              <span>{{ t('rum.lastSeen') }}</span>
+              <article
+                v-for="item in group.rows"
+                :key="item.id"
+                class="rum-table__row error-overview__row"
+              >
+                <div class="rum-table__primary">
+                  <t-button
+                    variant="text"
+                    @click="openError(item.id)"
+                  >
+                    {{ item.message }}
+                  </t-button>
+                </div>
+                <span class="rum-table__muted">{{ item.page || '—' }}</span>
+                <span class="rum-table__num">{{ item.count }}</span>
+                <time class="rum-table__muted">{{ formatTime(item.lastSeenAt) }}</time>
+              </article>
             </div>
-            <article
-              v-for="item in latestCustom"
-              :key="item.id"
-              class="rum-table__row error-overview__row error-overview__row--clickable"
-              @click="openError(item.id)"
+            <div
+              v-else
+              class="error-overview__empty"
             >
-              <div class="rum-table__primary">
-                <t-button
-                  variant="text"
-                  @click.stop="openError(item.id)"
-                  >{{ item.message }}</t-button
-                >
-              </div>
-              <span class="rum-table__muted">{{ item.page || '—' }}</span>
-              <span class="rum-table__num">{{ item.count }}</span>
-              <time class="rum-table__muted">{{
-                formatTime(item.lastSeenAt)
-              }}</time>
-            </article>
-          </div>
-          <div
-            v-else
-            class="error-overview__empty"
-          >
-            {{ t('rum.empty') }}
-          </div>
-        </section>
+              {{ t('rum.empty') }}
+            </div>
+          </section>
+        </div>
       </div>
     </RumState>
   </t-card>
@@ -409,146 +318,99 @@ function openError(id: string) {
 .error-overview {
   min-width: 0;
 
-  &__toolbar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+  &__body {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
   }
 
   &__kpis {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 16px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid @beacon-border;
-  }
+    margin: 0;
 
-  &__kpi {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    min-width: 0;
+    div {
+      min-width: 0;
+    }
 
-    span {
+    dt {
       color: @beacon-text-secondary;
       font-size: 12px;
     }
 
-    strong {
-      font-size: 24px;
-      font-weight: 600;
-      line-height: 32px;
+    dd {
+      margin: 6px 0 0;
       overflow-wrap: anywhere;
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 30px;
       font-variant-numeric: tabular-nums;
     }
-
-    small {
-      color: @beacon-text-tertiary;
-      font-size: 12px;
-    }
   }
 
-  &__section {
-    padding: 20px 0;
-    border-bottom: 1px solid @beacon-border;
+  &__split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+    min-width: 0;
   }
 
-  &__section-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
-
-    h3 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: @beacon-font-weight-medium;
-    }
-
-    span {
-      color: @beacon-text-tertiary;
-      font-size: 12px;
-    }
-  }
-
-  &__hourly,
   &__latest {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 16px;
-  }
-
-  &__hourly {
-    padding: 20px 0;
-    border-bottom: 1px solid @beacon-border;
-  }
-
-  &__latest {
-    padding-top: 20px;
+    min-width: 0;
   }
 
   &__panel {
     min-width: 0;
   }
 
-  &__row {
-    grid-template-columns: minmax(0, 1fr) 110px 64px 130px;
+  &__section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    h3 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: @beacon-font-weight-medium;
+    }
+
+    span {
+      color: @beacon-text-tertiary;
+      font-size: 11px;
+    }
   }
 
-  &__row--clickable {
-    cursor: pointer;
+  &__row {
+    display: grid;
+    grid-template-columns: minmax(160px, 2fr) minmax(80px, 1fr) 60px 120px;
+    align-items: center;
+    gap: 12px;
   }
 
   &__empty {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 140px;
+    min-height: 120px;
     color: @beacon-text-tertiary;
-  }
-
-  :deep(.chart-card) {
-    padding: 0;
-    border: 0;
-  }
-
-  :deep(.rum-table__row .t-button) {
-    max-width: 100%;
-    justify-content: flex-start;
-    padding: 0;
-    overflow: hidden;
-    font-weight: 600;
-    text-align: left;
-
-    .t-button__text {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
+    font-size: 12px;
   }
 }
 
-@media (max-width: 1100px) {
-  .error-overview__kpis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+@media (max-width: 900px) {
+  .error-overview__row {
+    grid-template-columns: minmax(140px, 2fr) 60px 110px;
   }
 
-  .error-overview__hourly,
-  .error-overview__latest {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 700px) {
-  .error-overview__kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .error-overview__toolbar {
-    justify-content: flex-start;
+  .error-overview__row > :nth-child(2) {
+    display: none;
   }
 }
 </style>

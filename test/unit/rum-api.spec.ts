@@ -3,6 +3,7 @@ import {
   createRumApp,
   getRumApp,
   getRumAppOverview,
+  getRumErrorOverview,
   getProjectRumOverview,
   listProjectRumErrors,
   listProjectRumEvents,
@@ -94,6 +95,15 @@ describe('RUM app management API', () => {
         to: '2026-11-05T00:00:00.000Z',
         bucketMinutes: 60,
       },
+      { signal },
+    )
+  })
+  it('reads the error overview from its own sub-resource', () => {
+    const signal = new AbortController().signal
+    getRumErrorOverview('p/a', 'a/b', { bucketMinutes: 60 }, { signal })
+    expect(get).toHaveBeenCalledWith(
+      '/projects/p%2Fa/apps/a%2Fb/errors/overview',
+      { bucketMinutes: 60 },
       { signal },
     )
   })

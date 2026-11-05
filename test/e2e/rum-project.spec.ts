@@ -80,6 +80,23 @@ test('project menu and project-wide error/event queries use server pagination an
     else if (url.pathname.endsWith('/rum/events'))
       data = { items: [event], total: 1, page: 1, limit: 20 }
     else if (url.pathname.endsWith('/apps')) data = apps
+    else if (url.pathname.endsWith('/apps/app2/errors/overview'))
+      data = {
+        from: now,
+        to: now,
+        bucketMinutes: 60,
+        totals: {
+          errors: 0,
+          js: 0,
+          custom: 0,
+          pv: 0,
+          errorRate: null,
+          affectedUsers: 0,
+          affectedPages: 0,
+          openGroups: 1,
+        },
+        series: [],
+      }
     else if (url.pathname.endsWith('/apps/app2/errors/e1')) data = error
     else if (url.pathname.endsWith('/apps/app2')) data = apps[1]
     else data = { items: [], total: 0, page: 1, limit: 20 }

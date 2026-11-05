@@ -58,6 +58,9 @@ export default {
   resource: 'Resource',
   failures: 'Failures',
   failureRate: 'Failure rate',
+  affectedPages: 'Affected pages',
+  openGroups: 'Unresolved groups',
+  latestInWindow: 'Latest in the selected range',
   performanceRating: {
     GOOD: 'Good',
     NEEDS_IMPROVEMENT: 'Needs improvement',

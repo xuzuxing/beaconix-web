@@ -58,6 +58,9 @@ export default {
   resource: '资源',
   failures: '失败次数',
   failureRate: '失败率',
+  affectedPages: '影响页面',
+  openGroups: '未解决错误组',
+  latestInWindow: '所选范围内最近出现',
   performanceRating: {
     GOOD: '良好',
     NEEDS_IMPROVEMENT: '需改进',
