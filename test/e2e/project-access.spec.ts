@@ -217,12 +217,15 @@ test('project ADMIN monitor editor preserves shared template summaries and can u
   })
   await page.goto('/monitor')
   await page.getByRole('button', { name: '编辑监控项', exact: true }).click()
-  const dialog = page.locator('.t-dialog:visible')
-  await expect(dialog).toContainText('Shared template summary')
-  await expect(dialog.getByRole('button', { name: '解绑', exact: true })).toBeVisible()
-  await dialog.getByRole('button', { name: '解绑', exact: true }).click()
-  await dialog.getByRole('button', { name: '确定', exact: true }).click()
-  await expect(dialog).not.toBeVisible()
+  // 编辑已改为单页路由：不再有弹窗，断言落在页面表单与 URL 上
+  await expect(page).toHaveURL(/\/monitor\/b\/monitor-b\/edit$/)
+  const editor = page.locator('.editor-form')
+  await expect(editor).toContainText('Shared template summary')
+  await expect(editor.getByRole('button', { name: '解绑', exact: true })).toBeVisible()
+  await editor.getByRole('button', { name: '解绑', exact: true }).click()
+  // 顶栏「确定」保存后回到该监控详情页
+  await page.getByRole('button', { name: '确定', exact: true }).click()
+  await expect(page).toHaveURL(/\/monitor\/b\/monitor-b$/)
   expect(state.requests.find((request) => request.method === 'DELETE')?.path).toBe(
     '/projects/b/monitors/monitor-b/rule-bindings/template-1',
   )
@@ -237,11 +240,14 @@ test('project ADMIN creates and edits a monitor without resending unchanged cred
   const state = await mockWorkspace(page, { projectId: 'b' })
   await page.goto('/monitor')
   await page.getByRole('button', { name: '新建监控项', exact: true }).click()
-  let dialog = page.locator('.t-dialog:visible')
-  await dialog.locator('input').nth(0).fill('Created fixture monitor')
-  await dialog.locator('input').nth(2).fill('https://fixture-target.example.invalid')
-  await dialog.getByRole('button', { name: '确定', exact: true }).click()
-  await expect(dialog).not.toBeVisible()
+  // 新建走单页路由 /monitor/:projectId/new
+  await expect(page).toHaveURL(/\/monitor\/b\/new$/)
+  const editor = page.locator('.editor-form')
+  await editor.locator('input').nth(0).fill('Created fixture monitor')
+  await editor.locator('input').nth(2).fill('https://fixture-target.example.invalid')
+  await page.getByRole('button', { name: '确定', exact: true }).click()
+  // 保存后进入该监控的详情页
+  await expect(page).toHaveURL(/\/monitor\/b\/monitor-b$/)
   const create = state.requests.find(
     (request) => request.method === 'POST' && request.path === '/projects/b/monitors',
   )
@@ -254,10 +260,10 @@ test('project ADMIN creates and edits a monitor without resending unchanged cred
   })
   await expect(page.getByText('Created fixture monitor', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: '编辑监控项', exact: true }).click()
-  dialog = page.locator('.t-dialog:visible')
-  await dialog.locator('input').first().fill('Renamed fixture monitor')
-  await dialog.getByRole('button', { name: '确定', exact: true }).click()
-  await expect(dialog).not.toBeVisible()
+  await expect(page).toHaveURL(/\/monitor\/b\/monitor-b\/edit$/)
+  await page.locator('.editor-form input').first().fill('Renamed fixture monitor')
+  await page.getByRole('button', { name: '确定', exact: true }).click()
+  await expect(page).toHaveURL(/\/monitor\/b\/monitor-b$/)
   expect(state.requests.find((request) => request.method === 'PATCH')?.body).toEqual({
     name: 'Renamed fixture monitor',
   })

@@ -164,13 +164,15 @@ const decisionTheme = (value: string): TagTheme => {
             </div>
             <div>
               <dt>{{ t('monitorPage.roundEvaluated') }}</dt>
-              <dd>{{
-                t(
-                  round.check.evaluated
-                    ? 'monitorPage.roundYes'
-                    : 'monitorPage.roundNo',
-                )
-              }}</dd>
+              <dd>
+                {{
+                  t(
+                    round.check.evaluated
+                      ? 'monitorPage.roundYes'
+                      : 'monitorPage.roundNo',
+                  )
+                }}
+              </dd>
             </div>
             <div
               v-if="round.check.failureKind"
@@ -243,6 +245,22 @@ const decisionTheme = (value: string): TagTheme => {
               <dt>{{ t('monitorPage.roundProbeCount') }}</dt>
               <dd>{{ round.aggregation.effectiveProbeCount }}</dd>
             </div>
+            <!-- 应报探针：与实际到达的差即未上报，避免「只绑了 1 个却按 3 票判定」的误解 -->
+            <div v-if="round.aggregation.expectedProbeCount">
+              <dt>{{ t('monitorPage.roundExpectedProbes') }}</dt>
+              <dd>{{ round.aggregation.expectedProbeCount }}</dd>
+            </div>
+            <div v-if="round.aggregation.expectedProbeCount">
+              <dt>{{ t('monitorPage.roundVoteSplit') }}</dt>
+              <dd>
+                {{
+                  t('monitorPage.roundVoteSplitValue', {
+                    tenant: round.aggregation.tenantProbeCount,
+                    system: round.aggregation.systemProbeCount,
+                  })
+                }}
+              </dd>
+            </div>
             <div>
               <dt>{{ t('monitorPage.roundSampleCount') }}</dt>
               <dd>{{ round.aggregation.sampleCount }}</dd>
@@ -276,6 +294,7 @@ const decisionTheme = (value: string): TagTheme => {
               <thead>
                 <tr>
                   <th>{{ t('monitorPage.roundProbe') }}</th>
+                  <th>{{ t('monitorPage.roundProbeScope') }}</th>
                   <th>{{ t('monitorPage.roundRegion') }}</th>
                   <th>{{ t('monitorPage.result') }}</th>
                   <th>{{ t('monitorPage.latency') }}</th>
@@ -290,6 +309,17 @@ const decisionTheme = (value: string): TagTheme => {
                   :key="result.id"
                 >
                   <td>{{ result.probe?.name ?? result.probeId }}</td>
+                  <td>
+                    <t-tag
+                      v-if="result.probe"
+                      size="small"
+                      variant="outline"
+                      >{{
+                        t(`monitorPage.roundScope.${result.probe.scope}`)
+                      }}</t-tag
+                    >
+                    <span v-else>-</span>
+                  </td>
                   <td>{{ result.probe?.region ?? '-' }}</td>
                   <td>
                     <t-tag
@@ -308,11 +338,13 @@ const decisionTheme = (value: string): TagTheme => {
                   <td>{{ latency(result.latency) }}</td>
                   <td>{{ result.statusCode ?? '-' }}</td>
                   <td>{{ time(result.receivedAt) }}</td>
-                  <td>{{
-                    result.appliedAt
-                      ? time(result.appliedAt)
-                      : t('monitorPage.roundIgnored')
-                  }}</td>
+                  <td>
+                    {{
+                      result.appliedAt
+                        ? time(result.appliedAt)
+                        : t('monitorPage.roundIgnored')
+                    }}
+                  </td>
                 </tr>
               </tbody>
             </table>

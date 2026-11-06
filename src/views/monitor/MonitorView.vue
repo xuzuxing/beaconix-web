@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { Monitor, MonitorStatus, MonitorType } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import MonitorActions from '@/components/monitor/MonitorActions.vue'
-import MonitorEditorDialog from '@/components/monitor/MonitorEditorDialog.vue'
 import MonitorStatusTag from '@/components/monitor/MonitorStatusTag.vue'
 import { useMonitorAccess } from '@/composables/useMonitorAccess'
 import { useMonitorActions } from '@/composables/useMonitorActions'
@@ -35,8 +34,6 @@ const {
 const projectId = computed(() => org.currentProjectId)
 const { canManage, canCheck, canTestAlert } = useMonitorAccess()
 const { monitors, loading, error, load } = useMonitorList(projectId)
-const dialog = ref(false)
-const editing = ref<Monitor>()
 const statuses: MonitorStatus[] = [
   'UP',
   'DOWN',
@@ -130,20 +127,26 @@ const rows = computed(() =>
     page.value * pageSize.value,
   ),
 )
-// 切换项目时关闭编辑弹窗；列表本身由 useMonitorList 负责重载
-watch(
-  projectId,
-  () => {
-    dialog.value = false
-  },
-  { flush: 'sync' },
-)
 const { pending, actionError, act } = useMonitorActions(projectId, async () => {
   await load()
 })
+/** 新建与编辑都走单页编辑器，列表只负责跳转 */
 function edit(monitor?: Monitor) {
-  editing.value = monitor
-  dialog.value = true
+  const project = projectId.value
+  if (!project || !canManage.value) return
+  void router.push(
+    monitor
+      ? {
+          name: 'monitor-edit',
+          params: { projectId: project, monitorId: monitor.id },
+          query: route.query,
+        }
+      : {
+          name: 'monitor-create',
+          params: { projectId: project },
+          query: route.query,
+        },
+  )
 }
 function detail(monitor: Monitor) {
   return {
@@ -380,16 +383,6 @@ function paginate({
         >
       </div>
     </t-card>
-    <MonitorEditorDialog
-      v-model:visible="dialog"
-      :project-id="projectId"
-      :monitor="editing"
-      @saved="
-        (id) => {
-          if (id === projectId) void load()
-        }
-      "
-    />
   </section>
 </template>
 

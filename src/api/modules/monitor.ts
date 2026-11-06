@@ -8,11 +8,7 @@ import type {
 } from '../types'
 import { del, get, patch, post } from '@/utils/request'
 import type { AxiosRequestConfig } from 'axios'
-import type {
-  MonitorDetailRange,
-  MonitorInsights,
-  MonitorRound,
-} from '../types/monitor-detail'
+import type { MonitorDetailRange, MonitorInsights, MonitorRound } from '../types/monitor-detail'
 
 /** 项目下的监控项列表 */
 export function listMonitors(projectId: string, config?: AxiosRequestConfig) {
@@ -52,6 +48,17 @@ export function updateMonitor(projectId: string, id: string, data: UpdateMonitor
 /** 软删除监控项 */
 export function deleteMonitor(projectId: string, id: string) {
   return del<Monitor>(`/projects/${projectId}/monitors/${id}`)
+}
+
+/**
+ * 替换监控项绑定的租户探针集合（空数组即解绑全部）。
+ * 上限由后端按套餐校验（`min(maxProbes, maxProbesPerMonitor)`），超限返回 QUOTA_EXCEEDED。
+ */
+export function setMonitorProbes(projectId: string, id: string, probeIds: string[]) {
+  return patch<Monitor>(
+    `/projects/${encodeURIComponent(projectId)}/monitors/${encodeURIComponent(id)}/probes`,
+    { probeIds },
+  )
 }
 
 /** 暂停调度 */

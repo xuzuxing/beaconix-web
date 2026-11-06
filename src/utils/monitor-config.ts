@@ -6,7 +6,7 @@ import type { HttpJsonAssertion, MonitorConfig, MonitorType } from '../api/types
  *
  * 后端对 config 是「整体替换」语义，且 password / token / tlsKey 等
  * 只写字段不回传，因此这里的取舍是：调用方只在用户确实改动过配置时提交
- * config，否则整段省略以保留已保存的凭据（见 MonitorEditorDialog）。
+ * config，否则整段省略以保留已保存的凭据（见 MonitorEditorForm）。
  */
 
 /** 协议下拉选项：顺序与后端 MonitorType 枚举一致 */

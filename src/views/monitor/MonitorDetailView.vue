@@ -10,6 +10,7 @@ import {
   listOrganizations,
   listProjects,
   listRuleGroups,
+  setMonitorProbes,
   unbindRuleGroup,
 } from '@/api'
 import type { MonitorDetailRange } from '@/api/types/monitor-detail'
@@ -22,7 +23,6 @@ import AppIcon from '@/components/AppIcon.vue'
 import HeaderActions from '@/components/HeaderActions.vue'
 import MonitorActions from '@/components/monitor/MonitorActions.vue'
 import MonitorDetailCharts from '@/components/monitor/MonitorDetailCharts.vue'
-import MonitorEditorDialog from '@/components/monitor/MonitorEditorDialog.vue'
 import MonitorEvents from '@/components/monitor/MonitorEvents.vue'
 import MonitorRoundDialog from '@/components/monitor/MonitorRoundDialog.vue'
 import MonitorStatusTag from '@/components/monitor/MonitorStatusTag.vue'
@@ -33,6 +33,7 @@ import { useMonitorActions } from '@/composables/useMonitorActions'
 import { useMonitorDetail } from '@/composables/useMonitorDetail'
 import { useMonitorRuntime } from '@/composables/useMonitorRuntime'
 import { usePageHeader } from '@/composables/usePageHeader'
+import { useProbeList } from '@/composables/useProbeList'
 import { Copy01Icon, RefreshIcon } from '@/icons'
 import { useOrganizationStore } from '@/stores'
 import { usePermissionsStore } from '@/stores/modules/permissions'
@@ -155,7 +156,6 @@ const timezones = [
 const ranges: MonitorDetailRange[] = ['1h', '24h', '7d', '30d']
 const tab = ref('overview')
 const autoRefresh = ref(false)
-const dialog = ref(false)
 const checkPage = ref(1)
 const roundDialog = ref(false)
 const selectedRoundId = ref('')
@@ -178,10 +178,20 @@ const { pending, actionError, act } = useMonitorActions(
     await refresh()
   },
 )
+/** 编辑走单页编辑器（字段多），详情页只负责跳转 */
+function openEditor() {
+  const project = projectId.value
+  const id = monitorId.value
+  if (!project || !id) return
+  void router.push({
+    name: 'monitor-edit',
+    params: { projectId: project, monitorId: id },
+    query: route.query,
+  })
+}
 watch(
   identity,
   () => {
-    dialog.value = false
     checkPage.value = 1
   },
   { flush: 'sync' },
@@ -193,7 +203,6 @@ const timer = setInterval(() => {
   if (
     autoRefresh.value &&
     !loading.value &&
-    !dialog.value &&
     !pending.value[monitorId.value] &&
     document.visibilityState === 'visible'
   )
@@ -335,6 +344,65 @@ watch(
   },
   { immediate: true, flush: 'sync' },
 )
+
+// ---------- 绑定的租户探针 ----------
+// 租户探针由用户手动绑定；平台分配的系统探针参与同一轮投票但不可在此编辑，只读见单次结果详情。
+const {
+  probes: tenantProbes,
+  loading: probesLoading,
+  error: probesLoadError,
+} = useProbeList(orgId)
+/** 已绑定的租户探针摘要（随单个监控项详情返回） */
+const boundProbes = computed(() => monitor.value?.probes ?? [])
+/** 套餐允许单个监控项绑定的探针上限；0 表示套餐未开放手动绑定 */
+const probeLimit = computed(() => monitor.value?.maxProbes ?? 0)
+/** 待保存的探针集合，初始化为当前绑定 */
+const probeSelection = ref<string[]>([])
+const probesSaving = ref(false)
+const probesSaveError = ref('')
+const probeOptions = computed(() =>
+  tenantProbes.value.map((probe) => ({
+    label: `${probe.name} · ${probe.region}`,
+    value: probe.id,
+  })),
+)
+/** 只在绑定集合真的变化时重置选择，避免自动刷新冲掉用户尚未保存的勾选 */
+const boundProbeKey = computed(() =>
+  boundProbes.value.map((probe) => probe.id).join(','),
+)
+watch(
+  boundProbeKey,
+  (key) => {
+    probeSelection.value = key ? key.split(',') : []
+    probesSaveError.value = ''
+  },
+  { immediate: true, flush: 'sync' },
+)
+async function saveProbes() {
+  const project = projectId.value
+  const id = monitorId.value
+  if (!project || !id || probesSaving.value || !canManage.value) return
+  const ids = [...new Set(probeSelection.value)]
+  if (ids.length > probeLimit.value) {
+    probesSaveError.value = t('monitorPage.probesOverLimit', {
+      limit: probeLimit.value,
+    })
+    return
+  }
+  probesSaving.value = true
+  probesSaveError.value = ''
+  try {
+    await setMonitorProbes(project, id, ids)
+    await refresh()
+    MessagePlugin.success(t('monitorPage.probesSaved'))
+  } catch (cause) {
+    probesSaveError.value =
+      cause instanceof Error ? cause.message : t('monitorPage.probesSaveFailed')
+  } finally {
+    probesSaving.value = false
+  }
+}
+
 const info = computed(() => {
   const m = monitor.value
   if (!m) return []
@@ -375,6 +443,16 @@ const info = computed(() => {
     [
       'availabilityWindow',
       m.availabilityWindow === null ? '-' : String(m.availabilityWindow),
+    ],
+    [
+      'probeRatio',
+      m.type === 'HTTP' || m.type === 'TCP'
+        ? `${m.probeSuccessRatio ?? 100}%`
+        : t('monitorPage.probeNotApplicable'),
+    ],
+    [
+      'probeTenantOnly',
+      t(m.tenantProbesOnly ? 'monitorPage.roundYes' : 'monitorPage.roundNo'),
     ],
   ]
 })
@@ -423,7 +501,7 @@ async function copy() {
         :can-manage="canManage"
         :can-check="canCheck"
         :can-test-alert="canTestAlert"
-        @edit="dialog = true"
+        @edit="openEditor"
         @action="act(projectId, monitor, $event)"
       />
     </HeaderActions>
@@ -819,6 +897,105 @@ async function copy() {
           {{ t('ruleGroup.monitor.empty') }}
         </p>
       </t-card>
+      <!-- 绑定的租户探针：手动绑定；平台分配的系统探针参与同一轮投票，但不能在此编辑 -->
+      <t-card
+        v-if="tab === 'configuration'"
+        class="monitor-detail__card"
+      >
+        <template #title>{{ t('monitorPage.boundProbes') }}</template>
+        <template #actions>
+          <span class="monitor-detail__hint">
+            {{ t('monitorPage.probesLimit', { limit: probeLimit }) }}
+          </span>
+        </template>
+        <t-alert
+          v-if="probesSaveError"
+          theme="error"
+          :message="probesSaveError"
+        />
+        <t-alert
+          v-else-if="probesLoadError"
+          theme="error"
+          :message="probesLoadError"
+        />
+        <p
+          v-if="!probeLimit"
+          class="monitor-detail__probes-empty"
+        >
+          {{ t('monitorPage.probesUnavailable') }}
+        </p>
+        <template v-else>
+          <div
+            v-if="boundProbes.length"
+            class="monitor-detail__probes"
+          >
+            <article
+              v-for="probe in boundProbes"
+              :key="probe.id"
+              class="monitor-detail__probe"
+            >
+              <span class="monitor-detail__probe-name">{{ probe.name }}</span>
+              <t-tag
+                size="small"
+                variant="outline"
+                >{{ probe.region }}</t-tag
+              >
+              <t-tag
+                size="small"
+                variant="light"
+                :theme="probe.status === 'ONLINE' ? 'success' : 'default'"
+                >{{
+                  t(
+                    probe.status === 'ONLINE'
+                      ? 'monitorPage.probeOnline'
+                      : 'monitorPage.probeOffline',
+                  )
+                }}</t-tag
+              >
+              <t-tag
+                v-if="!probe.enabled"
+                size="small"
+                variant="light"
+                >{{ t('monitorPage.probeDisabled') }}</t-tag
+              >
+              <span class="monitor-detail__probe-heartbeat">{{
+                probe.lastHeartbeat
+                  ? time(probe.lastHeartbeat)
+                  : t('monitorPage.never')
+              }}</span>
+            </article>
+          </div>
+          <p
+            v-else
+            class="monitor-detail__probes-empty"
+          >
+            {{ t('monitorPage.probesEmpty') }}
+          </p>
+          <template v-if="canManage">
+            <t-select
+              v-model="probeSelection"
+              multiple
+              clearable
+              :options="probeOptions"
+              :loading="probesLoading"
+              :min-collapsed-num="3"
+              :placeholder="t('monitorPage.probesPlaceholder')"
+            />
+            <div class="monitor-detail__probes-actions">
+              <t-button
+                size="small"
+                theme="primary"
+                :loading="probesSaving"
+                @click="saveProbes"
+                >{{ t('monitorPage.probesSave') }}</t-button
+              >
+            </div>
+          </template>
+          <p class="monitor-detail__probes-empty">
+            {{ t('monitorPage.probesHint') }}
+          </p>
+        </template>
+      </t-card>
       <t-card
         v-if="tab === 'configuration'"
         class="monitor-detail__card"
@@ -879,16 +1056,6 @@ async function copy() {
           </div>
         </dl>
       </t-card>
-      <MonitorEditorDialog
-        v-model:visible="dialog"
-        :project-id="projectId"
-        :monitor="monitor"
-        @saved="
-          (id) => {
-            if (id === projectId) void refresh()
-          }
-        "
-      />
       <RuleGroupEditorDialog
         v-model:visible="ruleDialog"
         :org-id="orgId"
@@ -1030,6 +1197,40 @@ async function copy() {
     font-size: 12px;
     font-weight: 400;
     color: @beacon-text-tertiary;
+  }
+  // 绑定的探针清单：一行一个探针，名称 + 地域 + 在线状态 + 最近心跳
+  &__probes {
+    display: flex;
+    flex-direction: column;
+  }
+  &__probe {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid @beacon-border;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+  &__probe-name {
+    font-weight: @beacon-font-weight-medium;
+  }
+  &__probe-heartbeat {
+    color: @beacon-text-tertiary;
+    font-size: 12px;
+  }
+  &__probes-empty {
+    margin: 8px 0 0;
+    color: @beacon-text-tertiary;
+    font-size: 12px;
+  }
+  &__probes-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
   }
   &__info {
     display: grid;

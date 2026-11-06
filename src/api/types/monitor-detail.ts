@@ -98,28 +98,27 @@ export interface MonitorRoundResult {
 }
 
 export type RoundDecision =
-  | 'RESCUED'
-  | 'OVERTURNED'
-  | 'CONFIRMED_SUCCESS'
-  | 'CONFIRMED_FAILURE'
-  | 'FALLBACK_LOCAL'
+  'RESCUED' | 'OVERTURNED' | 'CONFIRMED_SUCCESS' | 'CONFIRMED_FAILURE' | 'FALLBACK_LOCAL'
 
-export type RoundProtectedReason =
-  | 'LEGACY_UNSUPPORTED'
-  | 'UNEVALUATED'
-  | 'ASSERTION'
-  | 'SSL'
+export type RoundProtectedReason = 'LEGACY_UNSUPPORTED' | 'UNEVALUATED' | 'ASSERTION' | 'SSL'
 
 export interface MonitorRoundAggregation {
   /** 受保护批次仅以本地判定结算 */
   protected: boolean
   protectedReason: RoundProtectedReason | null
-  /** 参与分母的在线租户探针数 */
+  /** 实际到达的上报数，即成功率的分母（含租户与系统探针；每个探针最多一票） */
   effectiveProbeCount: number
+  /** 本轮可能上报的探针数（在线租户探针 + 分配到的系统探针），与 effectiveProbeCount 的差即未上报 */
+  expectedProbeCount: number
+  /** 分母中来自租户探针的票数 */
+  tenantProbeCount: number
+  /** 分母中来自平台分配的系统探针票数 */
+  systemProbeCount: number
   /** 参与投票的样本数（每个探针最多一票） */
   sampleCount: number
   successCount: number
   ratio: number
+  /** 该监控项配置的探针成功率门槛（百分比） */
   threshold: number
   decision: RoundDecision
   settledAt: string

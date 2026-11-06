@@ -435,6 +435,17 @@ export type MonitorStatus = 'UNKNOWN' | 'UP' | 'DEGRADED' | 'DOWN' | 'PAUSED'
 /** 检查执行位置：本地调度或探针上报 */
 export type CheckSource = 'LOCAL' | 'PROBE'
 
+/** 监控项绑定的租户探针摘要（单个监控项详情会返回，列表接口不返回） */
+export interface MonitorBindingProbe {
+  id: string
+  name: string
+  provider: 'TENCENT' | 'ALIYUN' | 'CUSTOM'
+  region: string
+  status: 'ONLINE' | 'OFFLINE'
+  enabled: boolean
+  lastHeartbeat: string | null
+}
+
 /** 监控项 */
 export interface Monitor {
   id: string
@@ -451,6 +462,14 @@ export interface Monitor {
   expectedStatus: number
   /** 连续失败多少次判定为 DOWN */
   failureThreshold: number
+  /** 探针投票成功率门槛（1-100，100 表示所有参与投票的探针都必须成功） */
+  probeSuccessRatio: number
+  /** true 表示只有租户探针参与判定，分配到的系统探针照常执行但不计票 */
+  tenantProbesOnly: boolean
+  /** 已绑定的租户探针摘要；列表接口省略该字段 */
+  probes?: MonitorBindingProbe[]
+  /** 当前套餐允许单个监控项绑定的租户探针上限（0 表示套餐未开放手动绑定） */
+  maxProbes: number
   checkSsl: boolean
   /** 证书到期前多少天开始告警 */
   sslExpiryThreshold: number
@@ -494,6 +513,10 @@ export interface CreateMonitorParams {
   timeout?: number
   expectedStatus?: number
   failureThreshold?: number
+  /** 探针投票成功率门槛（1-100，默认 100） */
+  probeSuccessRatio?: number
+  /** 只让租户探针参与判定（系统探针照常执行但不计票） */
+  tenantProbesOnly?: boolean
   checkSsl?: boolean
   sslExpiryThreshold?: number
   enabled?: boolean
@@ -501,6 +524,8 @@ export interface CreateMonitorParams {
   availabilityThreshold?: number
   availabilityWindow?: number
   notificationChannelIds?: string[]
+  /** 创建/更新时一并绑定的租户探针；更新时为空数组即解绑全部 */
+  probeIds?: string[]
 }
 
 export type UpdateMonitorParams = Partial<CreateMonitorParams>

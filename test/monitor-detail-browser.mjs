@@ -457,11 +457,14 @@ try {
     await page.locator('.t-pagination').getByText('1', { exact: true }).click()
     await page.waitForFunction(() => document.querySelectorAll('.monitor-row').length === 10)
     await page.getByRole('button', { name: '新建监控项', exact: true }).click()
-    const creator = page.locator('.t-dialog').filter({ hasText: '新建监控项' })
+    // 单页编辑器：/monitor/:projectId/new，保存后进入该监控详情页
+    const creator = page.locator('.editor-form')
+    await creator.waitFor({ state: 'visible' })
     await creator.locator('input').first().fill('Browser added HTTP')
     await creator.locator('input').nth(2).fill('https://browser.test/health')
-    await creator.getByRole('button', { name: '确定', exact: true }).click()
-    await creator.waitFor({ state: 'hidden' })
+    await page.getByRole('button', { name: '确定', exact: true }).click()
+    await page.getByRole('button', { name: '返回', exact: true }).click()
+    await page.getByPlaceholder('搜索名称或检查目标').waitFor()
     await page.getByPlaceholder('搜索名称或检查目标').fill('Browser added')
     await page.getByRole('link', { name: 'Browser added HTTP' }).waitFor()
     await page.locator('.monitor-row').getByRole('button', { name: '删除', exact: true }).click()
@@ -536,14 +539,14 @@ try {
     await page.waitForTimeout(250)
     assert.ok((await page.locator('.monitor-detail__status').innerText()).includes('正常'))
     await page.getByRole('button', { name: '编辑监控项', exact: true }).click()
-    const editor = page.locator('.t-dialog').filter({ hasText: '编辑监控项' })
+    const editor = page.locator('.editor-form')
     await editor.waitFor({ state: 'visible' })
     await editor.locator('input').first().fill('Production API updated')
     await page.screenshot({
       path: `${output}/${viewport.width}-editor.png`,
       fullPage: true,
     })
-    await editor.getByRole('button', { name: '确定', exact: true }).click()
+    await page.getByRole('button', { name: '确定', exact: true }).click()
     await page.getByRole('heading', { name: 'Production API updated' }).waitFor()
     mode = 'truncated'
     await page.getByText('近 30 天', { exact: true }).click()

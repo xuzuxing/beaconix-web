@@ -73,6 +73,31 @@ export const layoutChildren: RouteRecordRaw[] = [
     },
   },
   {
+    // 新建走单页编辑：字段多（协议配置 + 条件 + 探针 + 渠道），弹窗放不下
+    path: 'monitor/:projectId/new',
+    name: 'monitor-create',
+    component: () => import('@/views/monitor/MonitorEditorView.vue'),
+    meta: {
+      titleKey: 'workspace.monitor.create',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/monitor',
+      keepAlive: false,
+    },
+  },
+  {
+    path: 'monitor/:projectId/:monitorId/edit',
+    name: 'monitor-edit',
+    component: () => import('@/views/monitor/MonitorEditorView.vue'),
+    meta: {
+      titleKey: 'workspace.monitor.edit',
+      hidden: true,
+      menuExcluded: true,
+      activeMenu: '/monitor',
+      keepAlive: false,
+    },
+  },
+  {
     path: 'monitor/:projectId/:monitorId',
     name: 'monitor-detail',
     component: () => import('@/views/monitor/MonitorDetailView.vue'),
